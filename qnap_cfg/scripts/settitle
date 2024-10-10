@@ -1,0 +1,12 @@
+#!/bin/bash
+
+# Check if an argument is provided
+if [ -z "$1" ]; then
+  echo "Usage: settitle <title>"
+  return 1
+fi
+
+# Set the TTY_TITLE environment variable
+export TTY_TITLE="$1"
+echo "TTY_TITLE set to '$TTY_TITLE'"
+
