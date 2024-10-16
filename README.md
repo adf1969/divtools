@@ -1,10 +1,10 @@
 # divtools
 Divix Linux Config Tools
 
-To Execute/Install:
+To Execute/Install:<br>
 `bash <(wget -qO- https://raw.githubusercontent.com/adf1969/divtools/main/divtools_install.sh)`
 
-To Download the `divtools_install.sh` file:
+To Download the `divtools_install.sh` file:<br>
 `wget https://raw.githubusercontent.com/adf1969/divtools/main/divtools_install.sh -O divtools_install.sh`
 
 
