@@ -1,10 +1,37 @@
   #!/bin/sh
   LOGFILE="/etc/logs/adf_custom_startup.log"
-  NEW_OPT_LOC="/share/CACHEDEV1_DATA/opt"
+  NEW_OPT_LOC="/share/CACHEDEV1_DATA/opt"   # Set to location where you want /opt to be
 
   log() {
       echo "$(date '+%Y-%m-%d %H:%M:%S') : $1" >> $LOGFILE
   }
+
+# Update /etc/profile
+function update_profile() {
+    if grep -q "#DIVTOOLS-BEFORE" /etc/profile; then
+        # If the DIVTOOLS block exists, replace the content between BEFORE and AFTER
+        echo "Updating Divtools entry in /etc/profile."
+        run_cmd sed -i '/#DIVTOOLS-BEFORE/,/#DIVTOOLS-AFTER/c\
+#DIVTOOLS-BEFORE\n\
+# Source divtools profile\n\
+if [ -f /opt/divtools/dotfiles/.bash_profile ]; then\n\
+    . /opt/divtools/dotfiles/.bash_profile\n\
+fi\n\
+#DIVTOOLS-AFTER' /etc/profile
+    else
+        # If the DIVTOOLS block doesn't exist, append it to the file
+        echo "Adding Divtools entry to /etc/profile."
+        run_cmd tee -a /etc/profile > /dev/null <<EOL
+
+#DIVTOOLS-BEFORE
+# Source divtools profile
+if [ -f /opt/divtools/dotfiles/.bash_profile ]; then
+    . /opt/divtools/dotfiles/.bash_profile
+fi
+#DIVTOOLS-AFTER
+EOL
+    fi
+}
 
   log "START: Executing adf_custom_startup.sh"
 
@@ -26,20 +53,11 @@
 
 # Fix the /etc/profile
 log "** Fix /etc/profile"
-cat <<EOF >> /etc/profile
-# Call Custom Profiles
-echo "Running /etc/profile"
-#if [ -f ~/.bash_profile_cust ]; then
-#  . ~/.bash_profile_cust
-#fi
-if [ -f /opt/home/root/.bash_profile ]; then
-  . /opt/home/root/.bash_profile
-fi
-EOF
+update_profile
 
 # Fix the /root homedir
 log "** Fix /root files"
-/opt/home/root/scripts/mk_homedir_links.sh
+/opt/divtools/qnap_cfg/scripts/mk_homedir_links.sh
 
 # Copy this file to /opt/etc/config/. This backs up this file
 #cp /etc/config/adf_custom_startup.sh /opt/etc/config/adf_custom_startup.sh
