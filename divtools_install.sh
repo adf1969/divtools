@@ -167,6 +167,9 @@ function install_packages() {
 
 # Function to install Docker
 function install_docker() {
+    # Comma-delimited list of users to add to the docker group
+    local users_to_add="divix"
+
     # Check if Docker is already installed
     if command -v docker &> /dev/null; then
         echo "Docker is already installed."
@@ -174,7 +177,7 @@ function install_docker() {
     fi
 
     echo "Installing Docker..."
-    
+
     if [[ "$OS" == "ubuntu" || "$OS" == "debian" ]]; then
         # Update package list and install prerequisites
         run_cmd apt update
@@ -197,7 +200,20 @@ function install_docker() {
         run_cmd systemctl start docker
 
         echo "Docker installed successfully."
-    
+
+        # Iterate over the comma-delimited list of users
+        IFS=',' read -ra users <<< "$users_to_add"
+        for user in "${users[@]}"; do
+            # Check if the user exists and add them to the docker group
+            if id "$user" &>/dev/null; then
+                echo "User $user exists. Adding to docker group..."
+                run_cmd usermod -aG docker "$user"
+                echo "User $user added to docker group."
+            else
+                echo "User $user does not exist. Skipping docker group addition for $user."
+            fi
+        done
+
     elif [[ "$OS" == "qts" ]]; then
         echo "QNAP detected. Docker installation on QNAP must be done via App Center."
         return 1
@@ -206,6 +222,7 @@ function install_docker() {
         return 1
     fi
 }
+
 
 # Function to install Cockpit and additional modules
 function install_cockpit() {
@@ -291,6 +308,34 @@ function update_git_config() {
 
 # Function to git clone the divtools repository into /opt/divtools
 function clone_divtools_repo() {
+    # Check if the ~/.ssh directory exists, create it if not
+    if [ ! -d ~/.ssh ]; then
+        echo "~/.ssh directory does not exist. Creating it..."
+        mkdir -p ~/.ssh
+        chmod 700 ~/.ssh
+    fi
+
+    # Check if the ~/.ssh/id_ed25519 file exists
+    if [ ! -f ~/.ssh/id_ed25519 ]; then
+        echo "~/.ssh/id_ed25519 does not exist. You need to provide an SSH private key for Git operations."
+
+        # Prompt the user to enter their private key
+        read -p "Please enter your private SSH key (id_ed25519): " ssh_key
+
+        # Save the user's input into the id_ed25519 file
+        echo "$ssh_key" > ~/.ssh/id_ed25519
+        chmod 600 ~/.ssh/id_ed25519
+
+        echo "SSH private key saved to ~/.ssh/id_ed25519."
+    fi
+
+    # Ensure there is a public key (if not already present)
+    if [ ! -f ~/.ssh/id_ed25519.pub ]; then
+        echo "Generating the public key..."
+        ssh-keygen -y -f ~/.ssh/id_ed25519 > ~/.ssh/id_ed25519.pub
+        echo "Public key generated at ~/.ssh/id_ed25519.pub."
+    fi
+
     # Check if the /opt/divtools directory exists
     if [ ! -d /opt/divtools ]; then
         echo "/opt/divtools directory does not exist. Creating it first..."
@@ -319,6 +364,7 @@ function clone_divtools_repo() {
         echo "Failed to clone the repository."
     fi
 }
+
 
 
 # Update /etc/profile
