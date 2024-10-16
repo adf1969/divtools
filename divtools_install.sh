@@ -79,38 +79,56 @@ function qnap_pre_install() {
     fi
 }
 
-# Add divix user and set password
-# Add divix user and set password
-function add_divix_user() {
-    if id "divix" &>/dev/null; then
-        echo "User divix already exists"
-    else
-        # Prompt for password input only if the user doesn't exist
-        read -sp "Enter password for divix user: " divix_passwd
-        echo ""
-        
-        # Add the divix user
-        run_cmd useradd -m -s /bin/bash divix
-        
-        # Set the password for divix user (compatible with systems without chpasswd)
-        echo "Setting password for divix user..."
-        echo -e "$divix_passwd\n$divix_passwd" | run_cmd passwd divix
-        
-        # Add divix to appropriate groups
-        if [[ "$OS" == "ubuntu" || "$OS" == "debian" ]]; then
-            run_cmd usermod -aG sudo divix
-        elif [[ "$OS" == "qts" ]]; then
-            run_cmd usermod -aG administrators divix
-            # Create the "adm" group if it doesn't exist on QNAP
-            if ! getent group adm &>/dev/null; then
-                run_cmd groupadd adm
-            fi
-        fi
+# Function to add a user and assign them to specified groups
+# Parameters:
+# $1 - username
+# $2 - space-delimited list of groups
+function add_user() {
+    local username=$1
+    local groups=$2
 
-        # Add the "divix" user to the "adm" group on all systems
-        run_cmd usermod -aG adm divix
+    # Check if the user already exists
+    if id "$username" &>/dev/null; then
+        echo "User $username already exists"
+    else
+        # Prompt for password input
+        read -sp "Enter password for $username user: " user_passwd
+        echo ""
+
+        # Add the user with a home directory and bash shell
+        run_cmd useradd -m -s /bin/bash "$username"
+        
+        # Set the password for the user
+        echo "Setting password for $username user..."
+        echo -e "$user_passwd\n$user_passwd" | run_cmd passwd "$username"
+    fi
+
+    # Loop through each group and add the user to the group
+    for group in $groups; do
+        # Check if the group exists, if not, create it
+        if ! getent group "$group" &>/dev/null; then
+            echo "Group $group does not exist. Creating it..."
+            run_cmd groupadd "$group"
+        fi
+        
+        # Add the user to the group
+        run_cmd usermod -aG "$group" "$username"
+        echo "User $username added to group $group"
+    done
+}
+
+# Refactored add_divix_user using add_user
+function add_divix_user() {
+    # Add divix user and assign to groups based on the OS
+    if [[ "$OS" == "ubuntu" || "$OS" == "debian" ]]; then
+        add_user "divix" "sudo adm"
+    elif [[ "$OS" == "qts" ]]; then
+        add_user "divix" "administrators adm"
+    else
+        add_user "divix" "adm"
     fi
 }
+
 
 
 
@@ -149,21 +167,48 @@ function install_entware() {
     fi
 }
 
+# Function to output in red text
+function echo_red() {
+    echo -e "\033[0;31m$1\033[0m"
+}
+
+# Function to output in green text
+function echo_green() {
+    echo -e "\033[0;32m$1\033[0m"
+}
+
 # Install necessary packages
 function install_packages() {
-    packages=(sudo syncthing git git-http vim-nox rclone python3 libssl-dev curl ca-certificates openssh-client tmux)
+    packages=(curl sudo whois syncthing xmlstarlet git git-http vim-nox rclone python3 libssl-dev ca-certificates openssh-client tmux)
+
     if [[ "$PKG_MANAGER" == "apt" ]]; then
-        # Add syncthing repository
+        # Add syncthing repository if syncthing is not already installed
         if ! command -v syncthing &>/dev/null; then
             run_cmd curl -s https://syncthing.net/release-key.txt | run_cmd gpg --dearmor -o /usr/share/keyrings/syncthing-archive-keyring.gpg
             echo "deb [signed-by=/usr/share/keyrings/syncthing-archive-keyring.gpg] https://apt.syncthing.net/ syncthing stable" | run_cmd tee /etc/apt/sources.list.d/syncthing.list
             run_cmd apt update
         fi
-        run_cmd apt install -y ${packages[@]}
+
+        # Install each package one by one
+        for package in "${packages[@]}"; do
+            echo_green "Installing $package..."
+            if ! run_cmd apt install -y "$package"; then
+                echo_red "Failed to install $package. Continuing with the next package..."
+            fi
+        done
+
     elif [[ "$PKG_MANAGER" == "opkg" ]]; then
-        run_cmd opkg install ${packages[@]}
+        # Install each package one by one using opkg
+        for package in "${packages[@]}"; do
+            echo_green "Installing $package..."
+            if ! run_cmd opkg install "$package"; then
+                echo_red "Failed to install $package. Continuing with the next package..."
+            fi
+        done
     fi
 }
+
+
 
 # Function to install Docker
 function install_docker() {
@@ -256,8 +301,72 @@ function install_cockpit() {
 }
 
 
-# Configure Syncthing to start on boot
+# Configure Syncthing to start on boot and modify the config.xml file
 function configure_syncthing_boot() {
+    # Add syncthing user if it doesn't exist and add to appropriate groups
+    if [[ "$OS" == "ubuntu" || "$OS" == "debian" ]]; then
+        add_user "syncthing" "adm"
+    elif [[ "$OS" == "qts" ]]; then
+        add_user "syncthing" "administrators adm"
+    fi
+
+    # Path to the Syncthing configuration file
+    syncthing_config="/home/syncthing/.local/state/syncthing/config.xml"
+
+    # Check if mkpasswd (bcrypt) is installed
+    if ! command -v mkpasswd &>/dev/null; then
+        echo "mkpasswd is required but not installed. Installing it..."
+        run_cmd apt install -y whois
+    fi
+
+    # Prompt for a new password
+    read -sp "Enter a password for the Syncthing 'divix' user: " syncthing_password
+    echo ""
+
+    # Use mkpasswd to generate a bcrypt hash for the password
+    hashed_password=$(mkpasswd --method=bcrypt --rounds=10 "$syncthing_password")
+
+    # Modify the config.xml file using xmlstarlet
+    if [ -f "$syncthing_config" ]; then
+        # Backup the original file
+        run_cmd cp "$syncthing_config" "$syncthing_config.bak"
+
+        echo "Modifying Syncthing config file: $syncthing_config..."
+
+        # Ensure the <gui> element exists
+        if ! xmlstarlet sel -t -v "//gui" "$syncthing_config" &>/dev/null; then
+            echo "Adding <gui> element to the config..."
+            xmlstarlet ed -L -s "/configuration" -t elem -n "gui" -v "" "$syncthing_config"
+        fi
+
+        # Ensure <address> exists and update it
+        if xmlstarlet sel -t -v "//gui/address" "$syncthing_config" &>/dev/null; then
+            xmlstarlet ed -L -u "//gui/address" -v "0.0.0.0:8384" "$syncthing_config"
+        else
+            xmlstarlet ed -L -s "//gui" -t elem -n "address" -v "0.0.0.0:8384" "$syncthing_config"
+        fi
+
+        # Ensure <user> exists and update it, or add it if missing
+        if xmlstarlet sel -t -v "//gui/user" "$syncthing_config" &>/dev/null; then
+            xmlstarlet ed -L -u "//gui/user" -v "divix" "$syncthing_config"
+        else
+            xmlstarlet ed -L -s "//gui" -t elem -n "user" -v "divix" "$syncthing_config"
+        fi
+
+        # Ensure <password> exists and update it, or add it if missing
+        if xmlstarlet sel -t -v "//gui/password" "$syncthing_config" &>/dev/null; then
+            xmlstarlet ed -L -u "//gui/password" -v "$hashed_password" "$syncthing_config"
+        else
+            xmlstarlet ed -L -s "//gui" -t elem -n "password" -v "$hashed_password" "$syncthing_config"
+        fi
+
+        echo "Configuration updated. GUI is now set to listen on 0.0.0.0:8384 with user 'divix'."
+    else
+        echo "Syncthing configuration file not found: $syncthing_config"
+        return 1
+    fi
+
+    # Proceed with configuration for Ubuntu or Debian
     if [[ "$OS" == "ubuntu" || "$OS" == "debian" ]]; then
         # Create a systemd service file for Syncthing
         run_cmd tee /etc/systemd/system/syncthing.service > /dev/null <<EOL
@@ -286,6 +395,8 @@ EOL
         echo "QNAP autostart of syncthing must be configured manually."
     fi
 }
+
+
 
 # Update the git configuration for divix and root users
 function update_git_config() {
@@ -318,14 +429,19 @@ function clone_divtools_repo() {
     # Check if the ~/.ssh/id_ed25519 file exists
     if [ ! -f ~/.ssh/id_ed25519 ]; then
         echo "~/.ssh/id_ed25519 does not exist. You need to provide an SSH private key for Git operations."
-
-        # Prompt the user to enter their private key
-        read -p "Please enter your private SSH key (id_ed25519): " ssh_key
-
+        
+        echo "Please paste your private SSH key (id_ed25519) below. Press Ctrl+D when finished:"
+        
+        # Read multi-line input (private SSH key)
+        ssh_key=""
+        while IFS= read -r line; do
+            ssh_key+="$line"$'\n'
+        done
+        
         # Save the user's input into the id_ed25519 file
-        echo "$ssh_key" > ~/.ssh/id_ed25519
+        echo -n "$ssh_key" > ~/.ssh/id_ed25519
         chmod 600 ~/.ssh/id_ed25519
-
+        
         echo "SSH private key saved to ~/.ssh/id_ed25519."
     fi
 
@@ -364,6 +480,7 @@ function clone_divtools_repo() {
         echo "Failed to clone the repository."
     fi
 }
+
 
 
 
