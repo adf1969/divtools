@@ -2,7 +2,7 @@
 LOGFILE="/etc/logs/mk_homedir_links.log"
 
 # Define the source and destination directories
-HOME_SRC="/opt/home/root"
+HOME_SRC="/opt/divtools/dotfiles"
 HOME_DEST="/root"
 
 log() {
@@ -21,7 +21,7 @@ if [ ! -d "$HOME_DEST" ]; then
 fi
 
 # Array of folders/files to skip
-SKIP_ITEMS=("." ".." ".git")  # Add more items to skip as needed
+SKIP_ITEMS=("." ".." ".git" ".bashrc")  # Add more items to skip as needed
 
 # Function to check if an item is in the SKIP_ITEMS array
 is_skip_item() {
