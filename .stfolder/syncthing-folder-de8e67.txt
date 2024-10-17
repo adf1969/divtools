@@ -1,0 +1,5 @@
+# This directory is a Syncthing folder marker.
+# Do not delete.
+
+folderID: divtools
+created: 2024-10-17T01:29:10Z
