@@ -1,0 +1,64 @@
+# Docker-Compose file for Base Template Container
+# Ensure .env file contains used Environment Variables
+# CLOUDFLARE_API_TOKEN=<api-token>
+
+version: '3'
+services:
+  # PORTAINER Service
+  portainer:
+    container_name: portainer
+    image: portainer/portainer-ce:latest
+    restart: always
+    ports:      
+      - "8000:8000/tcp"       # Agent communication port
+      - "9443:9443/tcp"       # HTTPS port for the web UI
+    environment:
+      - TZ=America/Chicago
+      - LOG_LEVEL=warn        # Options: debug, info, warn, error, fatal
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock   # Access to the Docker socket
+      - /opt/portainer:/data                        # Bind Mount location to persist data
+    networks:
+      - default                                     # Member of Default network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "https://localhost:9443"]   # Health check to monitor container
+      interval: 1m30s
+      timeout: 10s
+      retries: 3   
+      start_period: 30s
+
+
+  # NGINX Proxy Manager      
+  proxy:
+    image: 'jc21/nginx-proxy-manager:latest'
+    container_name: nginx-proxy-manager
+    restart: unless-stopped
+    network_mode: host
+    volumes:
+      - /opt/nginx/data:/data
+      - /opt/nginx/letsencrypt:/etc/letsencrypt
+    healthcheck:
+      test: ["CMD", "/usr/bin/check-health"]
+      interval: 10s
+      timeout: 3s
+
+  # Dynamic DNS Service for updating if Dynamic IP
+  ddns:
+    image: favonia/cloudflare-ddns:latest
+    container_name: cloudflare-ddns
+    # network_mode: host # This bypasses network isolation and makes IPv6 easier (optional; see below)
+    restart: always
+    user: "1000:1000"   # Run the updater with specific user and group IDs (in that order).
+    read_only: true     # Make the container filesystem read-only (optional but recommended)
+    cap_drop: [all]     # Drop all Linux capabilities (optional but recommended)
+    security_opt: [no-new-privileges:true] # Another protection to restrict superuser privileges (optional but recommended)
+    environment:
+      - CLOUDFLARE_API_TOKEN=${CLOUDFLARE_API_TOKEN}
+      - DOMAINS=example.com,jellyfin.example.com
+      - PROXIED=true
+      - IP6_PROVIDER=none
+
+# Stack Networks
+networks:
+  default:
+    driver: bridge

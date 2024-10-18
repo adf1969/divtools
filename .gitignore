@@ -1,0 +1,2 @@
+# Ignore .env files in the docker folder and subfolders
+docker/**/*.env

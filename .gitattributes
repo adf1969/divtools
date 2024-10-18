@@ -1,0 +1,4 @@
+* text=auto
+
+# Force CRLF for files in the .vscode folder
+.vscode/* text eol=crlf
