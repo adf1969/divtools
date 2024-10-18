@@ -211,7 +211,7 @@ build_prompt() {
   local PS1_CHAR=""
   case "$(whoami)" in
     admin|root)
-      PS1_ROOT="${C_BG_RED}ROOT${C_RESET} "
+      PS1_ROOT="${C_BG_RED}${C_WHITE}ROOT${C_RESET} "
       PS1_CHAR="#"
       ;;
     *)
