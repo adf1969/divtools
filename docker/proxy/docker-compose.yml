@@ -48,15 +48,23 @@ services:
     container_name: cloudflare-ddns
     # network_mode: host # This bypasses network isolation and makes IPv6 easier (optional; see below)
     restart: always
-    user: "1000:1000"   # Run the updater with specific user and group IDs (in that order).
+    user: "1000:1000"   # Run the updater with specific user and group IDs (in that order). | divix:divix
     read_only: true     # Make the container filesystem read-only (optional but recommended)
     cap_drop: [all]     # Drop all Linux capabilities (optional but recommended)
     security_opt: [no-new-privileges:true] # Another protection to restrict superuser privileges (optional but recommended)
     environment:
       - CLOUDFLARE_API_TOKEN=${CLOUDFLARE_API_TOKEN}
-      - DOMAINS=example.com,jellyfin.example.com
+      - DOMAINS=tn-proxy.divix.biz
       - PROXIED=true
       - IP6_PROVIDER=none
+
+  # Proxy Testing Container
+  helloworld:
+    image: 'karthequian/helloworld:latest'
+    container_name: helloworld
+    restart: unless-stopped
+    ports:
+      - 8888:80/tcp
 
 # Stack Networks
 networks:
