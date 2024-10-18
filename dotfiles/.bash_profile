@@ -2,7 +2,8 @@
 export DIVTOOLS="/opt/divtools"
 export HOSTNAME_U=$(hostname -s | tr '[:lower:]' '[:upper:]')
 
-if [ -n "$SSH_CLIENT" ] || [ -n "$SSH_TTY" ]; then
+if [[ $- == *i* ]]; then
+  # interactive shell
 	echo "$(date): Running $DIVTOOLS/dotfiles/.bash_profile"
 
 	# Existing ANSI Color Variables
@@ -253,7 +254,8 @@ build_prompt() {
 
 }
 
-if [ -n "$SSH_CLIENT" ] || [ -n "$SSH_TTY" ]; then
+if [[ $- == *i* ]]; then
+  # interactive shell
   PROMPT_COMMAND="set_title; build_prompt"
 
   # Apply changes
