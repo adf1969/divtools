@@ -96,6 +96,10 @@ if [[ $- == *i* ]]; then
 	  PATH=/opt/sbin:$PATH
   fi
 
+  # Load any Local Env
+  if [ -f ~/.bash_local_env ] ; then
+    . ~/.bash_local_env
+  fi
 fi
 
 # Function to set PuTTY window title
@@ -223,6 +227,7 @@ build_prompt() {
 
   local PS1_PROMPT=""
   #case "$(hostname -s | tr '[:lower:]' '[:upper:]')" in
+  
   case "${HOSTNAME_U}" in
     FHM4x8)
       HOST_COL=${C_GREEN}
@@ -241,7 +246,9 @@ build_prompt() {
       #PS1_PROMPT="${C_ORANGE}[\u@\h \w]${PS1_CHAR}${C_RESET}"      
       ;;
     *)
-      HOST_COL=${C_WHITE}
+    # Only set HOST_COL to ${C_WHITE} if it is not already set
+      : "${HOST_COL:=${C_WHITE}}"
+      #HOST_COL=${C_WHITE}
       #PS1_PROMPT="${C_WHITE}[\u@\h \w]${PS1_CHAR}${C_RESET}"
       ;;
   esac
