@@ -5,7 +5,7 @@ services:
   portainer:
     container_name: portainer
     image: portainer/portainer-ce:latest
-    restart: unless-stopped
+    restart: always
     ports:      
       - "8000:8000/tcp"       # Agent communication port
       - "9443:9443/tcp"       # HTTPS port for the web UI
