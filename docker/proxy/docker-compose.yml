@@ -4,30 +4,6 @@
 
 version: '3'
 services:
-  # PORTAINER Service
-  portainer:
-    container_name: portainer
-    image: portainer/portainer-ce:latest
-    restart: always
-    ports:      
-      - "8000:8000/tcp"       # Agent communication port
-      - "9443:9443/tcp"       # HTTPS port for the web UI
-    environment:
-      - TZ=America/Chicago
-      - LOG_LEVEL=warn        # Options: debug, info, warn, error, fatal
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock   # Access to the Docker socket
-      - /opt/portainer:/data                        # Bind Mount location to persist data
-    networks:
-      - default                                     # Member of Default network
-    healthcheck:
-      test: ["CMD", "curl", "-f", "https://localhost:9443"]   # Health check to monitor container
-      interval: 1m30s
-      timeout: 10s
-      retries: 3   
-      start_period: 30s
-
-
   # NGINX Proxy Manager      
   proxy:
     image: 'jc21/nginx-proxy-manager:latest'
