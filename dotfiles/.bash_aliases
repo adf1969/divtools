@@ -3,7 +3,6 @@ echo "$(date): Running $DIVTOOLS/dotfiles/.bash_aliases"
 
 # Utility Aliases
 #alias su='sudo -u admin sh'
-alias su='sudo -u admin -i'
 #alias egrep='egrep --color=auto'
 #alias fgrep='fgrep --color=auto'
 #alias grep='grep --color=auto'
@@ -40,5 +39,6 @@ case "${ID}" in
   debian|ubuntu):
   ;;
   qts):     # QNAP
+    alias su='sudo -u admin -i'
   ;;
 esac
