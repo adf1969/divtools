@@ -86,7 +86,20 @@ services:
       dns_net:
         ipv4_address: ${PIHOLE_NETWORK}.11
     volumes:
-      - /opt/unbound:/opt/unbound/etc/unbound
+      - type: bind
+        read_only: true
+        source: /opt/unbound/unbound.conf
+        target: /opt/unbound/etc/unbound/unbound.conf
+      - type: bind
+        read_only: true
+        source: /opt/unbound/a-records.conf
+        target: /opt/unbound/etc/unbound/a-records.conf
+      - type: bind
+        read_only: true
+        source: /opt/unbound/forward-records.conf
+        target: /opt/unbound/etc/unbound/forward-records.conf
+      #- /opt/unbound/unbound.log:/opt/unbound/etc/unbound/unbound.log
+
     ports:
       - "5053:53/tcp"     # DNS
       - "5053:53/udp"     # DNS
