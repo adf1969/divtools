@@ -5,6 +5,17 @@
 # PIHOLE_NETWORK=<172.##.0> Eg: 172.25.0   # Just make sure to check the Networks stack for availability
 
 version: '3'
+
+# Stack Networks
+networks:
+  default:
+    driver: bridge
+  dns_net:
+    driver: bridge
+    ipam:
+      config:
+      - subnet: ${PIHOLE_NETWORK}.0/16
+    
 services:
   # NGINX Proxy Manager      
   proxy:
@@ -86,14 +97,3 @@ services:
       test: ["NONE"]
     restart: unless-stopped
 
-# Stack Networks
-networks:
-  default:
-    driver: bridge
-  dns_net:
-    driver: bridge
-    ipam:
-      config:
-      - subnet: ${PIHOLE_NETWORK}.0/16
-  proxy:
-    external: true
