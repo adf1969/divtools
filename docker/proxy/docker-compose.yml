@@ -60,50 +60,49 @@ services:
     container_name: pihole
     hostname: pihole
     image: pihole/pihole:latest # remember to change this if you're using rpi
-    networks:
-      dns_net:
-        ipv4_address: ${PIHOLE_NETWORK}.10      
-    ports:
-      - "53:53/tcp"       # DNS
-      - "53:53/udp"       # DNS
-      - "85:80/tcp"       # Admin Web UI
-      - "67:67/tcp"       # DHCP
-    #- "443:443/tcp"      # HTTPS
+    network_mode: host
     environment:
-      TZ: 'USA/Chicago'
-      WEBPASSWORD: '${PIHOLE_PASSWORD}'
-      PIHOLE_DNS_: '${PIHOLE_NETWORK}.11#5053'
+      - TZ='America/Chicago'
+      - WEBPASSWORD:=${PIHOLE_PASSWORD}'      
+      # Unbound is installed in the Host since the Docker Container didn't work
+      - PIHOLE_DNS_='127.0.0.1#5353'
+      # If we want to NOT pass to Unbound, here are Env Vars for Cloudflare
+      #- DNS1=1.1.1.1          # Cloudflare DNS IPv4
+      #- DNS2=1.0.0.1          # Secondary Cloudflare DNS IPv4
+      #- DNS3=2606:4700:4700::1111  # Cloudflare DNS IPv6 (optional)
+      #- DNS4=2606:4700:4700::1001  # Secondary Cloudflare DNS IPv6 (optional)      
     volumes:
       - /opt/pihole/etc-pihole/:/etc/pihole/
       - /opt/pihole/etc-dnsmasq.d/:/etc/dnsmasq.d/
     restart: unless-stopped
 
-  # Unbound Container
-  unbound:
-    container_name: unbound
-    image: mvance/unbound:latest # remember to change this if you're using rpi
-    networks:
-      dns_net:
-        ipv4_address: ${PIHOLE_NETWORK}.11
-    volumes:
-      - type: bind
-        read_only: true
-        source: /opt/unbound/unbound.conf
-        target: /opt/unbound/etc/unbound/unbound.conf
-      - type: bind
-        read_only: true
-        source: /opt/unbound/a-records.conf
-        target: /opt/unbound/etc/unbound/a-records.conf
-      - type: bind
-        read_only: true
-        source: /opt/unbound/forward-records.conf
-        target: /opt/unbound/etc/unbound/forward-records.conf
-      #- /opt/unbound/unbound.log:/opt/unbound/etc/unbound/unbound.log
 
-    ports:
-      - "5053:53/tcp"     # DNS
-      - "5053:53/udp"     # DNS
-    healthcheck:
-      test: ["NONE"]
-    restart: unless-stopped
+  # This container is NOT working, so we removed it, and installed in the Host OS.
+  # Unbound Container
+  # unbound:
+  #   container_name: unbound
+  #   image: mvance/unbound:latest # remember to change this if you're using rpi
+  #   networks:
+  #     dns_net:
+  #       ipv4_address: ${PIHOLE_NETWORK}.11
+  #   volumes:
+  #     - type: bind
+  #       read_only: true
+  #       source: /opt/unbound/unbound.conf
+  #       target: /opt/unbound/etc/unbound/unbound.conf
+  #     - type: bind
+  #       read_only: true
+  #       source: /opt/unbound/a-records.conf
+  #       target: /opt/unbound/etc/unbound/a-records.conf
+  #     - type: bind
+  #       read_only: true
+  #       source: /opt/unbound/forward-records.conf
+  #       target: /opt/unbound/etc/unbound/forward-records.conf
+  #     #- /opt/unbound/unbound.log:/opt/unbound/etc/unbound/unbound.log
+  #   ports:
+  #     - "5053:53/tcp"     # DNS
+  #     - "5053:53/udp"     # DNS
+  #   healthcheck:
+  #     test: ["NONE"]
+  #   restart: unless-stopped
 
