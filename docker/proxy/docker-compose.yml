@@ -4,8 +4,6 @@
 # PIHOLE_PASSWORD=<passwd>
 # PIHOLE_NETWORK=<172.##.0> Eg: 172.25.0   # Just make sure to check the Networks stack for availability
 
-version: '3'
-
 # Stack Networks
 networks:
   default:
@@ -64,8 +62,7 @@ services:
     image: pihole/pihole:latest # remember to change this if you're using rpi
     networks:
       dns_net:
-        ipv4_address: ${PIHOLE_NETWORK}.10
-      proxy:
+        ipv4_address: ${PIHOLE_NETWORK}.10      
     ports:
       - "53:53/tcp"       # DNS
       - "53:53/udp"       # DNS
