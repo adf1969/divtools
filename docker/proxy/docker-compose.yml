@@ -1,6 +1,8 @@
 # Docker-Compose file for Base Template Container
 # Ensure .env file contains used Environment Variables
 # CLOUDFLARE_API_TOKEN=<api-token>
+# PIHOLE_PASSWORD=<passwd>
+# PIHOLE_NETWORK=<172.##.0> Eg: 172.25.0   # Just make sure to check the Networks stack for availability
 
 version: '3'
 services:
@@ -17,6 +19,7 @@ services:
       test: ["CMD", "/usr/bin/check-health"]
       interval: 10s
       timeout: 3s
+      # Default Login: admin@example.com | changeme
 
   # Dynamic DNS Service for updating if Dynamic IP
   ddns:
@@ -42,7 +45,55 @@ services:
     ports:
       - 8888:80/tcp
 
+
+  # Pi-Hole Container
+  pihole:
+    container_name: pihole
+    hostname: pihole
+    image: pihole/pihole:latest # remember to change this if you're using rpi
+    networks:
+      dns_net:
+        ipv4_address: ${PIHOLE_NETWORK}.10
+      proxy:
+    ports:
+      - "53:53/tcp"       # DNS
+      - "53:53/udp"       # DNS
+      - "85:80/tcp"       # Admin Web UI
+      - "67:67/tcp"       # DHCP
+    #- "443:443/tcp"      # HTTPS
+    environment:
+      TZ: 'USA/Chicago'
+      WEBPASSWORD: '${PIHOLE_PASSWORD}'
+      PIHOLE_DNS_: '${PIHOLE_NETWORK}.11#5053'
+    volumes:
+      - /opt/pihole/etc-pihole/:/etc/pihole/
+      - /opt/pihole/etc-dnsmasq.d/:/etc/dnsmasq.d/
+    restart: unless-stopped
+
+  # Unbound Container
+  unbound:
+    container_name: unbound
+    image: mvance/unbound:latest # remember to change this if you're using rpi
+    networks:
+      dns_net:
+        ipv4_address: ${PIHOLE_NETWORK}.11
+    volumes:
+      - /opt/unbound:/opt/unbound/etc/unbound
+    ports:
+      - "5053:53/tcp"     # DNS
+      - "5053:53/udp"     # DNS
+    healthcheck:
+      test: ["NONE"]
+    restart: unless-stopped
+
 # Stack Networks
 networks:
   default:
     driver: bridge
+  dns_net:
+    driver: bridge
+    ipam:
+      config:
+      - subnet: ${PIHOLE_NETWORK}.0/16
+  proxy:
+    external: true
