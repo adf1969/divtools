@@ -15,6 +15,9 @@ The structure for the divtools files are as follows:
 - **.ssh**: contains the **PUBLIC** `authorized_keys` to be installed on all servers for SSH access.
   - **authorized_keys**: file to be installed in `~/.ssh` folders for access.
 
+- **config**: Contains various configs used for standalone installs
+  - **unbound**: contains unbound configuration files
+
 - **scripts**: Contains common scripts for use on all systems.
 
 - **dotfiles**: contains various login/.* files used for configuring shells:
