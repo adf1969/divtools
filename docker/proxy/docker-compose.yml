@@ -63,9 +63,12 @@ services:
     network_mode: host
     environment:
       - TZ='America/Chicago'
-      - WEBPASSWORD:=${PIHOLE_PASSWORD}'      
+      - WEBPASSWORD:=${PIHOLE_PASSWORD}'
+      - VIRTUAL_HOST=pihole
+      - VIRTUAL_PORT=85     # run Pi-Hole WebUI on Port 85
+      - LIGHTTPD_PORT=85    # Lighttpd (pi-hole's webserver) on Port 85
       # Unbound is installed in the Host since the Docker Container didn't work
-      - PIHOLE_DNS_='127.0.0.1#5353'
+      - PIHOLE_DNS_='127.0.0.1#5335'
       # If we want to NOT pass to Unbound, here are Env Vars for Cloudflare
       #- DNS1=1.1.1.1          # Cloudflare DNS IPv4
       #- DNS2=1.0.0.1          # Secondary Cloudflare DNS IPv4
