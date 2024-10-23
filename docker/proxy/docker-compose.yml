@@ -57,8 +57,10 @@ services:
 
   # Mailrise Container
   mailrise:
-    image: yoryan/mailrise
+    image: yoryan/mailrise:latest
     container_name: mailrise
+    # For debugging set this:
+    # command: -vv /etc/mailrise.conf
     ports:
       - '8025:8025'
     restart: unless-stopped
@@ -66,9 +68,12 @@ services:
       - /opt/mailrise/mailrise.conf:/etc/mailrise.conf:ro
       - /opt/mailrise/mailrise.crt:/etc/ssl/mailrise.crt
       - /opt/mailrise/mailrise.key:/etc/ssl/mailrise.key
+    # THIS DOES NOT WORK. The Docs are just WRONG.
+    # I MUST hard-code the UserKey & API Token in the mailrise.conf file
+    # What I did instead, is we STILL update the .env file, but now I have a script that runs
+    # that copies the mailrise.conf > /opt/mailrise/mailrise.conf and pre-process that file to FIX it as it should
     environment:
-      - PUSHOVER_USER_KEY=${PUSHOVER_USER_KEY}
-      - PUSHOVER_MAILRISE_API_TOKEN=${PUSHOVER_MAILRISE_API_TOKEN}
-      - LOGLEVEL="DEBUG"  # Set the log level to DEBUG, INFO, WARNING, ERROR, or CRITICAL
-      
+      - PUSHOVER_USER_KEY="${PUSHOVER_USER_KEY}"
+      - PUSHOVER_MAILRISE_API_TOKEN="${PUSHOVER_MAILRISE_API_TOKEN}"      
+
 
