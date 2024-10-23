@@ -34,9 +34,11 @@ alias dstart='docker start' #name#
 alias dsetrestart='docker update --restart unless-stopped' #name#
 alias dlistrp='$DIVTOOLS/scripts/list_restart_policies.sh'
 
+
 # OS Specific Aliases
 case "${ID}" in
   debian|ubuntu):
+    alias updalted='update-alternatives --config editor'
   ;;
   qts):     # QNAP
     alias su='sudo -u admin -i'
