@@ -1,29 +1,18 @@
 # Docker-Compose file for Base Template Container
 # Ensure .env file contains used Environment Variables
 # CLOUDFLARE_API_TOKEN=<api-token>
-# PIHOLE_PASSWORD=<passwd>
-# PIHOLE_NETWORK=<172.##.0> Eg: 172.25.0   # Just make sure to check the Networks stack for availability
 
-# TODO:
-# I need to move pihole to its OWN LXC, and NOT on proxy.
-# This is because pihole is special. see this text:
-# When Pi-hole blocks an ad, it redirects the request to its own IP, where it serves a blocked content message or a blank page. By default, Pi-hole does this on port 80. If you’ve changed Pi-hole’s web interface to port 85, and if the router or firewall is not correctly forwarding traffic to this port, then Pi-hole might fail to serve the blocked ad content, and the browser may attempt to load the ad anyway.
-# That means, I need to have an internal IP that is directed BACK so that I can reverse proxy from the internet, on a certain ip, back to pihole.
-# An easier option, is to just put pihole on a totally differnet internal IP and run it in Host mode.
-# That way, it can run DHCP as well, if I want.
-# I should put it on : 192.168.9.153 | since 53 is DNS, that will be easier to remember.
+# PIHOLE: UNUSED
+## PIHOLE_PASSWORD=<passwd>
+## PIHOLE_NETWORK=<172.##.0> Eg: 172.25.0   # Just make sure to check the Networks stack for availability
 #
-# Commented out pihole. It will NO LONGER be running here. It will be run in a separate LXC
+# PUSHOVER_USER_KEY=<Pushover UserKey>
+# PUSHOVER_MAILRISE_API_TOKEN=<Pushover Mailrise API Token>
 
 # Stack Networks
 networks:
   default:
     driver: bridge
-  # dns_net:
-  #   driver: bridge
-  #   ipam:
-  #     config:
-  #     - subnet: ${PIHOLE_NETWORK}.0/16
     
 services:
   # NGINX Proxy Manager      
@@ -66,55 +55,18 @@ services:
       - 8888:80/tcp
 
 
-  # # Pi-Hole Container
-  # pihole:
-  #   container_name: pihole
-  #   hostname: pihole
-  #   image: pihole/pihole:latest # remember to change this if you're using rpi    
-  #   #network_mode: host
-  #   environment:
-  #     TZ: 'America/Chicago'
-  #     WEBPASSWORD: '${PIHOLE_PASSWORD}'
-  #     VIRTUAL_HOST: 'pihole'
-  #     WEB_PORT: 85     # run Pi-Hole WebUI on Port 85            
-  #     PIHOLE_DNS_: '127.0.0.1#5335'      # Unbound is installed in the Host since the Docker Container didn't work
-  #     # If we want to NOT pass to Unbound, here are Env Vars for Cloudflare
-  #     #- DNS1=1.1.1.1          # Cloudflare DNS IPv4
-  #     #- DNS2=1.0.0.1          # Secondary Cloudflare DNS IPv4
-  #     #- DNS3=2606:4700:4700::1111  # Cloudflare DNS IPv6 (optional)
-  #     #- DNS4=2606:4700:4700::1001  # Secondary Cloudflare DNS IPv6 (optional)      
-  #   volumes:
-  #     - /opt/pihole/etc-pihole/:/etc/pihole/
-  #     - /opt/pihole/etc-dnsmasq.d/:/etc/dnsmasq.d/
-  #   restart: unless-stopped
-
-
-  # This container is NOT working, so we removed it, and installed in the Host OS.
-  # Unbound Container
-  # unbound:
-  #   container_name: unbound
-  #   image: mvance/unbound:latest # remember to change this if you're using rpi
-  #   networks:
-  #     dns_net:
-  #       ipv4_address: ${PIHOLE_NETWORK}.11
-  #   volumes:
-  #     - type: bind
-  #       read_only: true
-  #       source: /opt/unbound/unbound.conf
-  #       target: /opt/unbound/etc/unbound/unbound.conf
-  #     - type: bind
-  #       read_only: true
-  #       source: /opt/unbound/a-records.conf
-  #       target: /opt/unbound/etc/unbound/a-records.conf
-  #     - type: bind
-  #       read_only: true
-  #       source: /opt/unbound/forward-records.conf
-  #       target: /opt/unbound/etc/unbound/forward-records.conf
-  #     #- /opt/unbound/unbound.log:/opt/unbound/etc/unbound/unbound.log
-  #   ports:
-  #     - "5053:53/tcp"     # DNS
-  #     - "5053:53/udp"     # DNS
-  #   healthcheck:
-  #     test: ["NONE"]
-  #   restart: unless-stopped
+  # Mailrise Container
+  mailrise:
+    image: yoryan/mailrise
+    container_name: mailrise
+    ports:
+      - '8025:8025'
+    restart: unless-stopped
+    volumes:
+      - /opt/mailrise/mailrise.conf:/etc/mailrise.conf:ro
+      - /opt/mailrise/mailrise.crt:/etc/ssl/mailrise.crt
+      - /opt/mailrise/mailrise.key:/etc/ssl/mailrise.key
+    environment:
+      - PUSHOVER_USER_KEY=${PUSHOVER_USER_KEY}
+      - PUSHOVER_MAILRISE_API_TOKEN=${PUSHOVER_MAILRISE_API_TOKEN}
 
