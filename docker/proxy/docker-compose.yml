@@ -69,4 +69,6 @@ services:
     environment:
       - PUSHOVER_USER_KEY=${PUSHOVER_USER_KEY}
       - PUSHOVER_MAILRISE_API_TOKEN=${PUSHOVER_MAILRISE_API_TOKEN}
+      - LOGLEVEL="DEBUG"  # Set the log level to DEBUG, INFO, WARNING, ERROR, or CRITICAL
+      
 
