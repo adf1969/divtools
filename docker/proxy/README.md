@@ -1,3 +1,6 @@
+# Mailrise
+Copy the mailrise.conf to /opt/mailrise/mailrise.conf
+
 # Pihole
 Check and ensure that the host is not running anything on port 53.
 This can be done with:

@@ -1,6 +1,5 @@
 #!/bin/bash
 
-
 source ./.env
 # The following keys need to be defined in the .env file in the same directory
 # PUSH_USER_KEY=key
