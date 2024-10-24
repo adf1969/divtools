@@ -34,9 +34,9 @@ networks:
 ########################### SECRETS
 secrets:
   basic_auth_credentials:
-    file: $DOCKERDIR/secrets/basic_auth_credentials
+    file: $DOCKER_LOCALDIR/secrets/basic_auth_credentials
   cf_dns_api_token:
-    file: $DOCKERDIR/secrets/cf_dns_api_token
+    file: $DOCKER_LOCALDIR/secrets/cf_dns_api_token
 
 
 include:
