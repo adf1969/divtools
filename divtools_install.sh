@@ -179,7 +179,7 @@ function echo_green() {
 
 # Install necessary packages
 function install_packages() {
-    packages=(curl sudo whois syncthing xmlstarlet git git-http vim-nox rclone python3 libssl-dev ca-certificates openssh-client tmux net-tools)
+    packages=(curl sudo whois syncthing xmlstarlet git git-http vim-nox rclone python3 libssl-dev ca-certificates openssh-client tmux net-tools ccze)
 
     if [[ "$PKG_MANAGER" == "apt" ]]; then
         # Add syncthing repository if syncthing is not already installed
