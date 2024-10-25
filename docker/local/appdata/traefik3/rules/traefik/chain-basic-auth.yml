@@ -4,5 +4,5 @@ http:
       chain:
         middlewares:
           - middlewares-rate-limit
-          - middlewares-secure-headers
+          #- middlewares-secure-headers
           - middlewares-basic-auth
