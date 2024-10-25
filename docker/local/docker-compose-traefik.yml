@@ -49,5 +49,5 @@ include:
   - include/$HOSTNAME/traefik.yml  
   #- include/$HOSTNAME/oauth.yml
   #- include/$HOSTNAME/authelia.yml
-  #- include/$HOSTNAME/portainer.yml
+  - include/$HOSTNAME/portainer.yml
   #- include/$HOSTNAME/dockge.yml      
