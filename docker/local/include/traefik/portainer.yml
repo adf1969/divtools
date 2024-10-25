@@ -29,6 +29,7 @@ services:
       # HTTP Services
       - "traefik.http.routers.portainer-rtr.service=portainer-svc"
       - "traefik.http.services.portainer-svc.loadbalancer.server.port=9000"
+
     #healthcheck:
     #  test: ["CMD", "curl", "-f", "https://localhost:9443"]   # Health check to monitor container
     #  interval: 1m30s
