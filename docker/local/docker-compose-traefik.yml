@@ -46,7 +46,7 @@ include:
 
   # CORE
   - include/$HOSTNAME/socket-proxy.yml   #SP+ Uncomment to enable Socket Proxy. Check files for #SP for details
-  #- include/$HOSTNAME/traefik.yml  
+  - include/$HOSTNAME/traefik.yml  
   #- include/$HOSTNAME/oauth.yml
   #- include/$HOSTNAME/authelia.yml
   #- include/$HOSTNAME/portainer.yml
