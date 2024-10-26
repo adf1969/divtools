@@ -9,6 +9,8 @@ services:
     read_only: true # Make the container filesystem read-only (optional but recommended)
     cap_drop: [all] # Drop all Linux capabilities (optional but recommended)
     security_opt: [no-new-privileges:true] # Another protection to restrict superuser privileges (optional but recommended)
+    secrets:
+      - cf_dns_api_token_traefik3_divix_biz
     environment:
       #- CLOUDFLARE_API_TOKEN=${CLOUDFLARE_API_TOKEN}
       - CLOUDFLARE_API_TOKEN=/run/secrets/cf_dns_api_token_traefik3_divix_biz
