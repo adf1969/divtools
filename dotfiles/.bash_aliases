@@ -76,7 +76,7 @@ if [ -f $DOCKERFILE ] ; then
   alias dcrestart='dcrun restart ' # usage: dcrestart container_name
   alias dcstart='dcrun start ' # usage: dcstart container_name
   alias dcpull='dcrun pull' # usage: dcpull to pull all new images or dcpull container_name
-  alias traefiklogs='tail -f /opt/logs/$HOSTNAME/traefik/traefik.log' # tail traefik logs
+  alias traefiklogs='tail -f /opt/traefik/logs/traefik.log' # tail traefik logs
 
   # Manage "core" services as defined by profiles in docker compose
   alias startcore='sudo docker compose --profile core -f $DOCKERDIR/docker-compose-$HOSTNAME.yml start'

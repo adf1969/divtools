@@ -79,7 +79,7 @@ services:
       - $DOCKERDIR/appdata/traefik3/rules/$HOSTNAME:/rules # Dynamic File Provider directory
       #- /var/run/docker.sock:/var/run/docker.sock:ro #SP- Enable if not using Socket Proxy
       - $DOCKERDIR/appdata/traefik3/acme/acme.json:/acme.json # Certs File
-      - $DOCKERDIR/$HOSTNAME/traefik:/logs # Traefik logs
+      - $DOCKERDATADIR/traefik/logs:/logs # Traefik logs
     environment:
       - TZ=$TZ
       - CF_DNS_API_TOKEN_FILE=/run/secrets/cf_dns_api_token_traefik3_divix_biz
