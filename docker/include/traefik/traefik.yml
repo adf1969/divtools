@@ -90,12 +90,13 @@ services:
       - basic_auth_credentials
     labels:
       - "traefik.enable=true"
-      # HTTP Routers
+      ## HTTP Routers
       - "traefik.http.routers.traefik-rtr.entrypoints=websecure"
-      - "traefik.http.routers.traefik-rtr.rule=Host(`traefik.$DOMAINNAME_1`)"
-      # Services - API
+      #- "traefik.http.routers.traefik-rtr.rule=Host(`traefik.$DOMAINNAME_1`)"
+      - "traefik.http.routers.traefik-rtr.rule=Host(`traefik.$DOMAINNAME_1`) || Host(`traefik.tn1.$DOMAINNAME_1`)"
+      ## Services - API
       - "traefik.http.routers.traefik-rtr.service=api@internal"
-      # Middlewares
+      ## Middlewares
       # In-Line Mode
       - "traefik.http.routers.traefik-rtr.middlewares=chain-basic-auth@file"
       #  Use YAML folded style > for splitting on multiple lines,
