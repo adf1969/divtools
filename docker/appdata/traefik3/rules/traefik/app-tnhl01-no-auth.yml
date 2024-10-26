@@ -1,7 +1,7 @@
 http:
   routers:
     tnhl01-service-rtr:
-      rule: "Host(`tnhl01.$DOMAINNAME_1`) || (Host(`tn1.$DOMAINNAME_1`) && PathPrefix(`/proxmox/tnhl01`))"
+      rule: "Host(`tnhl01.{{env "DOMAINNAME_1"}}`) || (Host(`tn1.{{env "DOMAINNAME_1"}}`) && PathPrefix(`/proxmox/tnhl01`))"
       entryPoints:
         - "websecure"
       middlewares:
