@@ -76,10 +76,10 @@ services:
         protocol: tcp #LOCAL+
         mode: host #LOCAL+
     volumes:
-      - $DOCKER_LOCALDIR/appdata/traefik3/rules/$HOSTNAME:/rules # Dynamic File Provider directory
+      - $DOCKERDIR/appdata/traefik3/rules/$HOSTNAME:/rules # Dynamic File Provider directory
       #- /var/run/docker.sock:/var/run/docker.sock:ro #SP- Enable if not using Socket Proxy
-      - $DOCKER_LOCALDIR/appdata/traefik3/acme/acme.json:/acme.json # Certs File
-      - $DOCKER_LOGDIR/$HOSTNAME/traefik:/logs # Traefik logs
+      - $DOCKERDIR/appdata/traefik3/acme/acme.json:/acme.json # Certs File
+      - $DOCKERDIR/$HOSTNAME/traefik:/logs # Traefik logs
     environment:
       - TZ=$TZ
       - CF_DNS_API_TOKEN_FILE=/run/secrets/cf_dns_api_token

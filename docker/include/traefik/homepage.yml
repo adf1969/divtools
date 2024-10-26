@@ -13,7 +13,7 @@ services:
     # ports:
     #  - "$HOMEPAGE_PORT:3000"
     volumes:
-      - $DOCKER_LOCALDIR/appdata/homepage:/app/config
+      - $DOCKERDIR/appdata/homepage:/app/config
     environment:
       TZ: $TZ
       PUID: $PUID
