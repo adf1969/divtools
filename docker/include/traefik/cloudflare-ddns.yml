@@ -10,7 +10,8 @@ services:
     cap_drop: [all] # Drop all Linux capabilities (optional but recommended)
     security_opt: [no-new-privileges:true] # Another protection to restrict superuser privileges (optional but recommended)
     environment:
-      - CLOUDFLARE_API_TOKEN=${CLOUDFLARE_API_TOKEN}
+      #- CLOUDFLARE_API_TOKEN=${CLOUDFLARE_API_TOKEN}
+      - CLOUDFLARE_API_TOKEN=/run/secrets/cf_dns_api_token_traefik3_divix_biz
       - DOMAINS=tn1.${DOMAINNAME_1}
       - PROXIED=true
       - IP6_PROVIDER=none

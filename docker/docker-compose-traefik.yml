@@ -35,8 +35,8 @@ networks:
 secrets:
   basic_auth_credentials:
     file: $DOCKERDIR/secrets/basic_auth_credentials
-  cf_dns_api_token:
-    file: $DOCKERDIR/secrets/cf_dns_api_token
+  cf_dns_api_token_traefik3_divix_biz:
+    file: $DOCKERDIR/secrets/cf_dns_api_token_traefik3_divix_biz
 
 
 include:
