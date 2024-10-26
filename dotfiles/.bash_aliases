@@ -2,8 +2,9 @@
 echo "$(date): Running $DIVTOOLS/dotfiles/.bash_aliases"
 
 # Global Env Vars
-export DOCKER_LOCALDIR=/opt/divtools/docker/local
-export DOCKER_LOCALFILE=$DOCKER_LOCALDIR/docker-compose-$HOSTNAME.yml
+export DOCKERDIR=/opt/divtools/docker
+export DOCKERFILE=$DOCKERDIR/docker-compose-$HOSTNAME.yml
+export DOCKERDATADIR=/opt
 
 force_color_prompt=yes
 
@@ -34,7 +35,7 @@ alias dlistrp='$DIVTOOLS/scripts/list_restart_policies.sh'
 #alias vim='nvim'
 
 # Set Aliases based upon DOCKER_LOCALFILE or not
-if [ -f $DOCKER_LOCALFILE ] ; then
+if [ -f $DOCKERFILE ] ; then
   # We have a Local DockerFile - All settings are for that config
 
   # DOCKER - All Docker commands start with "d" AND Docker Compose commands start with "dc"
@@ -54,16 +55,16 @@ if [ -f $DOCKER_LOCALFILE ] ; then
   alias dlogsize='sudo du -ch $(sudo docker inspect --format='{{.LogPath}}' $(sudo docker ps -qa)) | sort -h' # see the size of docker containers
   alias dips="sudo docker ps -q | xargs -n 1 sudo docker inspect -f '{{.Name}}%tab%{{range .NetworkSettings.Networks}}{{.IPAddress}}%tab%{{end}}' | sed 's#%tab%#\t#g' | sed 's#/##g' | sort | column -t -N NAME,IP\(s\) -o $'\t'"
 
-  alias dp600='sudo chown -R root:root $DOCKER_LOCALDIR/secrets ; sudo chmod -R 600 $DOCKER_LOCALDIR/secrets ; sudo chown -R root:root $DOCKER_LOCALDIR/.env ; sudo chmod -R 600 $DOCKER_LOCALDIR/.env' # re-lock permissions
-  alias dp777='sudo chown -R $USER:$USER $DOCKER_LOCALDIR/secrets ; sudo chmod -R 777 $DOCKER_LOCALDIR/secrets ; sudo chown -R $USER:$USER $DOCKER_LOCALDIR/.env ; sudo chmod -R 777 $DOCKER_LOCALDIR/.env' # open permissions for editing
+  alias dp600='sudo chown -R root:root $DOCKERDIR/secrets ; sudo chmod -R 600 $DOCKERDIR/secrets ; sudo chown -R root:root $DOCKERDIR/.env ; sudo chmod -R 600 $DOCKERDIR/.env' # re-lock permissions
+  alias dp777='sudo chown -R $USER:$USER $DOCKERDIR/secrets ; sudo chmod -R 777 $DOCKERDIR/secrets ; sudo chown -R $USER:$USER $DOCKERDIR/.env ; sudo chmod -R 777 $DOCKERDIR/.env' # open permissions for editing
 
   # DOCKER COMPOSE TRAEFIK 2 - All docker-compose commands start with "dc" 
   case "${ID}" in
     ds918): # synology at this point uses an old version of docker. Therefore, 'docker-compose' instead of 'docker compose'
-      alias dcrun='sudo docker-compose -f $DOCKER_LOCALDIR/docker-compose-$HOSTNAME.yml' # /volume1/docker symlinked to /var/services/homes/user/docker
+      alias dcrun='sudo docker-compose -f $DOCKERDIR/docker-compose-$HOSTNAME.yml' # /volume1/docker symlinked to /var/services/homes/user/docker
     ;;
     *):     # Every Other Normal Server
-      alias dcrun='sudo docker compose --profile all -f $DOCKER_LOCALDIR/docker-compose-$HOSTNAME.yml'
+      alias dcrun='sudo docker compose --profile all -f $DOCKERDIR/docker-compose-$HOSTNAME.yml'
     ;;
   esac
 
@@ -78,25 +79,25 @@ if [ -f $DOCKER_LOCALFILE ] ; then
   alias traefiklogs='tail -f /opt/logs/$HOSTNAME/traefik/traefik.log' # tail traefik logs
 
   # Manage "core" services as defined by profiles in docker compose
-  alias startcore='sudo docker compose --profile core -f $DOCKER_LOCALDIR/docker-compose-$HOSTNAME.yml start'
-  alias createcore='sudo docker compose --profile core -f $DOCKER_LOCALDIR/docker-compose-$HOSTNAME.yml up -d --build --remove-orphans'
-  alias stopcore='sudo docker compose --profile core -f $DOCKER_LOCALDIR/docker-compose-$HOSTNAME.yml stop'
+  alias startcore='sudo docker compose --profile core -f $DOCKERDIR/docker-compose-$HOSTNAME.yml start'
+  alias createcore='sudo docker compose --profile core -f $DOCKERDIR/docker-compose-$HOSTNAME.yml up -d --build --remove-orphans'
+  alias stopcore='sudo docker compose --profile core -f $DOCKERDIR/docker-compose-$HOSTNAME.yml stop'
   # Manage "media" services as defined by profiles in docker compose
-  alias stopmedia='sudo docker compose --profile media -f $DOCKER_LOCALDIR/docker-compose-$HOSTNAME.yml stop'
-  alias createmedia='sudo docker compose --profile media -f $DOCKER_LOCALDIR/docker-compose-$HOSTNAME.yml up -d --build --remove-orphans'
-  alias startmedia='sudo docker compose --profile media -f $DOCKER_LOCALDIR/docker-compose-$HOSTNAME.yml start'
+  alias stopmedia='sudo docker compose --profile media -f $DOCKERDIR/docker-compose-$HOSTNAME.yml stop'
+  alias createmedia='sudo docker compose --profile media -f $DOCKERDIR/docker-compose-$HOSTNAME.yml up -d --build --remove-orphans'
+  alias startmedia='sudo docker compose --profile media -f $DOCKERDIR/docker-compose-$HOSTNAME.yml start'
   # Manage "diwkiads" services as defined by profiles in docker compose
-  alias stopdownloads='sudo docker compose --profile downloads -f $DOCKER_LOCALDIR/docker-compose-$HOSTNAME.yml stop'
-  alias createdownloads='sudo docker compose --profile downloads -f $DOCKER_LOCALDIR/docker-compose-$HOSTNAME.yml up -d --build --remove-orphans'
-  alias startdownloads='sudo docker compose --profile downloads -f $DOCKER_LOCALDIR/docker-compose-$HOSTNAME.yml start'
+  alias stopdownloads='sudo docker compose --profile downloads -f $DOCKERDIR/docker-compose-$HOSTNAME.yml stop'
+  alias createdownloads='sudo docker compose --profile downloads -f $DOCKERDIR/docker-compose-$HOSTNAME.yml up -d --build --remove-orphans'
+  alias startdownloads='sudo docker compose --profile downloads -f $DOCKERDIR/docker-compose-$HOSTNAME.yml start'
   # Manage Starr apps as defined by profiles in docker compose
-  alias stoparrs='sudo docker compose --profile arrs -f $DOCKER_LOCALDIR/docker-compose-$HOSTNAME.yml stop'
-  alias startarrs='sudo docker compose --profile arrs -f $DOCKER_LOCALDIR/docker-compose-$HOSTNAME.yml start'
-  alias createarrs='sudo docker compose --profile arrs -f $DOCKER_LOCALDIR/docker-compose-$HOSTNAME.yml up -d --build --remove-orphans'
+  alias stoparrs='sudo docker compose --profile arrs -f $DOCKERDIR/docker-compose-$HOSTNAME.yml stop'
+  alias startarrs='sudo docker compose --profile arrs -f $DOCKERDIR/docker-compose-$HOSTNAME.yml start'
+  alias createarrs='sudo docker compose --profile arrs -f $DOCKERDIR/docker-compose-$HOSTNAME.yml up -d --build --remove-orphans'
   # Manage "dbs" (database) services as defined by profiles in docker compose
-  alias stopdbs='sudo docker compose --profile dbs -f $DOCKER_LOCALDIR/docker-compose-$HOSTNAME.yml stop'
-  alias createdbs='sudo docker compose --profile dbs -f $DOCKER_LOCALDIR/docker-compose-$HOSTNAME.yml up -d --build --remove-orphans'
-  alias startdbs='sudo docker compose --profile dbs -f $DOCKER_LOCALDIR/docker-compose-$HOSTNAME.yml start'
+  alias stopdbs='sudo docker compose --profile dbs -f $DOCKERDIR/docker-compose-$HOSTNAME.yml stop'
+  alias createdbs='sudo docker compose --profile dbs -f $DOCKERDIR/docker-compose-$HOSTNAME.yml up -d --build --remove-orphans'
+  alias startdbs='sudo docker compose --profile dbs -f $DOCKERDIR/docker-compose-$HOSTNAME.yml start'
 
 else
   # No DOCKER_LOCALFILE - docker files all run according to folder
