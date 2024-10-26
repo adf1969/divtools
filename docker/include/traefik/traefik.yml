@@ -53,6 +53,7 @@ services:
       - --entrypoints.websecure.http.tls.certresolver=dns-cloudflare
       - --entrypoints.websecure.http.tls.domains[0].main=$DOMAINNAME_1
       - --entrypoints.websecure.http.tls.domains[0].sans=*.$DOMAINNAME_1
+      - --entrypoints.websecure.http.tls.domains[0].sans=*.tn1.$DOMAINNAME_1
       # - --entrypoints.websecure.http.tls.domains[1].main=$DOMAINNAME_2 # Pulls main cert for second domain
       # - --entrypoints.websecure.http.tls.domains[1].sans=*.$DOMAINNAME_2 # Pulls wildcard cert for second domain
       - --providers.file.directory=/rules # Load dynamic configuration from one or more .toml or .yml files in a directory
