@@ -13,7 +13,7 @@ services:
       - cf_dns_api_token_traefik3_divix_biz
     environment:
       #- CLOUDFLARE_API_TOKEN=${CLOUDFLARE_API_TOKEN}
-      - CLOUDFLARE_API_TOKEN=/run/secrets/cf_dns_api_token_traefik3_divix_biz
+      - CLOUDFLARE_API_TOKEN_FILE=/run/secrets/cf_dns_api_token_traefik3_divix_biz
       - DOMAINS=tn1.${DOMAINNAME_1}
       - PROXIED=true
       - IP6_PROVIDER=none
