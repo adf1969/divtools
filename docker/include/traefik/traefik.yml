@@ -86,7 +86,7 @@ services:
       - HTPASSWD_FILE=/run/secrets/basic_auth_credentials # HTTP Basic Auth Credentials
       - DOMAINNAME_1 # Passing the domain name to traefik container to be able to use the variable in rules. # Shortcut notation, aka: DOMAINNAME_1=$DOMAINNAME_1
     secrets:
-      - cf_dns_api_token
+      - cf_dns_api_token_traefik3_divix_biz
       - basic_auth_credentials
     labels:
       - "traefik.enable=true"
