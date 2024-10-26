@@ -1,0 +1,17 @@
+http:
+  routers:
+    tnhl01-service-rtr:
+      rule: "Host(`tnhl01.$DOMAINNAME_1`) || (Host(`tn1.$DOMAINNAME_1`) && PathPrefix(`/proxmox/tnhl01`))"
+      entryPoints:
+        - "websecure"
+      middlewares:
+        - chain-no-auth
+      service: "tnhl01-service"
+      tls:
+        certResolver: "dns-cloudflare"
+        options: tls-opts@file
+  services:
+    tnhl01-service:
+      loadBalancer:
+        servers:
+          - url: "http://192.168.9.100:8006"
