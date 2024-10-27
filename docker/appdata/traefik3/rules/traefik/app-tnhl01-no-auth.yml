@@ -6,7 +6,7 @@ http:
         - "websecure"
       middlewares:
         - chain-no-auth
-        - strip-all-paths
+        - strip-proxmox-prefix
       service: "tnhl01-service"
       tls:
         certResolver: "dns-cloudflare"
@@ -17,6 +17,11 @@ http:
       replacePathRegex:
         regex: "^/.*"
         replacement: ""
+    strip-proxmox-prefix:
+      stripPrefix:
+        prefixes:
+          - "/proxmox/tnhl01"  # Only removes this specific path prefix, so it avoids the root redirect issue
+
   services:
     tnhl01-service:
       loadBalancer:
