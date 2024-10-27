@@ -6,10 +6,16 @@ http:
         - "websecure"
       middlewares:
         - chain-no-auth
+        - strip-all-prefixes
       service: "tnhl01-service"
       tls:
         certResolver: "dns-cloudflare"
         options: tls-opts@file
+
+  middlewares:
+    strip-all-prefixes:
+      replacePath:
+        path: "/"
   services:
     tnhl01-service:
       loadBalancer:
