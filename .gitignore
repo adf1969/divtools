@@ -1,4 +1,4 @@
 # Ignore .env files in the docker folder and subfolders
 docker/**/*.env
 docker/secrets
-appdata/traefik3/acme
+docker/appdata/traefik3/acme
