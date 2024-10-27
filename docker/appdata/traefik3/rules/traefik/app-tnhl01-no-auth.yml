@@ -6,7 +6,7 @@ http:
         - "websecure"
       middlewares:
         - chain-no-auth
-        - strip-proxmox-prefix
+        #- strip-proxmox-prefix
       service: "tnhl01-service"
       tls:
         certResolver: "dns-cloudflare"
