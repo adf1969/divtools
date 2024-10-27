@@ -4,8 +4,8 @@ http:
       rule: "Host(`tnhl01.{{env "DOMAINNAME_1"}}`) || (Host(`tn1.{{env "DOMAINNAME_1"}}`) && PathPrefix(`/proxmox/tnhl01`))"
       entryPoints:
         - "websecure"
-      middlewares:
-        - chain-no-auth
+      #middlewares:
+        #- chain-no-auth
         #- strip-proxmox-prefix
       service: "tnhl01-service"
       tls:
