@@ -1,0 +1,74 @@
+### DOCKER-COMPOSE FILE ###
+# Socket Proxy:
+#   All Socket Proxy Lines are marked with #SP+ or #SP-
+#   SP+ Uncomment these if ENABLING Socket Proxy
+#   SP- Uncomment these if DISABLING Socket Proxy
+#
+# Environment Vars in Use
+#
+services:
+  # Traefik 3 - Reverse Proxy
+  traefik:
+    container_name: traefik
+    image: traefik:3.0
+    security_opt:
+      - no-new-privileges:true
+    restart: unless-stopped
+    # profiles: ["core", "all"]
+    networks:
+      t3_proxy:
+        ipv4_address: ${T3_PROXY_NETWORK_BASE}.254 # You can specify a static IP
+      socket_proxy: #SP+ Uncomment if we enable and use socket-proxy
+    ports:
+      - target: 80
+        published: 80
+        protocol: tcp
+        mode: host
+      - target: 443
+        published: 443
+        protocol: tcp
+        mode: host
+      - target: 8080 # need to enable --api.insecure=true  #LOCAL+ Uncomment #LOCAL+ to enable Private IP Access NOT through Traefik FQDN
+        published: 8085 #LOCAL+
+        protocol: tcp #LOCAL+
+        mode: host #LOCAL+
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      #- /var/run/docker.sock:/var/run/docker.sock:ro #SP- Enable if not using Socket Proxy
+      - $DOCKERDIR/appdata/traefik3/config/$HOSTNAME/traefik.yml:/traefik.yml:ro
+      - $DOCKERDIR/appdata/traefik3/rules/$HOSTNAME:/rules # Dynamic File Provider directory
+      - $DOCKERDIR/appdata/traefik3/acme/acme.json:/acme.json # Certs File
+      - $DOCKERDATADIR/traefik/logs:/logs # Traefik logs
+    environment:
+      - TZ=$TZ
+      - CF_DNS_API_TOKEN_FILE=/run/secrets/cf_dns_api_token_traefik3_divix_biz
+      - HTPASSWD_FILE=/run/secrets/basic_auth_credentials # HTTP Basic Auth Credentials
+      - DOMAINNAME_1 # Passing the domain name to traefik container to be able to use the variable in rules. # Shortcut notation, aka: DOMAINNAME_1=$DOMAINNAME_1
+      - DOMAINNAME_2 # Passing the domain name to traefik container to be able to use the variable in rules. # Shortcut notation, aka: DOMAINNAME_2=$DOMAINNAME_2
+    secrets:
+      - cf_dns_api_token_traefik3_divix_biz
+      - basic_auth_credentials
+    labels:
+      - "traefik.enable=true"
+      ## HTTP Routers
+      - "traefik.http.routers.traefik-rtr.entrypoints=websecure"
+      #- "traefik.http.routers.traefik-rtr.rule=Host(`traefik.$DOMAINNAME_1`)"
+      ## Public Access
+      #- "traefik.http.routers.traefik-rtr.rule=Host(`traefik.$DOMAINNAME_1`)"
+      ## Public & Private Access
+      #- "traefik.http.routers.traefik-rtr.rule=Host(`traefik.$DOMAINNAME_2`)"
+      ## Public & Private Access
+      - "traefik.http.routers.traefik-rtr.rule=Host(`traefik.$DOMAINNAME_1`) || Host(`traefik.$DOMAINNAME_2`)"
+      ## Services - API
+      - "traefik.http.routers.traefik-rtr.service=api@internal"
+      ## Middlewares
+      # In-Line Mode
+      - "traefik.http.routers.traefik-rtr.middlewares=chain-basic-auth@file"
+      #  Use YAML folded style > for splitting on multiple lines,
+      #   in-line comments NOT allowed
+      # Basic Auth, Rate-Limited, Secure Headers
+      #- >
+      #  traefik.http.routers.traefik-rtr.middlewares=
+      #  middlewares-basic-auth@file,
+      #  middlewares-rate-limit@file,
+      #  middlewares-secure-headers@file

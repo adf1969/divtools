@@ -1,3 +1,4 @@
+### DOCKER-COMPOSE FILE ###
 # Socket Proxy:
 #   All Socket Proxy Lines are marked with #SP+ or #SP-
 #   SP+ Uncomment these if ENABLING Socket Proxy
@@ -51,10 +52,12 @@ services:
       - --entrypoints.websecure.http.tls.options=tls-opts@file
       # Add dns-cloudflare as default certresolver for all services. Also enables TLS and no need to specify on individual services
       - --entrypoints.websecure.http.tls.certresolver=dns-cloudflare
+      # MAIN DOMAIN:
       - --entrypoints.websecure.http.tls.domains[0].main=$DOMAINNAME_1
       - --entrypoints.websecure.http.tls.domains[0].sans=*.$DOMAINNAME_1
-      # - --entrypoints.websecure.http.tls.domains[1].main=$DOMAINNAME_2 # Pulls main cert for second domain
-      # - --entrypoints.websecure.http.tls.domains[1].sans=*.$DOMAINNAME_2 # Pulls wildcard cert for second domain
+      # LOCAL DOMAIN
+      - --entrypoints.websecure.http.tls.domains[1].main=$DOMAINNAME_2 # Pulls main cert for second domain
+      - --entrypoints.websecure.http.tls.domains[1].sans=*.$DOMAINNAME_2 # Pulls wildcard cert for second domain
       - --providers.file.directory=/rules # Load dynamic configuration from one or more .toml or .yml files in a directory
       - --providers.file.watch=true # Only works on top level files in the rules folder
       #- --certificatesResolvers.dns-cloudflare.acme.caServer=https://acme-staging-v02.api.letsencrypt.org/directory ## LetsEncrypt Staging Server - uncomment when testing
@@ -76,8 +79,9 @@ services:
         protocol: tcp #LOCAL+
         mode: host #LOCAL+
     volumes:
-      - $DOCKERDIR/appdata/traefik3/rules/$HOSTNAME:/rules # Dynamic File Provider directory
+      - /etc/localtime:/etc/localtime:ro
       #- /var/run/docker.sock:/var/run/docker.sock:ro #SP- Enable if not using Socket Proxy
+      - $DOCKERDIR/appdata/traefik3/rules/$HOSTNAME:/rules # Dynamic File Provider directory
       - $DOCKERDIR/appdata/traefik3/acme/acme.json:/acme.json # Certs File
       - $DOCKERDATADIR/traefik/logs:/logs # Traefik logs
     environment:
@@ -85,6 +89,7 @@ services:
       - CF_DNS_API_TOKEN_FILE=/run/secrets/cf_dns_api_token_traefik3_divix_biz
       - HTPASSWD_FILE=/run/secrets/basic_auth_credentials # HTTP Basic Auth Credentials
       - DOMAINNAME_1 # Passing the domain name to traefik container to be able to use the variable in rules. # Shortcut notation, aka: DOMAINNAME_1=$DOMAINNAME_1
+      - DOMAINNAME_2 # Passing the domain name to traefik container to be able to use the variable in rules. # Shortcut notation, aka: DOMAINNAME_2=$DOMAINNAME_2
     secrets:
       - cf_dns_api_token_traefik3_divix_biz
       - basic_auth_credentials
@@ -93,7 +98,12 @@ services:
       ## HTTP Routers
       - "traefik.http.routers.traefik-rtr.entrypoints=websecure"
       #- "traefik.http.routers.traefik-rtr.rule=Host(`traefik.$DOMAINNAME_1`)"
-      - "traefik.http.routers.traefik-rtr.rule=Host(`traefik.$DOMAINNAME_1`) || Host(`traefik.tn1.$DOMAINNAME_1`)"
+      ## Public Access
+      #- "traefik.http.routers.traefik-rtr.rule=Host(`traefik.$DOMAINNAME_1`)"
+      ## Public & Private Access
+      #- "traefik.http.routers.traefik-rtr.rule=Host(`traefik.$DOMAINNAME_2`)"
+      ## Public & Private Access
+      - "traefik.http.routers.traefik-rtr.rule=Host(`traefik.$DOMAINNAME_1`) || Host(`traefik.$DOMAINNAME_2`)"
       ## Services - API
       - "traefik.http.routers.traefik-rtr.service=api@internal"
       ## Middlewares
