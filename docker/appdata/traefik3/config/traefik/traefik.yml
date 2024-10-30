@@ -1,4 +1,6 @@
 ### TRAEFIK CONFIG FILE ###
+### THIS DOES NOT WORK SINCE TRAEFIK DOESN"T SUPPORT ENV SUBSTIBUTION ###
+### BARF! IT SHOULD! ####
 
 # This is used instead of CLI commands in the docker-compose command: setting:
 
