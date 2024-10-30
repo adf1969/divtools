@@ -29,10 +29,10 @@ entryPoints:
           - main: "${DOMAINNAME_2}"
             sans:
               - "*.${DOMAINNAME_2}"
-      forwardedHeaders:
-        trustedIPs:
-          - "${CLOUDFLARE_IPS}"
-          - "${LOCAL_IPS}"
+    forwardedHeaders:
+      trustedIPs:
+        - "${CLOUDFLARE_IPS}"
+        - "${LOCAL_IPS}"
 
   traefik:
     address: ":8080"
