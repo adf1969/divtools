@@ -102,11 +102,11 @@ services:
       - "traefik.http.routers.traefik-rtr.entrypoints=websecure"
       #- "traefik.http.routers.traefik-rtr.rule=Host(`traefik.$DOMAINNAME_1`)"
       ## Public Access
-      - "traefik.http.routers.traefik-rtr.rule=Host(`traefik.$DOMAINNAME_1`)"
+      #- "traefik.http.routers.traefik-rtr.rule=Host(`traefik.$DOMAINNAME_1`)"
       ## Public & Private Access
       #- "traefik.http.routers.traefik-rtr.rule=Host(`traefik.$DOMAINNAME_2`)"
       ## Public & Private Access
-      #- "traefik.http.routers.traefik-rtr.rule=Host(`traefik.$DOMAINNAME_1`) || Host(`traefik.$DOMAINNAME_2`)"
+      - "traefik.http.routers.traefik-rtr.rule=Host(`traefik.$DOMAINNAME_1`) || Host(`traefik.$DOMAINNAME_2`)"
       ## Services - API
       - "traefik.http.routers.traefik-rtr.service=api@internal"
       ## Middlewares
