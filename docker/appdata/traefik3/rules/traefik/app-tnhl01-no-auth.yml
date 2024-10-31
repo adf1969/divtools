@@ -5,8 +5,8 @@ http:
       entryPoints:
         - "websecure"
       #middlewares:
-        #- chain-no-auth
-        #- strip-proxmox-prefix
+      #- chain-no-auth
+      #- strip-proxmox-prefix
       service: "tnhl01-service"
       tls:
         certResolver: "dns-cloudflare"
@@ -15,10 +15,10 @@ http:
     tnhl01-service:
       loadBalancer:
         passHostHeader: true
-        serversTransport: "tnhl01"      
+        serversTransport: "tnhl01"
         servers:
           # Use the Portainer Non-Secure port since we secure it from Traefik to the Internet
           - url: "http://192.168.9.100:8006"
   serversTransports:
     tnhl01:
-      insecureSkipVerify: true          
+      insecureSkipVerify: true
