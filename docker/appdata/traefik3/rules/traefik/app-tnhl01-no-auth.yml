@@ -14,6 +14,11 @@ http:
   services:
     tnhl01-service:
       loadBalancer:
+        passHostHeader: true
+        serversTransport: "tnhl01"      
         servers:
           # Use the Portainer Non-Secure port since we secure it from Traefik to the Internet
           - url: "http://192.168.9.100:8006"
+  serversTransports:
+    tnhl01:
+      insecureSkipVerify: true          
