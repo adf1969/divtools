@@ -1,7 +1,7 @@
 http:
   routers:
     portainer-service-rtr:
-      rule: "Host(`portainer.{{env DOMAINNAME_2}}`)"
+      rule: "Host(`portainer.{{env "DOMAINNAME_2"}}`)"
       entryPoints:
         - "websecure"
       #middlewares:
