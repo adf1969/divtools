@@ -15,4 +15,4 @@ http:
     portainer-service:
       loadBalancer:
         servers:
-          - url: "http://192.168.9.103:9443"
+          - url: "http://192.168.9.103:9000"
