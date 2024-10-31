@@ -1,12 +1,12 @@
 http:
   routers:
     portainer-service-rtr:
-      rule: "Host(`portainer.{{env "DOMAINNAME_2"}}`)"
+      rule: "Host(`portainer.{{env DOMAINNAME_2}}`)"
       entryPoints:
         - "websecure"
       #middlewares:
-        #- chain-no-auth
-        #- strip-proxmox-prefix
+      #- chain-no-auth
+      #- strip-proxmox-prefix
       service: "portainer-service"
       tls:
         certResolver: "dns-cloudflare"
