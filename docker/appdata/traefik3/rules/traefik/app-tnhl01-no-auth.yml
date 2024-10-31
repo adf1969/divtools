@@ -1,19 +1,19 @@
 http:
   routers:
-    portainer-service-rtr:
-      rule: "Host(`portainer.{{env "DOMAINNAME_2"}}`)"
+    tnhl01-service-rtr:
+      rule: "Host(`tnhl01.{{env "DOMAINNAME_2"}}`)"
       entryPoints:
         - "websecure"
       #middlewares:
         #- chain-no-auth
         #- strip-proxmox-prefix
-      service: "portainer-service"
+      service: "tnhl01-service"
       tls:
         certResolver: "dns-cloudflare"
         options: tls-opts@file
   services:
-    portainer-service:
+    tnhl01-service:
       loadBalancer:
         servers:
           # Use the Portainer Non-Secure port since we secure it from Traefik to the Internet
-          - url: "http://192.168.9.103:9000"
+          - url: "http://192.168.9.100:8006"
