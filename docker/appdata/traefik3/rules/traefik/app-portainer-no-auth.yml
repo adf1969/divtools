@@ -1,0 +1,18 @@
+http:
+  routers:
+    portainer-service-rtr:
+      rule: "Host(`portainer.{{env "DOMAINNAME_2"}}`)"
+      entryPoints:
+        - "websecure"
+      #middlewares:
+        #- chain-no-auth
+        #- strip-proxmox-prefix
+      service: "portainer-service"
+      tls:
+        certResolver: "dns-cloudflare"
+        options: tls-opts@file
+  services:
+    portainer-service:
+      loadBalancer:
+        servers:
+          - url: "http://192.168.9.103:9443"
