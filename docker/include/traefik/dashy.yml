@@ -11,7 +11,7 @@ services:
       - t3_proxy
       - socket_proxy
     ports:
-      - 8080:80
+      - 8080:8080
     # Pass in your config file below, by specifying the path on your host machine
     volumes:
       - $DOCKERDIR/appdata/dashy/conf.yml:/app/user-data/conf.yml
