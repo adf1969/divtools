@@ -52,5 +52,6 @@ include:
   #- include/$HOSTNAME/authelia.yml
   - include/$HOSTNAME/portainer.yml
   - include/$HOSTNAME/homepage.yml
+  - include/$HOSTNAME/dashy.yml
   #- include/$HOSTNAME/dockge.yml
   - include/$HOSTNAME/cloudflare-ddns.yml      

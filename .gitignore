@@ -2,3 +2,4 @@
 docker/**/*.env
 docker/secrets
 docker/appdata/traefik3/acme
+docker/appdata/dashy/dashboard-icons

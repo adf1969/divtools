@@ -1,11 +1,11 @@
 http:
   routers:
     tnhl01-service-rtr:
-      rule: "Host(`tnhl01.{{env "DOMAINNAME_2"}}`)"
+      rule: "Host(`tnhl01.{{env DOMAINNAME_2 }}`)"
       entryPoints:
         - "websecure"
       middlewares:
-      - chain-no-auth
+        - chain-no-auth
       #- strip-proxmox-prefix
       service: "tnhl01-service"
       tls:
@@ -17,7 +17,7 @@ http:
         passHostHeader: true
         serversTransport: "tnhl01"
         servers:
-          # Use the Portainer Non-Secure port since we secure it from Traefik to the Internet
+          # Use the Proxmox SECURE port since that is what Proxmox REQUIRES
           - url: "https://192.168.9.100:8006"
   serversTransports:
     tnhl01:
