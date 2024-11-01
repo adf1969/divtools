@@ -18,6 +18,17 @@ services:
       - GID=1000
     # Specify restart policy
     restart: unless-stopped
+    # traefik labels
+    labels:
+      - "traefik.enable=true"
+      # HTTP Routers
+      - "traefik.http.routers.dashy-rtr.entrypoints=websecure"
+      - "traefik.http.routers.dashy-rtr.rule=Host(`dashy.$DOMAINNAME_2`)"
+      # Middlewares
+      - "traefik.http.routers.dashy-rtr.middlewares=chain-basic-auth@file"
+      # HTTP Services
+      - "traefik.http.routers.dashy-rtr.service=dashy-svc"
+      - "traefik.http.services.dashy-svc.loadbalancer.server.port=8080"
     # Configure healthchecks
     healthcheck:
       test: ["CMD", "node", "/app/services/healthcheck"]
