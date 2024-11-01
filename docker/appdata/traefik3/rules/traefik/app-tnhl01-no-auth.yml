@@ -4,8 +4,8 @@ http:
       rule: "Host(`tnhl01.{{env "DOMAINNAME_2"}}`)"
       entryPoints:
         - "websecure"
-      #middlewares:
-      #- chain-no-auth
+      middlewares:
+      - chain-no-auth
       #- strip-proxmox-prefix
       service: "tnhl01-service"
       tls:
@@ -18,7 +18,7 @@ http:
         serversTransport: "tnhl01"
         servers:
           # Use the Portainer Non-Secure port since we secure it from Traefik to the Internet
-          - url: "http://192.168.9.100:8006"
+          - url: "https://192.168.9.100:8006"
   serversTransports:
     tnhl01:
       insecureSkipVerify: true
