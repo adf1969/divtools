@@ -96,6 +96,7 @@ services:
       - DOMAINNAME_2 # Passing the domain name to traefik container to be able to use the variable in rules. # Shortcut notation, aka: DOMAINNAME_2=$DOMAINNAME_2
       - CLOUDFLARE_IPS
       - LOCAL_IPS
+      - SYNCTHING_PORT
     secrets:
       - cf_dns_api_token_traefik3_divix_biz
       - basic_auth_credentials
