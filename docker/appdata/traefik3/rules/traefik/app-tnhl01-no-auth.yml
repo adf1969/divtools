@@ -1,7 +1,7 @@
 http:
   routers:
     tnhl01-service-rtr:
-      rule: "Host(`tnhl01.{{env DOMAINNAME_2}}`)"
+      rule: "Host(`tnhl01.{{env "DOMAINNAME_2"}}`)"
       entryPoints:
         - "websecure"
       middlewares:
