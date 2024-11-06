@@ -313,18 +313,33 @@ function configure_syncthing_boot() {
     # Path to the Syncthing configuration file
     syncthing_config="/home/syncthing/.local/state/syncthing/config.xml"
 
-    # Check if mkpasswd (bcrypt) is installed
+    # Check if mkpasswd (bcrypt) is installed, and install whois if not
     if ! command -v mkpasswd &>/dev/null; then
-        echo "mkpasswd is required but not installed. Installing it..."
+        echo "mkpasswd is required but not installed. Installing whois..."
         run_cmd apt install -y whois
+    fi
+
+    # If mkpasswd is still not found, try installing apache-utils for htpasswd
+    if ! command -v mkpasswd &>/dev/null; then
+        echo "mkpasswd not found. Installing apache-utils for htpasswd..."
+        run_cmd apt install -y apache-utils
     fi
 
     # Prompt for a new password
     read -sp "Enter a password for the Syncthing 'divix' user: " syncthing_password
     echo ""
 
-    # Use mkpasswd to generate a bcrypt hash for the password
-    hashed_password=$(mkpasswd --method=bcrypt --rounds=10 "$syncthing_password")
+    # Use mkpasswd or htpasswd to generate a bcrypt hash for the password
+    if command -v mkpasswd &>/dev/null; then
+        # Use mkpasswd for hashing
+        hashed_password=$(mkpasswd --method=bcrypt --rounds=10 "$syncthing_password")
+    elif command -v htpasswd &>/dev/null; then
+        # Use htpasswd for hashing
+        hashed_password=$(htpasswd -nbBC 10 "" "$syncthing_password" | cut -d ":" -f 2)
+    else
+        echo "Error: Neither mkpasswd nor htpasswd is available for password hashing."
+        return 1
+    fi
 
     # Modify the config.xml file using xmlstarlet
     if [ -f "$syncthing_config" ]; then
@@ -395,6 +410,7 @@ EOL
         echo "QNAP autostart of syncthing must be configured manually."
     fi
 }
+
 
 
 
