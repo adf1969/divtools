@@ -6,6 +6,15 @@
       echo "$(date '+%Y-%m-%d %H:%M:%S') : $1" >> $LOGFILE
   }
 
+# Check if the script is run as root or a non-root user
+function run_cmd() {
+    if [[ $EUID -ne 0 ]]; then
+        sudo $@
+    else
+        $@
+    fi
+}
+
 # Update /etc/profile
 function update_profile() {
     if grep -q "#DIVTOOLS-BEFORE" /etc/profile; then
