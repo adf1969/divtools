@@ -1,4 +1,7 @@
 # Environment Variables defined in docker-compose-*.yml folder .env
+# $TZ : The timezone we run in. Format American/Chicago
+# $DOCKERDIR : Usually the divtools/docker dir
+# $DOCKERDATADIR: Usually the /opt dir
 # SOCKET_PROXY_NETWORK_BASE=192.168.201 - defined in .env
 # SOCKET_PROXY_NETWORK_CIDR=24 - defined in .env
 
