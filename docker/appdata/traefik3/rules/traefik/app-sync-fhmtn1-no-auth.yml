@@ -1,7 +1,7 @@
 http:
   routers:
     sync-fhmtn1-service-rtr:
-      rule: "Host(`sync-fhmtn1.{{env "DOMAINNAME_2"}}`)"
+      rule: "Host(`sync-fhmtn1.{{env 'DOMAINNAME_2'}}`)"
       entryPoints:
         - "websecure"
       middlewares:
@@ -18,7 +18,7 @@ http:
         serversTransport: "sync-fhmtn1"
         servers:
           # Use the SyncThing Port stored in env
-          - url: "https://192.168.9.85:{{env "SYNCTHING_PORT"}}"
+          - url: "https://192.168.9.85:{{env 'SYNCTHING_PORT'}}"
   serversTransports:
     sync-fhmtn1:
       insecureSkipVerify: true
