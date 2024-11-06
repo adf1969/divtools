@@ -542,26 +542,27 @@ function update_qnap_container_station() {
         # If the DIVTOOLS block exists, replace the content between BEFORE and AFTER
         echo "Updating Divtools Custom QNAP Startup entry in /etc/init.d/container-station.sh."
         run_cmd sed -i '/#DIVTOOLS-BEFORE/,/#DIVTOOLS-AFTER/c\
-#DIVTOOLS-BEFORE\n\
-# Run Custom QNAP Startup\n\
-if [ -f /opt/divtools/qnap_cfg/etc/config/adf_custom_startup.sh ]; then\n\
-    /opt/divtools/qnap_cfg/etc/config/adf_custom_startup.sh\n\
-fi\n\
-#DIVTOOLS-AFTER' /etc/profile
+        #DIVTOOLS-BEFORE\n\
+        # Run Custom QNAP Startup\n\
+        if [ -f /opt/divtools/qnap_cfg/etc/config/adf_custom_startup.sh ]; then\n\
+            /opt/divtools/qnap_cfg/etc/config/adf_custom_startup.sh\n\
+        fi\n\
+        #DIVTOOLS-AFTER' /etc/init.d/container-station.sh        
     else
         # If the DIVTOOLS block doesn't exist, append it to the file
         echo "Adding Divtools Custom QNAP Startup entry to /etc/init.d/container-station.sh."
         run_cmd tee -a /etc/init.d/container-station.sh > /dev/null <<EOL
 
 #DIVTOOLS-BEFORE
-# Run Custom QNAP Startup\n\
-if [ -f /opt/divtools/qnap_cfg/etc/config/adf_custom_startup.sh ]; then\n\
-    /opt/divtools/qnap_cfg/etc/config/adf_custom_startup.sh\n\
-fi\n\
+# Run Custom QNAP Startup
+if [ -f /opt/divtools/qnap_cfg/etc/config/adf_custom_startup.sh ]; then
+    /opt/divtools/qnap_cfg/etc/config/adf_custom_startup.sh
+fi
 #DIVTOOLS-AFTER
 EOL
     fi
 }
+
 
 
 # Update authorized_keys
