@@ -313,16 +313,26 @@ function configure_syncthing_boot() {
     # Path to the Syncthing configuration file
     syncthing_config="/home/syncthing/.local/state/syncthing/config.xml"
 
-    # Check if mkpasswd (bcrypt) is installed, and install whois if not
+    # Determine the package manager
+    if [[ "$PKG_MANAGER" == "apt" ]]; then
+        install_cmd="apt install -y"
+    elif [[ "$PKG_MANAGER" == "opkg" ]]; then
+        install_cmd="opkg install"
+    else
+        echo "Unsupported package manager: $PKG_MANAGER"
+        return 1
+    fi
+
+    # Check if mkpasswd (bcrypt) is installed
     if ! command -v mkpasswd &>/dev/null; then
         echo "mkpasswd is required but not installed. Installing whois..."
-        run_cmd apt install -y whois
+        run_cmd $install_cmd whois
     fi
 
     # If mkpasswd is still not found, try installing apache-utils for htpasswd
     if ! command -v mkpasswd &>/dev/null; then
         echo "mkpasswd not found. Installing apache-utils for htpasswd..."
-        run_cmd apt install -y apache-utils
+        run_cmd $install_cmd apache-utils
     fi
 
     # Prompt for a new password
@@ -410,7 +420,6 @@ EOL
         echo "QNAP autostart of syncthing must be configured manually."
     fi
 }
-
 
 
 
