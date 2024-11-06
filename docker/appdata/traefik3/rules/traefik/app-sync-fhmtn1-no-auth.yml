@@ -1,18 +1,18 @@
 http:
   routers:
-    sync-fhmtn1-service-rtr:
+    syncfhmtn1-service-rtr:
       rule: "Host(`sync-fhmtn1.{{env DOMAINNAME_2 }}`)"
       entryPoints:
         - "websecure"
       middlewares:
         - chain-no-auth
       #- strip-proxmox-prefix
-      service: "sync-fhmtn1-service"
+      service: "syncfhmtn1-service"
       tls:
         certResolver: "dns-cloudflare"
         #options: tls-opts@file
   services:
-    sync-fhmtn1-service:
+    syncfhmtn1-service:
       loadBalancer:
         #passHostHeader: true
         #serversTransport: "sync-fhmtn1"
