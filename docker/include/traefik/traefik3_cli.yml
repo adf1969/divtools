@@ -5,6 +5,9 @@
 #   SP- Uncomment these if DISABLING Socket Proxy
 #
 # Environment Vars in Use
+# $TZ : The timezone we run in. Format American/Chicago
+# $DOCKERDIR : Usually the divtools/docker dir
+# $DOCKERDATADIR: Usually the /opt dir
 #
 services:
   # Traefik 3 - Reverse Proxy

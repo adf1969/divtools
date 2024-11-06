@@ -1,3 +1,8 @@
+# Environment Vars in Use
+# $TZ : The timezone we run in. Format American/Chicago
+# $DOCKERDIR : Usually the divtools/docker dir
+# $DOCKERDATADIR: Usually the /opt dir
+
 services:
   # Portainer - WebUI for Containers
   portainer:
@@ -17,7 +22,7 @@ services:
       # - /var/run/docker.sock:/var/run/docker.sock   # Access to the Docker socket
       - $DOCKERDATADIR/portainer:/data # Bind Mount location to persist data
     environment:
-      - TZ=America/Chicago
+      - TZ=$TZ
       - LOG_LEVEL=warn # Options: debug, info, warn, error, fatal
     labels:
       - "traefik.enable=true"
