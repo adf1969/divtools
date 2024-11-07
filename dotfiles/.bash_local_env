@@ -1,0 +1,5 @@
+# Set the local Color here, instead of in .bash_profile, check .bash_profile for all the color options, or add new ones
+export HOST_COL=${C_YELLOW}
+
+# Set if GIT_SET_PROMPT is on or off here
+export GIT_SET_PROMPT=1
