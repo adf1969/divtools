@@ -9,7 +9,7 @@ SYNCTHING_PIDFILE="/var/run/syncthing.pid"
 # Log file and additional logging settings
 SYNC_LOGFILE="/var/log/syncthing.log"
 SYNC_LOGFLAGS=3  # Example: 0 disables all logging flags
-SYNC_LOGMAXSIZE="100M"  # Maximum size of the log file (e.g., "100M" for 100 MB)
+SYNC_LOGMAXSIZE=$((75 * 1024 * 1024))  # Maximum size of the log file xM * 1024 * 1024, change first # to MB
 SYNC_LOGMAXFILES=5  # Maximum number of old log files to keep
 
 # Additional command line flags
