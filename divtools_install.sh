@@ -1,5 +1,7 @@
 #!/bin/bash
 
+NEW_OPT_LOC="/share/CACHEDEV1_DATA/opt"   # Set to location where you want /opt to be
+
 # Check if the script is run as root or a non-root user
 function run_cmd() {
     if [[ $EUID -ne 0 ]]; then
@@ -554,30 +556,35 @@ EOL
 
 # Update /etc/init.d/container-station.sh
 function update_qnap_container_station() {
-    if grep -q "#DIVTOOLS-BEFORE" /etc/init.d/container-station.sh; then
+    # Define the path to the startup script
+    local STARTUP_SCRIPT_PATH="$NEW_OPT_LOC/divtools/qnap_cfg/etc/config/adf_custom_startup.sh"
+    local INIT_SCRIPT="/etc/init.d/container-station.sh"
+
+    if grep -q "#DIVTOOLS-BEFORE" "$INIT_SCRIPT"; then
         # If the DIVTOOLS block exists, replace the content between BEFORE and AFTER
-        echo "Updating Divtools Custom QNAP Startup entry in /etc/init.d/container-station.sh."
-        run_cmd sed -i '/#DIVTOOLS-BEFORE/,/#DIVTOOLS-AFTER/c\
-        #DIVTOOLS-BEFORE\n\
-        # Run Custom QNAP Startup\n\
-        if [ -f /opt/divtools/qnap_cfg/etc/config/adf_custom_startup.sh ]; then\n\
-            /opt/divtools/qnap_cfg/etc/config/adf_custom_startup.sh\n\
-        fi\n\
-        #DIVTOOLS-AFTER' /etc/init.d/container-station.sh        
+        echo "Updating Divtools Custom QNAP Startup entry in $INIT_SCRIPT."
+        run_cmd sed -i "/#DIVTOOLS-BEFORE/,/#DIVTOOLS-AFTER/c\
+#DIVTOOLS-BEFORE\n\
+# Run Custom QNAP Startup\n\
+if [ -f ${STARTUP_SCRIPT_PATH} ]; then\n\
+    ${STARTUP_SCRIPT_PATH}\n\
+fi\n\
+#DIVTOOLS-AFTER" "$INIT_SCRIPT"
     else
         # If the DIVTOOLS block doesn't exist, append it to the file
-        echo "Adding Divtools Custom QNAP Startup entry to /etc/init.d/container-station.sh."
-        run_cmd tee -a /etc/init.d/container-station.sh > /dev/null <<EOL
+        echo "Adding Divtools Custom QNAP Startup entry to $INIT_SCRIPT."
+        run_cmd tee -a "$INIT_SCRIPT" > /dev/null <<EOL
 
 #DIVTOOLS-BEFORE
 # Run Custom QNAP Startup
-if [ -f /opt/divtools/qnap_cfg/etc/config/adf_custom_startup.sh ]; then
-    /opt/divtools/qnap_cfg/etc/config/adf_custom_startup.sh
+if [ -f ${STARTUP_SCRIPT_PATH} ]; then
+    ${STARTUP_SCRIPT_PATH}
 fi
 #DIVTOOLS-AFTER
 EOL
     fi
 }
+
 
 
 
