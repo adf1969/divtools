@@ -229,7 +229,7 @@ build_prompt() {
   #case "$(hostname -s | tr '[:lower:]' '[:upper:]')" in
   
   case "${HOSTNAME_U}" in
-    FHM4x8)
+    FHM4X8)
       HOST_COL=${C_GREEN}
       #PS1_PROMPT="${C_GREEN}[\u@\h \w]${PS1_CHAR}${C_RESET}"
       ;;
