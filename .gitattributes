@@ -2,3 +2,6 @@
 
 # Force CRLF for files in the .vscode folder
 .vscode/* text eol=crlf
+
+# Force *.sh to have execute bits set
+
