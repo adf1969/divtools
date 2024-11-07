@@ -31,8 +31,8 @@ function start_syncthing() {
     if is_syncthing_running; then
         echo "Syncthing is already running." | tee -a "$SYNC_LOGFILE"
     else
-        echo "Starting Syncthing..." | tee -a "$SYNC_LOGFILE"
-        nohup "$SYNCTHING_BIN" -no-browser \
+        echo "Starting Syncthing as 'syncthing' user..." | tee -a "$SYNC_LOGFILE"
+        sudo -u syncthing nohup "$SYNCTHING_BIN" -no-browser \
             --logflags="$SYNC_LOGFLAGS" \
             --log-max-size="$SYNC_LOGMAXSIZE" \
             --log-max-old-files="$SYNC_LOGMAXFILES" \
