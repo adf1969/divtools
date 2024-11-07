@@ -109,6 +109,12 @@ else
   alias dsetrestart='docker update --restart unless-stopped' #name#  
 fi
 
+
+# GIT
+alias greset='git fetch origin && git reset --hard origin/main'
+alias ggraph='git log --all --decorate --oneline --graph'
+
+
 # UFW FIREWALL
 alias ufwenable='sudo ufw enable'
 alias ufwdisable='sudo ufw disable'
