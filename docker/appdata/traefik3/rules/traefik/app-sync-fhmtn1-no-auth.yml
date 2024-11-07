@@ -14,11 +14,11 @@ http:
   services:
     sync-fhmtn1-service:
       loadBalancer:
-        #passHostHeader: true
+        passHostHeader: true
         serversTransport: "sync-fhmtn1"
         servers:
           # Use the SyncThing Port stored in env
           - url: 'https://192.168.9.85:{{env "SYNCTHING_PORT"}}'
   serversTransports:
     sync-fhmtn1:
-      #insecureSkipVerify: true
+      insecureSkipVerify: true
