@@ -94,7 +94,7 @@ function restart_syncthing() {
     log "Restarting Syncthing..."
     stop_syncthing
     log "Waiting for Syncthing to stop completely..."
-    sleep 2  # Ensure Syncthing is fully stopped
+    sleep 5  # Ensure Syncthing is fully stopped
     start_syncthing
 }
 
