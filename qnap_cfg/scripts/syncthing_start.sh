@@ -9,7 +9,7 @@ SYNCTHING_PIDFILE="/var/run/syncthing.pid"
 # Log file and additional logging settings
 SYNC_LOGFILE="/var/log/syncthing.log"
 SYNC_LOGFLAGS=3  # Example: 0 disables all logging flags
-SYNC_LOGMAXSIZE=$((75 * 1024 * 1024))  # Maximum size of the log file xM * 1024 * 1024, change first # to MB
+SYNC_LOGMAXSIZE=$((75 * 1024 * 1024))  # Maximum size of the log file, change first number to MB
 SYNC_LOGMAXFILES=5  # Maximum number of old log files to keep
 
 # Additional command line flags
@@ -32,7 +32,8 @@ function start_syncthing() {
         echo "Syncthing is already running." | tee -a "$SYNC_LOGFILE"
     else
         echo "Starting Syncthing as 'syncthing' user..." | tee -a "$SYNC_LOGFILE"
-        sudo -u syncthing nohup "$SYNCTHING_BIN" -no-browser \
+        # Run Syncthing in the background and redirect output to the log file
+        sudo -u syncthing "$SYNCTHING_BIN" -no-browser \
             --logflags="$SYNC_LOGFLAGS" \
             --log-max-size="$SYNC_LOGMAXSIZE" \
             --log-max-old-files="$SYNC_LOGMAXFILES" \
