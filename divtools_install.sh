@@ -300,6 +300,17 @@ function install_cockpit() {
     fi
 }
 
+# Function to add a Syncthing user
+function add_syncthing_user() {
+    # Check if the OS is Ubuntu/Debian or QNAP and add the user with appropriate groups
+    if [[ "$OS" == "ubuntu" || "$OS" == "debian" ]]; then
+        add_user "syncthing" "adm"
+    elif [[ "$OS" == "qts" ]]; then
+        add_user "syncthing" "administrators adm"
+    else
+        echo "Unsupported OS for adding the Syncthing user."
+    fi
+}
 
 # Configure Syncthing to start on boot and modify the config.xml file
 function configure_syncthing_boot() {
@@ -595,8 +606,9 @@ function get_selections() {
     fi
 
     selections=$(whiptail --title "Select Tasks" --checklist \
-    "Choose tasks to run. Use SPACE to select and ENTER to confirm." 20 78 14 \
+    "Choose tasks to run. Use SPACE to select and ENTER to confirm." 20 78 15 \
     "ADD_DIVIX_USER" "Add Divix User" OFF \
+    "ADD_SYNCTHING_USER" "Add Syncthing User" OFF \
     "CREATE_DIVTOOLS_FOLDER" "Create /opt/divtools Folder" OFF \
     "INSTALL_ENTWARE" "Install Entware (QNAP only)" OFF \
     "INSTALL_PACKAGES" "Install Software Packages" OFF \
@@ -618,23 +630,23 @@ function get_selections() {
     echo "$selections"
 }
 
-
 # Run the selected tasks
 function run_selected_tasks() {
     for selection in $selections; do
         case $selection in
-            \"ADD_DIVIX_USER\") add_divix_user;;
-            \"CREATE_DIVTOOLS_FOLDER\") create_divtools_folder;;
-            \"INSTALL_ENTWARE\") install_entware;;
-            \"INSTALL_PACKAGES\") install_packages;;
-            \"INSTALL_DOCKER\") install_docker;;
-            \"INSTALL_COCKPIT\") install_cockpit;;
-            \"CONFIGURE_SYNCTHING_BOOT\") configure_syncthing_boot;;
-            \"UPDATE_GIT_CONFIG\") update_git_config;;
-            \"UPDATE_PROFILE\") update_profile;;
-            \"UPDATE_AUTH_KEYS\") update_authorized_keys;;
-            \"UPDATE_QNAP_CONTAINER\") update_qnap_container_station;;
-            \"CLONE_DIVTOOLS_REPO\") clone_divtools_repo;;
+            \"ADD_DIVIX_USER\") add_divix_user ;;
+            \"ADD_SYNCTHING_USER\") add_syncthing_user ;;
+            \"CREATE_DIVTOOLS_FOLDER\") create_divtools_folder ;;
+            \"INSTALL_ENTWARE\") install_entware ;;
+            \"INSTALL_PACKAGES\") install_packages ;;
+            \"INSTALL_DOCKER\") install_docker ;;
+            \"INSTALL_COCKPIT\") install_cockpit ;;
+            \"CONFIGURE_SYNCTHING_BOOT\") configure_syncthing_boot ;;
+            \"UPDATE_GIT_CONFIG\") update_git_config ;;
+            \"UPDATE_PROFILE\") update_profile ;;
+            \"UPDATE_AUTH_KEYS\") update_authorized_keys ;;
+            \"UPDATE_QNAP_CONTAINER\") update_qnap_container_station ;;
+            \"CLONE_DIVTOOLS_REPO\") clone_divtools_repo ;;
         esac
     done
 }
