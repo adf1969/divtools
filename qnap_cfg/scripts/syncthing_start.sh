@@ -16,8 +16,8 @@ SYNC_LOGMAXFILES=5  # Maximum number of old log files to keep
 SYNC_CLI_FLAGS=""  # Add any additional Syncthing command line arguments here
 
 # Increase UDP buffer sizes
-sudo sysctl -w net.core.rmem_max=8388608
-sudo sysctl -w net.core.wmem_max=8388608
+sudo sysctl -w net.core.rmem_max=8388608 # set read buffer to 8MB
+sudo sysctl -w net.core.wmem_max=8388608 # set write buffer to 8MB
 
 # Function to check if Syncthing is running
 function is_syncthing_running() {
