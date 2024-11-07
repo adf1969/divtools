@@ -53,9 +53,10 @@ log "** Fix /opt"
 if [ -L /opt ]; then
     log "/opt is already a symbolic link"
 else
-# Remove the existing /opt directory if it exists
-rm -rf /opt
-log "/opt directory removed"
+# Remove the existing /opt.bak directory if it exists
+rm -rf /opt.bak
+mv /opt /opt.bak
+log "/opt directory moved to /opt.bak"
 
 # Create a symbolic link to the new /opt location
 ln -s  $NEW_OPT_LOC /opt
