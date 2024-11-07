@@ -39,6 +39,18 @@ function is_syncthing_running() {
     return 1  # Syncthing is not running
 }
 
+# Function to kill all Syncthing processes
+function kill_all_syncthing_processes() {
+    log "Checking for any running Syncthing processes..."
+    local pids=$(ps aux | grep '[s]yncthing' | awk '{print $2}')
+    if [ -n "$pids" ]; then
+        log "Killing the following Syncthing processes: $pids"
+        kill $pids
+    else
+        log "No additional Syncthing processes found."
+    fi
+}
+
 # Function to start Syncthing
 function start_syncthing() {
     if is_syncthing_running; then
@@ -63,15 +75,13 @@ function stop_syncthing() {
         log "Stopping Syncthing..."
         local pid=$(cat "$SYNCTHING_PIDFILE")
         kill "$pid"
-        if [ $? -eq 0 ]; then
-            rm -f "$SYNCTHING_PIDFILE"
-            log "Syncthing stopped successfully."
-        else
-            log "Failed to stop Syncthing."
-        fi
+        rm -f "$SYNCTHING_PIDFILE"
+        log "Syncthing stopped."
     else
         log "Syncthing is not running."
     fi
+    # Ensure all Syncthing processes are killed
+    kill_all_syncthing_processes
 }
 
 # Function to restart Syncthing
