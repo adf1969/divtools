@@ -42,7 +42,10 @@ function is_syncthing_running() {
 # Function to kill all Syncthing processes
 function kill_all_syncthing_processes() {
     log "Checking for any running Syncthing processes..."
-    local pids=$(ps aux | grep '[s]yncthing' | awk '{print $2}')
+
+    # Extract the PIDs, which should be the first field in the ps output
+    local pids=$(ps aux | grep 'syncthing' | grep -v 'grep' | awk '{print $1}')
+
     if [ -n "$pids" ]; then
         log "Killing the following Syncthing processes: $pids"
         kill $pids
@@ -50,6 +53,8 @@ function kill_all_syncthing_processes() {
         log "No additional Syncthing processes found."
     fi
 }
+
+
 
 # Function to start Syncthing
 function start_syncthing() {
