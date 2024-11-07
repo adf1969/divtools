@@ -17,16 +17,19 @@ function run_cmd() {
 
 # Update /etc/profile
 function update_profile() {
+    local TEMP_PROFILE="/tmp/profile.tmp"
+
     if grep -q "#DIVTOOLS-BEFORE" /etc/profile; then
         # If the DIVTOOLS block exists, replace the content between BEFORE and AFTER
         echo "Updating Divtools entry in /etc/profile."
-        run_cmd sed -i '/#DIVTOOLS-BEFORE/,/#DIVTOOLS-AFTER/c\
-#DIVTOOLS-BEFORE\n\
-# Source divtools profile\n\
-if [ -f /opt/divtools/dotfiles/.bash_profile ]; then\n\
-    . /opt/divtools/dotfiles/.bash_profile\n\
-fi\n\
-#DIVTOOLS-AFTER' /etc/profile
+        # Use sed to write to a temporary file and then move it back
+        sed '/#DIVTOOLS-BEFORE/,/#DIVTOOLS-AFTER/c\
+#DIVTOOLS-BEFORE\
+# Source divtools profile\
+if [ -f /opt/divtools/dotfiles/.bash_profile ]; then\
+    . /opt/divtools/dotfiles/.bash_profile\
+fi\
+#DIVTOOLS-AFTER' /etc/profile > "$TEMP_PROFILE" && mv "$TEMP_PROFILE" /etc/profile
     else
         # If the DIVTOOLS block doesn't exist, append it to the file
         echo "Adding Divtools entry to /etc/profile."
@@ -42,20 +45,22 @@ EOL
     fi
 }
 
-  log "START: Executing adf_custom_startup.sh"
 
-  log "** Fix /opt"
-  if [ -L /opt ]; then
-      log "/opt is already a symbolic link"
-  else
-    # Remove the existing /opt directory if it exists
-    rm -rf /opt
-    log "/opt directory removed"
 
-    # Create a symbolic link to the new /opt location
-    ln -s  $NEW_OPT_LOC /opt
-    log "Created symbolic link /opt -> $NEW_OPT_LOC"
-  fi
+log "START: Executing adf_custom_startup.sh"
+
+log "** Fix /opt"
+if [ -L /opt ]; then
+    log "/opt is already a symbolic link"
+else
+# Remove the existing /opt directory if it exists
+rm -rf /opt
+log "/opt directory removed"
+
+# Create a symbolic link to the new /opt location
+ln -s  $NEW_OPT_LOC /opt
+log "Created symbolic link /opt -> $NEW_OPT_LOC"
+fi
 
 #log "** Start opkg scripts. Running /opt/etc/init.d/rc.unslung start"
 #/opt/etc/init.d/rc.unslung start
