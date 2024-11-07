@@ -108,7 +108,11 @@ function add_user() {
         # Check if the group exists, if not, create it
         if ! getent group "$group" &>/dev/null; then
             echo "Group $group does not exist. Creating it..."
-            run_cmd groupadd "$group"
+            if [[ "$OS" == "qts" ]]; then
+                run_cmd addgroup "$group"
+            else
+                run_cmd groupadd "$group"
+            fi
         fi
         
         # Add the user to the group
@@ -116,6 +120,7 @@ function add_user() {
         echo "User $username added to group $group"
     done
 }
+
 
 # Refactored add_divix_user using add_user
 function add_divix_user() {
