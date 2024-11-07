@@ -77,9 +77,9 @@ log "** Fix /root files"
 #cp /etc/config/adf_custom_startup.sh /opt/etc/config/adf_custom_startup.sh
 
 # Start Syncthing if it is installed
-if [ -f /opt/divtools/qnap_cft/scripts/syncthing_start.sh ]; then
+if [ -f /opt/divtools/qnap_cfg/scripts/syncthing_start.sh ]; then
   log "** Start Syncthing"
-  /opt/divtools/qnap_cft/scripts/syncthing_start.sh start
+  /opt/divtools/qnap_cfg/scripts/syncthing_start.sh start
 fi
 
 log "END: Custom startup script executed successfully"
