@@ -2,5 +2,11 @@
     "files.eol": "\n",
     "cSpell.words": [
         "DOMAINNAME"
+    ],
+    "runOnSave.commands": [
+        {
+            "match": "\\.sh$",
+            "command": "git update-index --chmod=+x ${file}"
+        }
     ]
 }
