@@ -1,5 +1,7 @@
 #!/bin/sh
 
+### REPLACED WITH QNAP_CFG/scripts/syncthing_start.sh ###
+
 # Path to Syncthing binary
 SYNCTHING_BIN="/opt/bin/syncthing"
 
