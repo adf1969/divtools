@@ -15,27 +15,36 @@ SYNC_LOGMAXFILES=5  # Maximum number of old log files to keep
 # Additional command line flags
 SYNC_CLI_FLAGS=""  # Add any additional Syncthing command line arguments here
 
+# Function for logging
+function log() {
+    echo "[START] $(date '+%Y-%m-%d %H:%M:%S') : $1" >> "$SYNC_LOGFILE"
+}
+
 # Increase UDP buffer sizes
-sudo sysctl -w net.core.rmem_max=8388608 # set read buffer to 8MB
-sudo sysctl -w net.core.wmem_max=8388608 # set write buffer to 8MB
+log "Increasing UDP buffer sizes..."
+sudo sysctl -w net.core.rmem_max=8388608 | tee -a "$SYNC_LOGFILE"
+sudo sysctl -w net.core.wmem_max=8388608 | tee -a "$SYNC_LOGFILE"
+log "UDP buffer sizes increased."
 
 # Function to check if Syncthing is running
 function is_syncthing_running() {
     if [ -f "$SYNCTHING_PIDFILE" ]; then
         local pid=$(cat "$SYNCTHING_PIDFILE")
         if ps -p "$pid" > /dev/null 2>&1; then
+            log "Syncthing is currently running with PID $pid."
             return 0  # Syncthing is running
         fi
     fi
+    log "Syncthing is not running."
     return 1  # Syncthing is not running
 }
 
 # Function to start Syncthing
 function start_syncthing() {
     if is_syncthing_running; then
-        echo "Syncthing is already running." | tee -a "$SYNC_LOGFILE"
+        log "Syncthing is already running."
     else
-        echo "Starting Syncthing as 'syncthing' user..." | tee -a "$SYNC_LOGFILE"
+        log "Starting Syncthing as 'syncthing' user..."
         # Run Syncthing in the background and redirect output to the log file
         sudo -u syncthing "$SYNCTHING_BIN" -no-browser \
             --logflags="$SYNC_LOGFLAGS" \
@@ -44,26 +53,33 @@ function start_syncthing() {
             --logfile="$SYNC_LOGFILE" \
             $SYNC_CLI_FLAGS >> "$SYNC_LOGFILE" 2>&1 &
         echo $! > "$SYNCTHING_PIDFILE"
-        echo "Syncthing started with PID $(cat "$SYNCTHING_PIDFILE")." | tee -a "$SYNC_LOGFILE"
+        log "Syncthing started with PID $(cat "$SYNCTHING_PIDFILE")."
     fi
 }
 
 # Function to stop Syncthing
 function stop_syncthing() {
     if is_syncthing_running; then
-        echo "Stopping Syncthing..." | tee -a "$SYNC_LOGFILE"
+        log "Stopping Syncthing..."
         local pid=$(cat "$SYNCTHING_PIDFILE")
         kill "$pid"
-        rm -f "$SYNCTHING_PIDFILE"
-        echo "Syncthing stopped." | tee -a "$SYNC_LOGFILE"
+        if [ $? -eq 0 ]; then
+            rm -f "$SYNCTHING_PIDFILE"
+            log "Syncthing stopped successfully."
+        else
+            log "Failed to stop Syncthing."
+        fi
     else
-        echo "Syncthing is not running." | tee -a "$SYNC_LOGFILE"
+        log "Syncthing is not running."
     fi
 }
 
 # Function to restart Syncthing
 function restart_syncthing() {
+    log "Restarting Syncthing..."
     stop_syncthing
+    log "Waiting for Syncthing to stop completely..."
+    sleep 2  # Ensure Syncthing is fully stopped
     start_syncthing
 }
 
