@@ -1,0 +1,23 @@
+http:
+  routers:
+    sync-traefik-service-rtr:
+      rule: 'Host(`sync-traefik.{{env "DOMAINNAME_2"}}`)'
+      entryPoints:
+        - "websecure"
+      middlewares:
+        - chain-no-auth
+      service: "sync-traefik-service"
+      tls:
+        certResolver: "dns-cloudflare"
+        options: tls-opts@file
+  services:
+    sync-traefik-service:
+      loadBalancer:
+        passHostHeader: true
+        serversTransport: "sync-traefik"
+        servers:
+          # Use the SyncThing Port stored in env
+          - url: 'https://192.168.9.103:{{env "SYNCTHING_PORT"}}'
+  serversTransports:
+    sync-traefik:
+      insecureSkipVerify: true
