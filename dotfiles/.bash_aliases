@@ -10,9 +10,9 @@ force_color_prompt=yes
 
 # Utility Aliases
 #alias su='sudo -u admin sh'
-#alias egrep='egrep --color=auto'
-#alias fgrep='fgrep --color=auto'
-#alias grep='grep --color=auto'
+alias egrep='egrep --color=auto'
+alias fgrep='fgrep --color=auto'
+alias grep='grep --color=auto'
 alias ls='ls --color=auto -la'
 alias l='ls -CF'
 alias la='ls -A'
