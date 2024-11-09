@@ -560,20 +560,46 @@ function update_qnap_container_station() {
     local STARTUP_SCRIPT_PATH="$NEW_OPT_LOC/divtools/qnap_cfg/etc/config/adf_custom_startup.sh"
     local INIT_SCRIPT="/etc/init.d/container-station.sh"
 
+    # Check if the DIVTOOLS block already exists
     if grep -q "#DIVTOOLS-BEFORE" "$INIT_SCRIPT"; then
-        # If the DIVTOOLS block exists, replace the content between BEFORE and AFTER
         echo "Updating Divtools Custom QNAP Startup entry in $INIT_SCRIPT."
-        run_cmd sed -i "/#DIVTOOLS-BEFORE/,/#DIVTOOLS-AFTER/c\
-#DIVTOOLS-BEFORE\n\
-# Run Custom QNAP Startup\n\
-if [ -f ${STARTUP_SCRIPT_PATH} ]; then\n\
-    ${STARTUP_SCRIPT_PATH}\n\
-fi\n\
-#DIVTOOLS-AFTER" "$INIT_SCRIPT"
+        awk -v script_path="$STARTUP_SCRIPT_PATH" '
+            BEGIN {found=0}
+            /#DIVTOOLS-BEFORE/ {found=1; print "#DIVTOOLS-BEFORE"; next}
+            /#DIVTOOLS-AFTER/ {found=1; print "#DIVTOOLS-AFTER"; next}
+            {if (!found) print $0}
+            END {
+                if (found) {
+                    print "#DIVTOOLS-BEFORE"
+                    print "# Run Custom QNAP Startup"
+                    print "if [ -f " script_path " ]; then"
+                    print "    " script_path
+                    print "fi"
+                    print "#DIVTOOLS-AFTER"
+                }
+            }' "$INIT_SCRIPT" | tee "$INIT_SCRIPT.tmp" > /dev/null
+        run_cmd mv "$INIT_SCRIPT.tmp" "$INIT_SCRIPT"
     else
-        # If the DIVTOOLS block doesn't exist, append it to the file
-        echo "Adding Divtools Custom QNAP Startup entry to $INIT_SCRIPT."
-        run_cmd tee -a "$INIT_SCRIPT" > /dev/null <<EOL
+        # Check if "exit 0" exists and insert before it, or append at the end
+        if grep -q "exit 0" "$INIT_SCRIPT"; then
+            echo "Inserting Divtools Custom QNAP Startup entry before 'exit 0' in $INIT_SCRIPT."
+            awk -v script_path="$STARTUP_SCRIPT_PATH" '
+                /exit 0/ {
+                    print "#DIVTOOLS-BEFORE"
+                    print "# Run Custom QNAP Startup"
+                    print "if [ -f " script_path " ]; then"
+                    print "    " script_path
+                    print "fi"
+                    print "#DIVTOOLS-AFTER"
+                    print
+                    next
+                }
+                {print}
+            ' "$INIT_SCRIPT" | tee "$INIT_SCRIPT.tmp" > /dev/null
+            run_cmd mv "$INIT_SCRIPT.tmp" "$INIT_SCRIPT"
+        else
+            echo "Adding Divtools Custom QNAP Startup entry to the end of $INIT_SCRIPT."
+            tee -a "$INIT_SCRIPT" > /dev/null <<EOL
 
 #DIVTOOLS-BEFORE
 # Run Custom QNAP Startup
@@ -582,8 +608,10 @@ if [ -f ${STARTUP_SCRIPT_PATH} ]; then
 fi
 #DIVTOOLS-AFTER
 EOL
+        fi
     fi
 }
+
 
 
 
