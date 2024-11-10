@@ -1,0 +1,8 @@
+[passwords]
+# Define the passwords list
+# Syntax: host=password
+# Where: host is the hostname
+#        password is the clear password
+# Additionally (and optionally) a default password could be defined
+localhost=mylocalhostpassword
+default=mydefaultpassword
