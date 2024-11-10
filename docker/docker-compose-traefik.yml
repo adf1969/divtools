@@ -53,5 +53,7 @@ include:
   - include/$HOSTNAME/portainer.yml
   - include/$HOSTNAME/homepage.yml
   - include/$HOSTNAME/dashy.yml
+  - include/$HOSTNAME/homarr.yml
   #- include/$HOSTNAME/dockge.yml
   - include/$HOSTNAME/cloudflare-ddns.yml      
+  - include/$HOSTNAME/glances.yml

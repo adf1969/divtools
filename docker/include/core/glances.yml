@@ -1,0 +1,25 @@
+services:
+  glances:
+    container_name: glances
+    image: nicolargo/glances:latest
+    restart: always
+    pid: host
+    network_mode: host # Ensures direct network access
+    privileged: true # for access to host network stats
+    volumes:    
+      - /var/run/docker.sock:/var/run/docker.sock
+      - $DOCKERDIR/appdata/glances/common/glances.conf:/etc/glances/glances.conf
+      #Uncomment the below line if you want glances to display host OS detail instead of container's
+      - /etc/os-release:/etc/os-release:ro
+    environment:
+      - "GLANCES_OPT=-w"
+    labels:
+      - "traefik.port=61208"
+      - "traefik.frontend.rule=Host:glances.docker.localhost"
+    # secrets:
+    #   - source: glances_password
+    #     target: /root/.config/glances/glances.pwd
+
+# secrets:
+#   glances_password:
+#     file: $DOCKERDIR/secrets/glances_password

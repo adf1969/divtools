@@ -1,22 +1,129 @@
 pageInfo:
-  title: Home Lab
-sections: # An array of sections
-  - name: Example Section
+  title: DivTools
+  navLinks: []
+sections:
+  - name: Media & Entertainment
+    items: []
+    displayData:
+      sortBy: default
+      rows: 1
+      cols: 1
+      collapsed: false
+      hideForGuests: false
+    icon: fas fa-photo-video
+  - name: Networking
+    icon: fas fa-network-wired
+    items:
+      - title: Pi-Hole
+        description: DNS Ad-Blocking
+        icon: pi-hole.png
+        url: http://pihole/admin/login.php
+        target: newtab
+        statusCheck: true
+        statusCheckUrl: http://192.168.9.111/admin/login.php
+        id: 0_1064_pihole
+    displayData:
+      sortBy: default
+      rows: 1
+      cols: 1
+      collapsed: false
+      hideForGuests: false
+  - name: Network Monitoring
+    icon: fas fa-tachometer-alt-fast
+    displayData:
+      sortBy: default
+      rows: 1
+      cols: 1
+      collapsed: false
+      hideForGuests: false
+    items: []
+  - name: System Monitoring
+    icon: fas fa-monitor-heart-rate
+    displayData:
+      sortBy: default
+      rows: 1
+      cols: 1
+      collapsed: false
+      hideForGuests: false
+    items: []
+  - name: Home Control
+    icon: fas fa-house-signal
+    displayData:
+      sortBy: default
+      rows: 1
+      cols: 1
+      collapsed: false
+      hideForGuests: false
+    items: []
+  - name: Productivity
+    icon: fas fa-bookmark
+    displayData:
+      sortBy: default
+      rows: 1
+      cols: 1
+      collapsed: false
+      hideForGuests: false
+    items: []
+  - name: Dashy Docs
     icon: far fa-rocket
+    displayData:
+      sortBy: default
+      rows: 1
+      cols: 1
+      collapsed: false
+      hideForGuests: false
     items:
       - title: GitHub
-        description: Dashy source code and docs
-        icon: fab fa-github
-        url: https://github.com/Lissy93/dashy
-      - title: Issues
-        description: View open issues, or raise a new one
-        icon: fas fa-bug
-        url: https://github.com/Lissy93/dashy/issues
-  - name: Local Services
-    items:
-      - title: Firewall
-        icon: favicon
-        url: http://192.168.1.1/
-      - title: Game Server
-        icon: https://i.ibb.co/710B3Yc/space-invader-x256.png
-        url: http://192.168.130.1/
+        description: Source Code, Issues and Pull Requests
+        icon: fab fa-github-alt
+        url: https://github.com/lissy93/dashy
+        target: newtab
+        id: 0_930_github
+      - title: Docs
+        description: Configuring & Usage Documentation
+        icon: far fa-book
+        url: https://dashy.to/docs
+        target: newtab
+        provider: Dashy.to
+        statusCheck: true
+        id: 1_930_docs
+      - title: WalkXCode GH
+        description: Dashboard Icon List
+        icon: far fa-rocket
+        url: https://github.com/walkxcode/dashboard-icons
+        target: newtab
+        id: 2_930_walkxcodegh
+      - title: WalkXCode Icons
+        description: Page to Display All Icons
+        icon: far fa-rocket
+        url: https://github.com/walkxcode/dashboard-icons/blob/main/ICONS.md
+        target: newtab
+        id: 3_930_walkxcodeicons
+      - title: FontAwesome Icons
+        description: Searchable Font Awesome Icon Library
+        icon: si-fontawesome
+        url: https://fontawesome.com/icons
+        target: newtab
+        id: 4_930_fontawesomeicons
+      - title: SimpleIcons
+        description: Searchable Icon Library
+        icon: si-simpleicons
+        url: https://simpleicons.org/
+        target: newtab
+        statusCheckUrl: https://simpleicons.org/
+        statusCheck: true
+        id: 5_930_simpleicons
+      - title: Ex Conf.YML
+        description: Example Config Files for Dashy
+        icon: si-yaml
+        url: https://gist.github.com/Lissy93/000f712a5ce98f212817d20bc16bab10
+        target: newtab
+        id: 6_930_exconfyml
+      - title: Sub-Pages Issue
+        url: https://github.com/Lissy93/dashy/issues/1258
+        target: newtab
+        id: 7_930_subpagesissue
+appConfig:
+  theme: nord-frost
+  layout: auto
+  iconSize: medium
