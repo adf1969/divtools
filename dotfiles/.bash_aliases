@@ -114,6 +114,8 @@ fi
 alias greset='git fetch origin && git reset --hard origin/main'
 alias ggraph='git log --all --decorate --oneline --graph'
 
+# SSH
+alias ssha='eval $(ssh-agent) && ssh-add'
 
 # UFW FIREWALL
 alias ufwenable='sudo ufw enable'
