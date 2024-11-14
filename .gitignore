@@ -6,3 +6,4 @@ docker/appdata/dashy/dashboard-icons
 docker/appdata/glances/common/glances.conf
 .sync-conflict*
 .stfolder/
+.stversions/
