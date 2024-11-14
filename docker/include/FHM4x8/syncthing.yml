@@ -22,6 +22,7 @@ services:
 
       # Volume Mounts for Sharing
       - $DOCKERDATADIR/divtools:/opt/divtools
+      - $DOCKERDATADIR/dt_git_test:/opt/dt_git_test
     ports:
       - 8384:8384 # Web UI
       - 22000:22000/tcp # TCP file transfers
