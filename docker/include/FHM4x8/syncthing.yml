@@ -2,12 +2,13 @@
 # $TZ : The timezone we run in. Format American/Chicago
 # $DOCKERDIR : Usually the divtools/docker dir
 # $DOCKERDATADIR: Usually the /opt dir
+# $HOSTNAME: defined in .env
 
 services:
   syncthing:
     image: syncthing/syncthing
     container_name: syncthing
-    hostname: FHM4x8
+    hostname: $HOSTNAME
     network_mode: host # Ensures direct network access
     environment:
       - TZ=$TZ
@@ -15,7 +16,6 @@ services:
       #- PGID=1008
       - PUID=0
       - PGID=0
-
     volumes:
       # Config
       - $DOCKERDATADIR/syncthing:/var/syncthing
