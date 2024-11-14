@@ -46,6 +46,7 @@ include:
   - include/$HOSTNAME/socket-proxy.yml   #SP+ Uncomment to enable Socket Proxy. Check files for #SP for details
   - include/$HOSTNAME/netbird-client.yml 
   - include/$HOSTNAME/glances.yml
+  - include/$HOSTNAME/syncthing.yml 
   #- include/$HOSTNAME/traefik3_cli.yml  # Use CLI in docker-compose version of Traefik config
   #- include/$HOSTNAME/traefik3_config.yml  # Use Config File ./traefik.yml version of Traefik config
   #- include/$HOSTNAME/oauth.yml
