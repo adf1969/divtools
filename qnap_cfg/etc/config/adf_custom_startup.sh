@@ -83,5 +83,9 @@ log "** Fix /root files"
 #   /opt/divtools/qnap_cfg/scripts/syncthing_start.sh start
 # fi
 
+# Set sysctl values for Syncthing performance
+sysctl -w net.core.rmem_max=8388608
+sysctl -w net.core.wmem_max=8388608
+
 log "END: Custom startup script executed successfully"
 
