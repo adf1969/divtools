@@ -1,0 +1,30 @@
+# Environment Vars in Use
+# $TZ : The timezone we run in. Format American/Chicago
+# $DOCKERDIR : Usually the divtools/docker dir
+# $DOCKERDATADIR: Usually the /opt dir
+
+services:
+  syncthing:
+    image: syncthing/syncthing
+    container_name: syncthing
+    hostname: FHMTN1
+    network_mode: host # Ensures direct network access
+    environment:
+      - TZ=$TZ
+      #- PUID=1008
+      #- PGID=1008
+      - PUID=0
+      - PGID=0
+
+    volumes:
+      # Config
+      - $DOCKERDATADIR/syncthing:/var/syncthing
+
+      # Volume Mounts for Sharing
+      - $DOCKERDATADIR/divtools:/opt/divtools
+    ports:
+      - 8384:8384 # Web UI
+      - 22000:22000/tcp # TCP file transfers
+      - 22000:22000/udp # QUIC file transfers
+      - 21027:21027/udp # Receive local discovery broadcasts
+    restart: unless-stopped

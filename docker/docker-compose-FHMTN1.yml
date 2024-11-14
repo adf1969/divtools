@@ -2,6 +2,7 @@
 # Here are my Docker Hosts:
 # - Traefik (traefik) - Proxmox LXC with Ubuntu Server 22.04
 # - DNS / AdBlock Server (pihole) - Proxmox LXC with Ubuntu Server 22.04
+# - FHMTN1 | QNAP Server
 # - FHM4x8 | QNAP Server
 
 ########################### THIS COMPOSE FILE
