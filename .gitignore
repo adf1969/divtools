@@ -7,3 +7,4 @@ docker/appdata/glances/common/glances.conf
 *.sync-conflict*
 .stfolder/
 .stversions/
+.stignore

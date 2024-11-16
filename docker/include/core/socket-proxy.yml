@@ -17,7 +17,7 @@ services:
     image: tecnativa/docker-socket-proxy
     security_opt:
       - no-new-privileges:true
-    restart: unless-stopped
+    restart: always
     #profiles: ["core", "all"] # Uncomment if using Docker Compose Profiles
     networks:
       socket_proxy:

@@ -420,7 +420,7 @@ After=network.target
 
 [Service]
 User=syncthing
-AmbientCapabilities=CAP_NET_ADMIN
+AmbientCapabilities=CAP_NET_ADMIN CAP_CHOWN CAP_FOWNER
 ExecStartPre=/bin/sh -c 'sysctl -w net.core.rmem_max=8388608'
 ExecStartPre=/bin/sh -c 'sysctl -w net.core.wmem_max=8388608'
 ExecStart=/usr/bin/syncthing -no-browser -logflags=0

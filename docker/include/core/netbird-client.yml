@@ -6,16 +6,19 @@
 services:
   netbird:
     container_name: netbird
-    image: netbirdio/netbird:latest
+    image: netbirdio/netbird:latest    
+    hostname: ubuntu-22v2    
     restart: unless-stopped
     #profiles: ["core", "all"]
     network_mode: host # Ensures direct network access
     command: ["netbird", "up"] # Automatically starts the Netbird client, when the container starts
     environment:
-      - NETBIRD_SETUP_KEY=${NETBIRD_SETUP_KEY} # Pulled from .env file
+      - NETBIRD_SETUP_KEY=$NETBIRD_SETUP_KEY # Pulled from .env file
     volumes:
-      - $DOCKERDATADIR/netbird:/etc/wg # Persistent data for Netbird
+      - $DOCKERDATADIR/netbird-client:/etc/netbird # Persistent data for Netbird
 
     cap_add:
       - NET_ADMIN # Necessary for network configuration
+      - SYS_ADMIN # Necessary for System Admin
+      - SYS_RESOURCE # Necessary for System Resource Access    
 
