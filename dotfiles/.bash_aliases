@@ -8,6 +8,25 @@ export DOCKERDATADIR=/opt
 
 force_color_prompt=yes
 
+### FUNCTIONS ###
+
+container_exists() {
+  local container_name=$1
+
+  # Check if Docker is installed
+  if ! command -v docker &> /dev/null; then
+    return 1
+  fi
+
+  # Check if the container exists (in any state)
+  if docker ps -a --format '{{.Names}}' | grep -q "^${container_name}$"; then
+    return 0  # Container exists
+  else
+    return 1  # Container does not exist
+  fi
+}
+
+
 # Utility Aliases
 #alias su='sudo -u admin sh'
 alias egrep='egrep --color=auto'
@@ -29,6 +48,9 @@ alias dils='docker image ls'
 alias dpsn='docker container ls --format '\''table {{.ID}}\t{{.Names}}\t{{.Image}}\t{{.RunningFor}}\t{{.Status}}\t{{.Size}}'\''' 
 alias dps='$DIVTOOLS/scripts/docker_ps.sh'
 alias dlistrp='$DIVTOOLS/scripts/list_restart_policies.sh'
+
+# Syncthing
+alias stfc='find . -type f -not -path "*/.stversions/*" -name "*sync-conflict*"'
 
 # VIM Aliases
 #alias vi='nvim'
@@ -126,7 +148,22 @@ alias ufwlist='sudo ufw status numbered'
 alias ufwdelete='sudo ufw delete'
 alias ufwreload='sudo ufw reload'
 
-# SYSTEMD START, STOP AND RESTART
+# JOURNALCTL
+alias jcu='journalctl -u'
+alias jceu='journalctl -eu'
+alias jcfu='journalctl -fu'
+
+# SYSTEMD START, STOP AND RESTART | sc
+alias screload='sudo systemctl daemon-reload'
+alias scstart='sudo systemctl start'
+alias scstop='sudo systemctl stop'
+alias screstart='sudo systemctl restart'
+alias scstatus='sudo systemctl status'
+alias scenable='sudo systemctl enable'
+alias scdisable='sudo systemctl disable'
+alias scactive='sudo systemctl is-active'
+
+# SYSTEMD START, STOP AND RESTART | ctl
 alias ctlreload='sudo systemctl daemon-reload'
 alias ctlstart='sudo systemctl start'
 alias ctlstop='sudo systemctl stop'
@@ -188,13 +225,32 @@ alias ipe='curl ipinfo.io/ip' # external ip
 alias ipi='ifconfig eth0' # internal ip
 alias header='curl -I' # get web server headers 
 
+# Syncthing Aliases
+if container_exists "syncthing"; then
+  # Syncthing loaded in a Container
+  alias ststart='dcstart syncthing'
+  alias strestart='dcrestart syncthing'
+  alias ststop='dcstop syncthing'
+  alias ststatus="dpsn | grep syncthing"
+  alias stlogs='docker logs -f syncthing'
+
+else
+  # Syncthing loaded locally using systemd  
+  alias ststart='sudo systemctl start syncthing'
+  alias strestart='sudo systemctl restart syncthing'
+  alias ststop='sudo systemctl stop syncthing'
+  alias ststatus='sudo systemctl status syncthing'
+  alias stlogs='journalctl -eu syncthing'
+fi
 
 # OS Specific Aliases
 case "${ID}" in
   debian|ubuntu):
     alias updalted='update-alternatives --config editor'
+
   ;;
   qts):     # QNAP
     alias su='sudo -u admin -i'
+
   ;;
 esac
