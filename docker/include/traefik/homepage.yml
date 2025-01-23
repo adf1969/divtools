@@ -14,6 +14,9 @@ services:
     #  - "$HOMEPAGE_PORT:3000"
     volumes:
       - $DOCKERDATADIR/homepage:/app/config
+    env_file:
+      - $DOCKERDIR/.env        # default .env file for all systems, 
+      - $DOCKERDIR/.env.host   # Host-level ENV vars, overrides .env      
     environment:
       TZ: $TZ
       PUID: $PUID

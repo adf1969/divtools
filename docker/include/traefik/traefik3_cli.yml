@@ -88,6 +88,9 @@ services:
       - $DOCKERDIR/appdata/traefik3/rules/$HOSTNAME:/rules # Dynamic File Provider directory
       - $DOCKERDIR/appdata/traefik3/acme/acme.json:/acme.json # Certs File
       - $DOCKERDATADIR/traefik/logs:/logs # Traefik logs
+    env_file:
+      - $DOCKERDIR/.env        # default .env file for all systems, 
+      - $DOCKERDIR/.env.host   # Host-level ENV vars, overrides .env      
     environment:
       - TZ=$TZ
       - CF_DNS_API_TOKEN_FILE=/run/secrets/cf_dns_api_token_traefik3_divix_biz

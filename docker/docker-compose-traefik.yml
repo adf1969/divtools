@@ -23,7 +23,7 @@ networks:
     driver: bridge
     ipam:
       config:
-        - subnet: ${SOCKET_PROXY_NETWORK_BASE}.0/${SOCKET_PROXY_NETWORK_CIDR}
+        - subnet: ${SOCKET_PROXY_NETWORK_BASE}.0/${SOCKET_PROXY_NETWORK_CIDR}        
   t3_proxy:
     name: t3_proxy
     driver: bridge
@@ -52,9 +52,11 @@ include:
   #- include/$HOSTNAME/oauth.yml
   #- include/$HOSTNAME/authelia.yml
   - include/$HOSTNAME/portainer.yml
-  - include/$HOSTNAME/homepage.yml
-  - include/$HOSTNAME/dashy.yml
-  - include/$HOSTNAME/homarr.yml
   #- include/$HOSTNAME/dockge.yml
   - include/$HOSTNAME/cloudflare-ddns.yml      
   - include/$HOSTNAME/glances.yml
+
+  # TRAEFIK
+  - include/$HOSTNAME/homepage.yml
+  - include/$HOSTNAME/dashy.yml
+  - include/$HOSTNAME/homarr.yml

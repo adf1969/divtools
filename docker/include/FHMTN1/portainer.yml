@@ -21,6 +21,9 @@ services:
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock # Access to the Docker socket
       - $DOCKERDATADIR/portainer:/data # Bind Mount location to persist data
+    env_file:
+      - $DOCKERDIR/.env        # default .env file for all systems, 
+      - $DOCKERDIR/.env.host   # Host-level ENV vars, overrides .env          
     environment:
       - TZ=$TZ
       - LOG_LEVEL=warn # Options: debug, info, warn, error, fatal

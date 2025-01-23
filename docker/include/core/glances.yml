@@ -1,3 +1,18 @@
+# Environment Vars in Use
+# $TZ : The timezone we run in. Format American/Chicago
+# $DOCKERDIR : Usually the divtools/docker dir
+# $DOCKERDATADIR: Usually the /opt dir
+# $HOSTNAME: defined in .env
+# Section Order: CIRPNVEUE
+#
+# ENV - ADD TO EVER FILE
+# To Add, from $DOCKERDIR dir
+# ln -s secrets/.env.defaults .env
+# ln -s secrets/.env.$HOSTNAME .env.host
+# env_file:
+#   - $DOCKERDIR/.env        # default .env file for all systems, 
+#   - $DOCKERDIR/.env.host   # Host-level ENV vars, overrides .env
+
 services:
   glances:
     container_name: glances
@@ -11,6 +26,9 @@ services:
       - $DOCKERDIR/appdata/glances/common/glances.conf:/etc/glances/glances.conf
       #Uncomment the below line if you want glances to display host OS detail instead of container's
       - /etc/os-release:/etc/os-release:ro
+    env_file:
+      - $DOCKERDIR/.env        # default .env file for all systems, 
+      - $DOCKERDIR/.env.host   # Host-level ENV vars, overrides .env
     environment:
       - "GLANCES_OPT=-w"
     labels:

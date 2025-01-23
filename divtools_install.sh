@@ -81,13 +81,15 @@ function qnap_pre_install() {
     fi
 }
 
-# Function to add a user and assign them to specified groups
+# Function to add a user, assign them to specified groups, and optionally set a specific UID
 # Parameters:
 # $1 - username
 # $2 - space-delimited list of groups
+# $3 - optional UID for the user
 function add_user() {
     local username=$1
     local groups=$2
+    local uid=$3
 
     # Check if the user already exists
     if id "$username" &>/dev/null; then
@@ -97,9 +99,15 @@ function add_user() {
         read -sp "Enter password for $username user: " user_passwd
         echo ""
 
-        # Add the user with a home directory and bash shell
-        run_cmd useradd -m -s /bin/bash "$username"
-        
+        # Construct the useradd command with optional UID
+        if [[ -n "$uid" ]]; then
+            echo "Creating user $username with UID $uid..."
+            run_cmd useradd -m -s /bin/bash -u "$uid" "$username"
+        else
+            echo "Creating user $username with default UID..."
+            run_cmd useradd -m -s /bin/bash "$username"
+        fi
+
         # Set the password for the user
         echo "Setting password for $username user..."
         echo -e "$user_passwd\n$user_passwd" | run_cmd passwd "$username"
@@ -116,25 +124,29 @@ function add_user() {
                 run_cmd groupadd "$group"
             fi
         fi
-        
+
         # Add the user to the group
         run_cmd usermod -aG "$group" "$username"
         echo "User $username added to group $group"
     done
-}
+} # add_user
 
 
 # Refactored add_divix_user using add_user
 function add_divix_user() {
+    local username="divix"
+    local uid="1400"
+
     # Add divix user and assign to groups based on the OS
     if [[ "$OS" == "ubuntu" || "$OS" == "debian" ]]; then
-        add_user "divix" "sudo adm"
+        add_user "$username" "sudo adm" "$uid"
     elif [[ "$OS" == "qts" ]]; then
-        add_user "divix" "administrators adm"
+        add_user "$username" "administrators adm" "$uid"
     else
-        add_user "divix" "adm"
+        add_user "$username" "adm" "$uid"
     fi
-}
+} # add_divix_user
+
 
 
 
@@ -307,26 +319,55 @@ function install_cockpit() {
     fi
 }
 
+# Function to install eza
+function install_eza() {
+    echo "Installing eza..."
+
+    if [[ "$OS" == "debian" || "$OS" == "ubuntu" ]]; then
+        echo "Detected Debian-based system. Installing eza via APT..."
+        sudo apt update
+        sudo apt install -y gpg
+        sudo mkdir -p /etc/apt/keyrings
+        wget -qO- https://raw.githubusercontent.com/eza-community/eza/main/deb.asc | sudo gpg --dearmor -o /etc/apt/keyrings/gierens.gpg
+        echo "deb [signed-by=/etc/apt/keyrings/gierens.gpg] http://deb.gierens.de stable main" | sudo tee /etc/apt/sources.list.d/gierens.list
+        sudo chmod 644 /etc/apt/keyrings/gierens.gpg /etc/apt/sources.list.d/gierens.list
+        sudo apt update
+        sudo apt install -y eza
+    elif [[ "$OS" == "qts" ]]; then
+        echo "Detected QNAP QTS system. Installing eza via Entware..."
+        run_cmd opkg install eza
+        if [ ! -f /opt/bin/eza ]; then
+            ln -s /opt/usr/bin/eza /opt/bin/eza
+        fi
+    else
+        echo "Unsupported operating system for eza installation."
+        return 1
+    fi
+
+    echo "eza installation completed successfully."
+} # install_eza
+
+
 # Function to add a Syncthing user
 function add_syncthing_user() {
+    local username="syncthing"
+    local uid="1401"
+
     # Check if the OS is Ubuntu/Debian or QNAP and add the user with appropriate groups
     if [[ "$OS" == "ubuntu" || "$OS" == "debian" ]]; then
-        add_user "syncthing" "adm"
+        add_user "$username" "adm" "$uid"
     elif [[ "$OS" == "qts" ]]; then
-        add_user "syncthing" "administrators adm"
+        add_user "$username" "administrators adm" "$uid"
     else
         echo "Unsupported OS for adding the Syncthing user."
     fi
-}
+} # add_syncthing_user
+
 
 # Configure Syncthing to start on boot and modify the config.xml file
 function configure_syncthing_boot() {
     # Add syncthing user if it doesn't exist and add to appropriate groups
-    if [[ "$OS" == "ubuntu" || "$OS" == "debian" ]]; then
-        add_user "syncthing" "adm"
-    elif [[ "$OS" == "qts" ]]; then
-        add_user "syncthing" "administrators adm"
-    fi
+    add_syncthing_user
 
     # Path to the Syncthing configuration file
     syncthing_config="/home/syncthing/.local/state/syncthing/config.xml"
@@ -617,8 +658,6 @@ EOL
 
 
 
-
-
 # Update authorized_keys
 function update_authorized_keys() {
     authorized_keys_url="https://raw.githubusercontent.com/adf1969/divtools/main/.ssh/authorized_keys"
@@ -637,6 +676,33 @@ function update_authorized_keys() {
     fi
 }
 
+
+# Function to configure en_US.UTF-8 locale
+function configure_utf8_locale() {
+    echo "Configuring en_US.UTF-8 locale..."
+
+    # see: https://github.com/starship/starship/issues/5881
+    # Check if /etc/locale.gen exists
+    if [ -f /etc/locale.gen ]; then
+        # Uncomment the line for en_US.UTF-8
+        run_cmd sed -i '/^# *en_US.UTF-8 UTF-8/s/^# *//' /etc/locale.gen
+        echo "Uncommented en_US.UTF-8 in /etc/locale.gen."
+
+        # Generate the locale
+        run_cmd locale-gen en_US.UTF-8
+        echo "Locale en_US.UTF-8 generated."
+
+        # Set the default locale
+        run_cmd update-locale LANG=en_US.UTF-8
+        echo "Default locale set to en_US.UTF-8."
+    else
+        echo "Error: /etc/locale.gen not found. Unable to configure locale."
+        return 1
+    fi
+}
+
+
+
 # Use whiptail to present a checkbox menu to the user
 function get_selections() {
     # Check if container-station.sh exists
@@ -649,7 +715,7 @@ function get_selections() {
     fi
 
     selections=$(whiptail --title "Select Tasks" --checklist \
-    "Choose tasks to run. Use SPACE to select and ENTER to confirm." 20 78 15 \
+    "Choose tasks to run. Use SPACE to select and ENTER to confirm." 20 78 17 \
     "ADD_DIVIX_USER" "Add Divix User" OFF \
     "ADD_SYNCTHING_USER" "Add Syncthing User" OFF \
     "CREATE_DIVTOOLS_FOLDER" "Create /opt/divtools Folder" OFF \
@@ -657,12 +723,14 @@ function get_selections() {
     "INSTALL_PACKAGES" "Install Software Packages" OFF \
     "INSTALL_DOCKER" "Install Docker" OFF \
     "INSTALL_COCKPIT" "Install Cockpit and Modules" OFF \
+    "INSTALL_EZA" "Install eza (Modern ls Replacement)" OFF \
     "CONFIGURE_SYNCTHING_BOOT" "Configure Syncthing to Run on Boot" OFF \
     "UPDATE_GIT_CONFIG" "Update Git Config" OFF \
     "UPDATE_PROFILE" "Update /etc/profile" OFF \
     "UPDATE_AUTH_KEYS" "Update authorized_keys" OFF \
     "UPDATE_QNAP_CONTAINER" "$container_station_text" $container_station_option \
-    "CLONE_DIVTOOLS_REPO" "Clone divtools Repository into /opt/divtools" OFF 3>&1 1>&2 2>&3)
+    "CLONE_DIVTOOLS_REPO" "Clone divtools Repository into /opt/divtools" OFF \
+    "CONFIGURE_UTF8_LOCALE" "Configure en_US.UTF-8 Locale" OFF 3>&1 1>&2 2>&3)
 
     if [[ $? != 0 ]]; then
         echo "Task selection cancelled."
@@ -671,7 +739,8 @@ function get_selections() {
 
     # Return selected items as a list
     echo "$selections"
-}
+} # get_selections
+
 
 # Run the selected tasks
 function run_selected_tasks() {
@@ -684,15 +753,17 @@ function run_selected_tasks() {
             \"INSTALL_PACKAGES\") install_packages ;;
             \"INSTALL_DOCKER\") install_docker ;;
             \"INSTALL_COCKPIT\") install_cockpit ;;
+            \"INSTALL_EZA\") install_eza ;;
             \"CONFIGURE_SYNCTHING_BOOT\") configure_syncthing_boot ;;
             \"UPDATE_GIT_CONFIG\") update_git_config ;;
             \"UPDATE_PROFILE\") update_profile ;;
             \"UPDATE_AUTH_KEYS\") update_authorized_keys ;;
             \"UPDATE_QNAP_CONTAINER\") update_qnap_container_station ;;
             \"CLONE_DIVTOOLS_REPO\") clone_divtools_repo ;;
+            \"CONFIGURE_UTF8_LOCALE\") configure_utf8_locale ;;
         esac
     done
-}
+} # run_selected_tasks
 
 
 

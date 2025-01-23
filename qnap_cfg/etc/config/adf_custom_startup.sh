@@ -46,6 +46,21 @@ EOL
 }
 
 
+fix_bash() {
+    if [ -f /opt/bin/bash ]; then
+        if [ -L /bin/bash ]; then
+            echo "Removing existing symlink /bin/bash"
+            rm /bin/bash
+        fi
+        echo "Creating new symlink /bin/bash -> /opt/bin/bash"
+        ln -s /opt/bin/bash /bin/bash
+    else
+        echo "/opt/bin/bash does not exist. No action taken."
+    fi
+}
+
+
+
 
 log "START: Executing adf_custom_startup.sh"
 
@@ -82,6 +97,9 @@ log "** Fix /root files"
 #   log "** Start Syncthing"
 #   /opt/divtools/qnap_cfg/scripts/syncthing_start.sh start
 # fi
+
+log "** Fix /bin/bash"
+fix_bash
 
 # Set sysctl values for Syncthing performance
 sysctl -w net.core.rmem_max=8388608
