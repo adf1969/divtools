@@ -1,0 +1,13 @@
+# Place this line directly under the `command_timeout` entry at the top of the file
+# palette = "catppuccin_macchiato"
+#
+[palettes.divtools]
+hostc_user = "#9A348E"
+hostc_root = "#9a3434"
+dir_bg = "#DA627D"
+dir_fg = "#FFFFFF"
+git_bg = "#1f833a"
+git_fg = ""
+docker_bg = "#06969A"
+time_bg = "#33658A"
+app_bg = "#86BBD8"

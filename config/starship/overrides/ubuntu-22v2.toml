@@ -1,0 +1,6 @@
+
+[custom.sys_symbol]
+symbol = " UBUNTU-22v2 "
+style = "bg:hostc_user"
+format = '[$symbol]($style)'
+when = "true"
