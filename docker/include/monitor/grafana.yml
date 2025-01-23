@@ -1,0 +1,30 @@
+# Environment Vars in Use
+# $TZ : The timezone we run in. Format American/Chicago
+# $DOCKERDIR : Usually the divtools/docker dir
+# $DOCKERDATADIR: Usually the /opt dir
+# $HOSTNAME: defined in .env
+# $GF_SECURITY_ADMIN_USER: defined in .env (default is "admin")
+# $GF_SECURITY_ADMIN_PASSWORD: defined in .env
+# Section Order: CIRPNVEUE
+
+services:
+  grafana:    
+    container_name: grafana
+    image: grafana/grafana:latest
+    restart: always
+    ports:
+      - 3000:3000
+    #networks:
+    volumes:
+      - $DOCKERDATADIR/grafana/data:/var/lib/grafana 
+      - $DOCKERDATADIR/grafana/logs:/var/log/grafana
+    user: "1400:1400" # divix | divix
+    env_file:
+      - $DOCKERDIR/.env        # default .env file for all systems, 
+      - $DOCKERDIR/.env.host   # Host-level ENV vars, overrides .env    
+    environment:
+      # NOTE: This did NOT work. I was requried to login as: admin | admin and change it...not sure why
+      - $GF_SECURITY_ADMIN_USER
+      - $GF_SECURITY_ADMIN_PASSWORD
+      #- GF_LOG_LEVEL=debug
+      #- GF_INSTALL_PLUBINS=

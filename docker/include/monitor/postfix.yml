@@ -1,0 +1,39 @@
+
+# Environment Vars in Use
+# $TZ : The timezone we run in. Format American/Chicago
+# $DOCKERDIR : Usually the divtools/docker dir
+# $DOCKERDATADIR: Usually the /opt dir
+# $HOSTNAME: defined in .envS
+
+## NEED TO FINISH CONFIG HERE
+# See here for details: https://github.com/catatnight/docker-postfix?tab=readme-ov-file
+services:
+  postfix:
+    container_name: postfix
+    image: catatnight/postfix:latest    
+    restart: unless-stopped
+    hostname: monitor
+    #networks:
+    ports:
+      - "25:25"                         # Standard SMTP (opportunistic TLS)
+      - "587:587"                       # Submission port (STARTTLS)
+      - "465:465"                       # SMTPS (SSL/TLS from start)             
+    volumes:
+      - $DOCKERDIR/secrets/postfix:/etc/ssl/postfix:ro
+      - $DOCKERDIR/appdata/monitor/postfix:/etc/postfix    
+    env_file:
+      - $DOCKERDIR/.env        # default .env file for all systems, 
+      - $DOCKERDIR/.env.host   # Host-level ENV vars, overrides .env      
+    environment:
+      - MYHOSTNAME=monitor.divix.biz
+      - MYNETWORKS=127.0.0.0/8,192.168.0.0/24,10.0.0.0/8
+      - MAILDOMAIN=divix.biz                    # Your domain name
+      - RELAYHOST=[smtp.gmail.com]:587          # Gmail SMTP server
+      - SMTP_USER=adf1969@gmail.com:wtmczowbksnqjnvc   
+      - SMTP_TLS_SECURITY_LEVEL=encrypt         # TLS encryption
+      - SMTP_USE_TLS=yes                        # Use TLS for connections
+      - SMTP_SASL_AUTH_ENABLE=yes               # Enable SASL authentication
+      - SMTP_SASL_PASSWORD_MAPS=hash:/etc/postfix/sasl_passwd
+      - SMTP_SASL_SECURITY_OPTIONS=noanonymous  # Security settings
+
+    

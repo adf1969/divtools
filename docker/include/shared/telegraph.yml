@@ -1,0 +1,38 @@
+# Environment Vars in Use
+# $TZ : The timezone we run in. Format American/Chicago
+# $DOCKERDIR : Usually the divtools/docker dir
+# $DOCKERDATADIR: Usually the /opt dir
+# $HOSTNAME: defined in .env
+# $PROMETHEUS_PORT: defined in .env, usually 9091 (since cockpit is on 9090)
+# Section Order: CIRPNVUE
+
+services:
+  # Telegraph - Pull Based Server Agent (for getting data that requires a PULL not a PUSH)
+  telegraf:
+    container_name: telegraf
+    image: telegraf:latest
+    restart: unless-stopped
+    user: divix:999 #you need to find the GID of Docker if not added to Sudo group
+    #networks:      
+    volumes:
+        - '$DOCKERDIR/appdata/$HOSTNAME/telegraf/telegraf.conf:/etc/telegraf/telegraf.conf:ro'
+        - '/:/hostfs:ro' # to monitor docker-vm
+        - '/var/run/docker.sock:/var/run/docker.sock' # to monitor docker containers
+        - '$DOCKERDATADIR/telegraf/mibs:/usr/share/snmp/mibs' # mibs files [e.g., sophos]
+    env_file:
+      - $DOCKERDIR/.env        # default .env file for all systems, 
+      - $DOCKERDIR/.env.host   # Host-level ENV vars, overrides .env
+    environment:
+        - HOST_ETC=/hostfs/etc
+        - HOST_PROC=/hostfs/proc
+        - HOST_SYS=/hostfs/sys
+        - HOST_VAR=/hostfs/var
+        - HOST_RUN=/hostfs/run
+        - HOST_MOUNT_PREFIX=/hostfs
+        - INFLUXDB_HOST
+        - INFLUXDB_PORT
+        - INFLUXDB_API_TOKEN
+        - INFLUXDB_ORG
+        - INFLUXDB_BUCKET
+
+    

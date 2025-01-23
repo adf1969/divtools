@@ -1,0 +1,28 @@
+# Environment Vars in Use
+# $TZ : The timezone we run in. Format American/Chicago
+# $DOCKERDIR : Usually the divtools/docker dir
+# $DOCKERDATADIR: Usually the /opt dir
+# $HOSTNAME: defined in .env
+# $PROMETHEUS_PORT: defined in .env, usually 9091 (since cockpit is on 9090)
+# Section Order: CIRPNVUE
+
+services:
+  graphite:
+    container_name: graphite
+    image: graphiteapp/graphite-statsd    
+    restart: unless-stopped
+    ports:
+      - 8050:80 # nginx
+      - 2003-2004 # carbon receiver - plaintext & pickle
+      - 2023-2024 # carbon aggregator - plaintext & pickle
+      - 8125:8125/udp # statsd
+      - 8126:8126 # statsd admin
+    #networks:      
+    volumes:
+      - $DOCKERDIR/appdata/$HOSTNAME/graphite/configs:/opt/graphite/conf
+      - $DOCKERDIR/appdata/$HOSTNAME/graphite/statsd_config:/opt/statsd/config
+      - $DOCKERDATADIR/graphite/data:/opt/graphite/storage
+    env_file:
+      - $DOCKERDIR/.env        # default .env file for all systems, 
+      - $DOCKERDIR/.env.host   # Host-level ENV vars, overrides .env    
+      

@@ -1,0 +1,27 @@
+# Set the fully qualified domain name of your mail server
+myhostname = nullmail.tn.divix.biz
+
+# Specify the origin domain for outgoing mail
+myorigin = $myhostname
+
+# Set the domain for which this machine is responsible
+mydestination = localhost.localdomain, localhost
+
+# Define which networks are allowed to relay mail through your server
+#mynetworks = 127.0.0.0/8
+
+# Ensure Postfix listens on all network interfaces
+inet_interfaces = all
+
+# Use IPv4 only (or configure for IPv6 as well, if needed)
+inet_protocols = ipv4
+
+# Do not use an external relay host; deliver mail directly
+relayhost = 
+
+# Additional settings for security and performance
+smtpd_banner = $myhostname ESMTP
+biff = no
+append_dot_mydomain = no
+readme_directory = no
+compatibility_level = 2

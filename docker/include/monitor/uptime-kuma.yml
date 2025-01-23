@@ -1,0 +1,25 @@
+# Environment Vars in Use
+# $TZ : The timezone we run in. Format American/Chicago
+# $DOCKERDIR : Usually the divtools/docker dir
+# $DOCKERDATADIR: Usually the /opt dir
+# $HOSTNAME: defined in .env
+# $UPTIME_KUMA_HOST_PORT: defined in .env, usually 3001
+# Section Order: CIRPNVUE
+
+# https://github.com/louislam/uptime-kuma
+
+services:
+  # Uptime Kuma - Status Page & Monitoring Server
+  uptime-kuma:
+    container_name: uptime-kuma
+    image: louislam/uptime-kuma
+    restart: unless-stopped
+    ports:
+      - $UPTIME_KUMA_HOST_PORT:3001
+    #networks:
+    volumes:
+      - $DOCKERDATADIR/uptime-kuma:/app/data
+    env_file:
+      - $DOCKERDIR/.env        # default .env file for all systems, 
+      - $DOCKERDIR/.env.host   # Host-level ENV vars, overrides .env      
+    
