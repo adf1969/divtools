@@ -1,0 +1,25 @@
+# Environment Vars in Use
+# $TZ : The timezone we run in. Format American/Chicago
+# $DOCKERDIR : Usually the divtools/docker dir
+# $DOCKERDATADIR: Usually the /opt dir
+# $HOSTNAME: defined in .env
+# $PROMETHEUS_PORT: defined in .env, usually 9091 (since cockpit is on 9090)
+# Section Order: CIRPNVUE
+
+services:
+  # Stores Log files scarped by Loki 
+  promtail:
+    container_name: promtail
+    image: grafana/promtail:main
+    restart: unless-stopped
+    ports:
+      - "1514:1514" # this is only needed if you are going to send syslogs
+    # networks:
+    env_file:
+      - $DOCKERDIR/.env        # default .env file for all systems, 
+      - $DOCKERDIR/.env.host   # Host-level ENV vars, overrides .env
+    volumes:
+      - /var/log:/var/log
+      - $DOCKERDIR/appdata/$HOSTNAME/promtail:/etc/promtail    
+    command: -config.file=/etc/promtail/promtail-config.yml
+    

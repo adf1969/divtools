@@ -1,0 +1,27 @@
+# Environment Vars in Use
+# $TZ : The timezone we run in. Format American/Chicago
+# $DOCKERDIR : Usually the divtools/docker dir
+# $DOCKERDATADIR: Usually the /opt dir
+
+services:
+  netbird:
+    container_name: netbird
+    image: netbirdio/netbird:latest    
+    hostname: ubuntu-22v2    
+    restart: unless-stopped
+    #profiles: ["core", "all"]
+    network_mode: host # Ensures direct network access
+    command: ["netbird", "up"] # Automatically starts the Netbird client, when the container starts
+    env_file:
+      - $DOCKERDIR/.env        # default .env file for all systems, 
+      - $DOCKERDIR/.env.host   # Host-level ENV vars, overrides .env    
+    environment:
+      - NETBIRD_SETUP_KEY=$NETBIRD_SETUP_KEY # Pulled from .env file
+    volumes:
+      - $DOCKERDATADIR/netbird-client:/etc/netbird # Persistent data for Netbird
+
+    cap_add:
+      - NET_ADMIN # Necessary for network configuration
+      - SYS_ADMIN # Necessary for System Admin
+      - SYS_RESOURCE # Necessary for System Resource Access    
+

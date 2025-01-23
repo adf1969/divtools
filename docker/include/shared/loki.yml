@@ -1,0 +1,24 @@
+# Environment Vars in Use
+# $TZ : The timezone we run in. Format American/Chicago
+# $DOCKERDIR : Usually the divtools/docker dir
+# $DOCKERDATADIR: Usually the /opt dir
+# $HOSTNAME: defined in .env
+# $PROMETHEUS_PORT: defined in .env, usually 9091 (since cockpit is on 9090)
+# Section Order: CIRPNVUE
+
+services:
+  loki:
+    # Query Log Files
+    container_name: loki
+    image: grafana/loki:main
+    restart: unless-stopped
+    ports:
+      - "3100:3100"
+    #networks:
+    env_file:
+      - $DOCKERDIR/.env        # default .env file for all systems, 
+      - $DOCKERDIR/.env.host   # Host-level ENV vars, overrides .env
+    volumes:
+      - $DOCKERDIR/appdata/$HOSTNAME/loki:/etc/loki    
+    command: -config.file=/etc/loki/loki-config.yml
+    

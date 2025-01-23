@@ -1,0 +1,33 @@
+# Environment Vars in Use
+# $TZ : The timezone we run in. Format American/Chicago
+# $DOCKERDIR : Usually the divtools/docker dir
+# $DOCKERDATADIR: Usually the /opt dir
+# $HOSTNAME: defined in .env
+# $PROMETHEUS_PORT: defined in .env, usually 9091 (since cockpit is on 9090)
+# Section Order: CIRPNVUE
+
+services:
+  # Prometheus - Time Sync Databaase
+  prometheus: 
+    container_name: prometheus
+    image: prom/prometheus:latest 
+    restart: unless-stopped 
+    ports: 
+      - $PROMETHEUS_PORT:9090 
+    #networks:      
+    volumes: 
+      - $DOCKERDIR/appdata/$HOSTNAME/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml 
+      - $DOCKERDATADIR/prometheus:/prometheus 
+    user: "1400" 
+    env_file:
+      - $DOCKERDIR/.env        # default .env file for all systems, 
+      - $DOCKERDIR/.env.host   # Host-level ENV vars, overrides .env    
+    environment: 
+      - PUID=1400
+      - PGID=1400 
+    command: 
+      - '--config.file=/etc/prometheus/prometheus.yml' 
+      - '--storage.tsdb.path=/prometheus' 
+      - '--web.console.libraries=/etc/prometheus/console_libraries' 
+      - '--web.console.templates=/etc/prometheus/consoles' 
+      - '--web.enable-lifecycle' 

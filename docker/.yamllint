@@ -1,0 +1,13 @@
+extends: default
+
+rules:
+  document-start: disable # Disables the "---" document start rule
+  line-length:            # Adjusts the line-length rule
+    max: 180              # Increases the max line length
+    level: warning        # Treats violations as warnings
+  trailing-spaces: disable # Ignores trailing spaces
+  comments:               # Adjusts the comments rule
+    require-starting-space: false # Ignores missing starting space in comments
+    min-spaces-from-content: 0    # Allows zero spaces between content and comments
+  new-line-at-end-of-file: disable # Disables new line at EOF checks
+  comments-indentation: disable # Disables checks for comment indentation
