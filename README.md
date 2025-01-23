@@ -20,6 +20,20 @@ The structure for the divtools files are as follows:
 
 - **scripts**: Contains common scripts for use on all systems.
 
+- **docker**: contains docker compose files for the local docker instance
+  - **appdata**
+  - **archive**
+  - **include**: folder contains docker-compose yml files for including in main docker-compose-<HOSTNAME>.yml file
+    - **<HOSTNAME>**: folder contains <HOSTNAME> folders which each contain host-specific yml files
+      - **<app>**: folder contains host specific full docker-compose yml files. 
+        These docker-compose files are NOT called by the main docker-compose-<HOSTNAME>.yml file.
+        These must be run by being in this dir and running docker compose, or by calling an alias defined to do that.
+    - **shared**: folder contains common shared docker-compose yml files.
+  - **local**: folder contains files used for local docker use.
+  - **secrets**: folder contains secret files.
+  - **secrets_example**: folder that contains examples of secrets files.
+  - **docker-compose-<HOSTNAME>.yml**: This is the local docker file, run by the alias dcrun.
+
 - **dotfiles**: contains various login/.* files used for configuring shells:
   - **.bash_aliases**
   - **.bash_profile**

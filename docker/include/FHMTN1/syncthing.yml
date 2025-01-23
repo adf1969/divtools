@@ -10,10 +10,11 @@ services:
     container_name: syncthing
     hostname: $HOSTNAME
     network_mode: host # Ensures direct network access
+    env_file:
+      - $DOCKERDIR/.env        # default .env file for all systems, 
+      - $DOCKERDIR/.env.host   # Host-level ENV vars, overrides .env        
     environment:
       - TZ=$TZ
-      #- PUID=1008
-      #- PGID=1008
       - PUID=0
       - PGID=0
 

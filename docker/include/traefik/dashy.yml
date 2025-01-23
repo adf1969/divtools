@@ -31,8 +31,8 @@ services:
     environment:
       #- NODE_ENV=production # Uncomment once you want to run in Production Mode.
       # Specify your user ID and group ID. You can find this by running `id -u` and `id -g`
-      - UID=1000
-      - GID=1000
+      - UID=1400
+      - GID=1400
     # traefik labels
     labels:
       - "traefik.enable=true"

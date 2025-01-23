@@ -20,6 +20,9 @@ services:
       - $DOCKERDATADIR/homarr/icons:/app/public/icons
       - $DOCKERDATADIR/homarr/data:/data
       - $DOCKERDATADIR/homarr/imgs/backgrounds:/app/public/imgs/backgrounds
+    env_file:
+      - $DOCKERDIR/.env        # default .env file for all systems, 
+      - $DOCKERDIR/.env.host   # Host-level ENV vars, overrides .env      
     environment:
       - DOCKER_HOST=tcp://socket-proxy:2375
       - TZ=$TZ

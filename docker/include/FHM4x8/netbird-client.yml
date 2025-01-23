@@ -2,6 +2,14 @@
 # $TZ : The timezone we run in. Format American/Chicago
 # $DOCKERDIR : Usually the divtools/docker dir
 # $DOCKERDATADIR: Usually the /opt dir
+#
+# ENV - ADD TO EVER FILE
+# To Add, from $DOCKERDIR dir
+# ln -s secrets/.env.defaults .env
+# ln -s secrets/.env.$HOSTNAME .env.host
+# env_file:
+#   - $DOCKERDIR/.env        # default .env file for all systems, 
+#   - $DOCKERDIR/.env.host   # Host-level ENV vars, overrides .env
 
 services:
   netbird:
@@ -11,6 +19,9 @@ services:
     #profiles: ["core", "all"]
     network_mode: host # Ensures direct network access
     command: ["netbird", "up"] # Automatically starts the Netbird client, when the container starts
+    env_file:
+      - $DOCKERDIR/.env        # default .env file for all systems, 
+      - $DOCKERDIR/.env.host   # Host-level ENV vars, overrides .env    
     environment:
       - NETBIRD_SETUP_KEY=${NETBIRD_SETUP_KEY} # Pulled from .env file
     volumes:

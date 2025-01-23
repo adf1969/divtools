@@ -26,6 +26,40 @@ container_exists() {
   fi
 }
 
+# Source Dotfiles
+alias sep='source /etc/profile'
+alias sbrc='source ~/.bashrc'
+alias sba='source $DIVTOOLS/dotfiles/.bash_aliases'
+alias sbp='source $DIVTOOLS/dotfiles/.bash_profile'
+
+# Script Folder Aliases
+alias chgid='$DIVTOOLS/scripts/chgid.sh'
+alias ffugid='$DIVTOOLS/scripts/find_ugid_files.sh'
+
+# GENERAL QOL ALIASES
+# navigation
+alias ..='cd ..'
+alias ...='cd ../..'
+alias .3='cd ../../..'
+alias .4='cd ../../../..'
+alias .5='cd ../../../../..'
+# adding flags
+alias df='df -h'               # human-readable sizes
+alias free='free -m'           # show sizes in MB
+
+# ps
+alias psa="ps auxf"
+alias psgrep="ps aux | grep -v grep | grep -i -e VSZ -e"
+alias psmem='ps auxf | sort -nr -k 4'
+alias pscpu='ps auxf | sort -nr -k 3'
+
+
+
+
+# DIVTOOL QOL ALIASES
+alias dt='cd $DIVTOOLS'
+alias dtd='cd $DOCKERDIR'
+alias pdiv='sudo chown -R divix $DOCKERDIR $DIVTOOLS/config $DIVTOOLS/scripts'
 
 # Utility Aliases
 #alias su='sudo -u admin sh'
@@ -34,9 +68,26 @@ alias fgrep='fgrep --color=auto'
 alias grep='grep --color=auto'
 alias ls='ls --color=auto -la'
 alias l='ls -CF'
-alias la='ls -A'
+alias la='ls -al'
 alias ll='ls -alF'
 alias h='history'
+alias gid='getent group'
+alias alg='alias | grep -i '
+# Match all files and color everything after the #. This is to allow ARGS to be shown for the various aliases and found with: "algg <char>"
+alias algg="cat $DIVTOOLS/dotfiles/.bash_aliases $DIVTOOLS/dotfiles/.bash_profile | grep --color=always -E '#.*$' | grep alias | grep -i "
+
+# EZA
+
+# Changing "ls" to "eza"
+if has_eza; then
+  alias ls='eza -al --color=always --group --group-directories-first' # my preferred listing
+  alias la='eza -a --color=always --group --group-directories-first'  # all files and dirs
+  alias ll='eza -l --color=always --group --group-directories-first'  # long format
+  alias lt='eza -aT --color=always --group --group-directories-first' # tree listing
+  alias l.='eza -al --color=always --group --group-directories-first ../' # ls on the PARENT directory
+  alias l..='eza -al --color=always --group --group-directories-first ../../' # ls on directory 2 levels up
+  alias l...='eza -al --color=always --group --group-directories-first ../../../' # ls on directory 3 levels up
+fi
 
 # Title Aliases
 alias settitle='source $DIVTOOLS/scripts/settitle'
@@ -83,10 +134,20 @@ if [ -f $DOCKERFILE ] ; then
   # DOCKER COMPOSE TRAEFIK 2 - All docker-compose commands start with "dc" 
   case "${ID}" in
     ds918): # synology at this point uses an old version of docker. Therefore, 'docker-compose' instead of 'docker compose'
-      alias dcrun='sudo docker-compose -f $DOCKERDIR/docker-compose-$HOSTNAME.yml' # /volume1/docker symlinked to /var/services/homes/user/docker
+      alias dcrun='source $DOCKERDIR/.env.host && sudo docker-compose -f $DOCKERDIR/docker-compose-$HOSTNAME.yml' # /volume1/docker symlinked to /var/services/homes/user/docker
     ;;
     *):     # Every Other Normal Server
-      alias dcrun='sudo docker compose --profile all -f $DOCKERDIR/docker-compose-$HOSTNAME.yml'
+      # Original dcrun
+      #alias dcrun='sudo docker compose --profile all -f $DOCKERDIR/docker-compose-$HOSTNAME.yml'      
+
+      # Add hostname explictly
+      #alias dcrun='HOSTNAME=$(hostname) sudo docker compose --profile all -f $DOCKERDIR/docker-compose-$HOSTNAME.yml'      
+
+      # Pass user .env.host to sudo/dc. This gets $HOSTNAME into the global dc-$HOSTNAME.yml file
+      alias dcrun='source $DOCKERDIR/.env.host && sudo -E docker compose --profile all -f $DOCKERDIR/docker-compose-$HOSTNAME.yml'
+      #alias dcrun='source $DOCKERDIR/.env.host && sudo -E docker compose -f $DOCKERDIR/docker-compose-$HOSTNAME.yml'      
+      #alias dcrun='sudo docker compose --profile all -f $DOCKERDIR/docker-compose-$HOSTNAME.yml'
+      
     ;;
   esac
 
@@ -99,6 +160,7 @@ if [ -f $DOCKERFILE ] ; then
   alias dcstart='dcrun start ' # usage: dcstart container_name
   alias dcpull='dcrun pull' # usage: dcpull to pull all new images or dcpull container_name
   alias traefiklogs='tail -f /opt/traefik/logs/traefik.log' # tail traefik logs
+  alias dcchk='$DIVTOOLS/scripts/dt_yamlcheck.sh -show-errors $DOCKERDIR/docker-compose-$HOSTNAME.yml'
 
   # Manage "core" services as defined by profiles in docker compose
   alias startcore='sudo docker compose --profile core -f $DOCKERDIR/docker-compose-$HOSTNAME.yml start'
@@ -120,7 +182,7 @@ if [ -f $DOCKERFILE ] ; then
   alias stopdbs='sudo docker compose --profile dbs -f $DOCKERDIR/docker-compose-$HOSTNAME.yml stop'
   alias createdbs='sudo docker compose --profile dbs -f $DOCKERDIR/docker-compose-$HOSTNAME.yml up -d --build --remove-orphans'
   alias startdbs='sudo docker compose --profile dbs -f $DOCKERDIR/docker-compose-$HOSTNAME.yml start'
-
+  
 else
   # No DOCKER_LOCALFILE - docker files all run according to folder
   alias docker-compose='docker compose'
@@ -231,7 +293,7 @@ if container_exists "syncthing"; then
   alias ststart='dcstart syncthing'
   alias strestart='dcrestart syncthing'
   alias ststop='dcstop syncthing'
-  alias ststatus="dpsn | grep syncthing"
+  alias ststatus='dpsn | grep syncthing'
   alias stlogs='docker logs -f syncthing'
 
 else
@@ -243,14 +305,109 @@ else
   alias stlogs='journalctl -eu syncthing'
 fi
 
+# Samba
+if [ -f ~/.smb_credentials ]; then
+  alias smbcacls="smbcacls --authentication-file=$HOME/.smb_credentials "
+fi
+
+# Starship
+if has_starship; then
+  alias bsst="build_starship_toml"
+fi
+
+if has_zfs; then
+  alias sslsz="zfs list -t snapshot"
+fi
+
+if has_qm; then
+  alias ssqmstop="qm stop" # <VMID>
+  alias ssqmstart="qm start" # <VMID>
+
+  alias qmstop="qm stop" # <VMID>  | Power Off
+  alias qmshut="qm shutdown" # <VMID> | Clean Shutdown
+  alias qmstart="qm start" # <VMID>
+  alias qms="qm status" # <VMID> |--verbose|  
+  alias qmrb="qm rollback" # <VMID> <SNAPSHOT-NAME> |--start|
+
+  # QM Functions
+  qmid() { # alias function: qmid <vmid>
+      if [ $# -eq 0 ]; then
+          echo "Usage: qmid <vmid>"
+          return 1
+      fi
+
+      local vmid="$1"
+      local vm_name
+
+      vm_name=$(qm config "$vmid" 2>/dev/null | grep '^name:' | awk '{print $2}')
+      if [ -z "$vm_name" ]; then
+          echo "Error: Could not find VM with ID $vmid"
+          return 1
+      fi
+
+      echo "$vm_name"
+  }
+
+  qmls() { # alias function: qmls <vmid>
+      if [ $# -eq 0 ]; then
+          echo "Usage: qmls <vmid>"
+          return 1
+      fi
+
+      local vmid="$1"
+      local vm_name
+      local snapshots
+
+      # Get the VM name
+      vm_name=$(qm config "$vmid" 2>/dev/null | grep '^name:' | awk '{print $2}')
+      if [ -z "$vm_name" ]; then
+          echo "Error: Could not find VM with ID $vmid"
+          return 1
+      fi
+
+      echo "VM Name: $vm_name"
+
+      # Get the list of snapshots
+      snapshots=$(qm listsnapshot "$vmid" 2>/dev/null)
+      if [ $? -ne 0 ]; then
+          echo "Error: Unable to list snapshots for VM ID $vmid"
+          return 1
+      fi
+
+      echo "Snapshots:"
+      echo "$snapshots"
+  }
+
+
+
+fi
+
+# HOSTNAME Specific Aliases
+
+case "${HOSTNAME_U}" in
+  EDMS):
+    alias dtm='cd ${DOCKERDIR}/include/edms/mayan'
+    # For managing the docker-compose file in mayan folder
+    alias docker-compose='docker compose'
+    alias dc='docker compose'
+    alias dcup='docker compose up -d'
+    alias distartpolicy='docker inspect --format '{{.HostConfig.RestartPolicy.Name}}'' #name#
+    alias dstart='docker start' #name#
+    alias dsetrestart='docker update --restart unless-stopped' #name#  
+
+  ;;
+esac
+
 # OS Specific Aliases
 case "${ID}" in
   debian|ubuntu):
     alias updalted='update-alternatives --config editor'
+    alias sup='sudo -u root bash --rcfile /etc/profile'
 
   ;;
   qts):     # QNAP
-    alias su='sudo -u admin -i'
-
+    #alias su='sudo -u admin -i'
+    alias su='sudo -u admin bash --rcfile /etc/profile'
+    alias sup='sudo -u admin bash --rcfile /etc/profile'
   ;;
 esac

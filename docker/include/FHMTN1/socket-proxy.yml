@@ -29,6 +29,9 @@ services:
       - "2375:2375" # Do not expose this to the internet with port forwarding
     volumes:
       - "/var/run/docker.sock:/var/run/docker.sock"
+    env_file:
+      - $DOCKERDIR/.env        # default .env file for all systems, 
+      - $DOCKERDIR/.env.host   # Host-level ENV vars, overrides .env          
     environment:
       - LOG_LEVEL=info # debug,info,notice,warning,err,crit,alert,emerg
       ## Variables match the URL prefix (i.e. AUTH blocks access to /auth/* parts of the API, etc.).

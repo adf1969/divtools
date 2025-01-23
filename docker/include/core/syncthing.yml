@@ -11,6 +11,9 @@ services:
     hostname: $HOSTNAME
     restart: unless-stopped
     network_mode: host # Ensures direct network access
+    env_file:
+      - $DOCKERDIR/.env        # default .env file for all systems, 
+      - $DOCKERDIR/.env.host   # Host-level ENV vars, overrides .env
     environment:
       - TZ=$TZ
       #- PUID=1008

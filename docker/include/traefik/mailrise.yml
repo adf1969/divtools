@@ -16,6 +16,9 @@ services:
     # I MUST hard-code the UserKey & API Token in the mailrise.conf file
     # What I did instead, is we STILL update the .env file, but now I have a script that runs
     # that copies the mailrise.conf > /opt/mailrise/mailrise.conf and pre-process that file to FIX it as it should
+    env_file:
+      - $DOCKERDIR/.env        # default .env file for all systems, 
+      - $DOCKERDIR/.env.host   # Host-level ENV vars, overrides .env    
     environment:
       - PUSHOVER_USER_KEY="${PUSHOVER_USER_KEY}"
       - PUSHOVER_MAILRISE_API_TOKEN="${PUSHOVER_MAILRISE_API_TOKEN}"
