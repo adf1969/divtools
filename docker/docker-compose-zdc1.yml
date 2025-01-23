@@ -47,6 +47,7 @@ include:
   ### DO NOT ADD PORTAINER ON Zentyal systems - they already include that
   #- include/$HOSTNAME/portainer.yml
   - include/$HOSTNAME/syncthing.yml
+  - include/$HOSTNAME/netbird-client.yml
   #- include/shared/node-exporter.yml
   #- include/shared/cadvisor.yml
 
