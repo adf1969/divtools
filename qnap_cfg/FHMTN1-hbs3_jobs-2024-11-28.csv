@@ -1,0 +1,26 @@
+Job Name,Sync Direction,Local Folder,Remote Folder,Frequency
+KM-QNapTest 2-Way,twoway,Google/km.qnaptest,/My Drive,continuous
+GD AVC-QNap 2-Way Google,twoway,Google/avcorp.km/AVAK-Company,/My Drive/AVAK-Company,continuous
+GD AVC-QNap 2-Way Google,twoway,Google/avcorp.km/AVAK-Mgmt,/My Drive/AVAK-Mgmt,continuous
+GD AVC-QNap 2-Way Google,twoway,Google/avcorp.km/AVC-Company,/My Drive/AVC-Company,continuous
+GD AVC-QNap 2-Way Google,twoway,Google/avcorp.km/AVC-Mgmt,/My Drive/AVC-Mgmt,continuous
+GD AVC-QNap 2-Way Google,twoway,Google/avcorp.km/AVC-SharedDocs,/My Drive/AVC-SharedDocs,continuous
+GD AVC-QNap 2-Way Google,twoway,Google/avcorp.km/CVG-Company,/My Drive/CVG-Company,continuous
+GD AVC-QNap 2-Way Google,twoway,Google/avcorp.km/CVG-Mgmt,/My Drive/CVG-Mgmt,continuous
+GD AVC-QNap 2-Way Google,twoway,Google/avcorp.km/FS-ARCHIVE,/My Drive/FS-ARCHIVE,continuous
+GD AVC-QNap 2-Way Google,twoway,Google/avcorp.km/FS-Company,/My Drive/FS-Company,continuous
+GD AVC-QNap 2-Way Google,twoway,Google/avcorp.km/KAVA-Mgmt,/My Drive/KAVA-Mgmt,continuous
+GD AVC-QNap 2-Way Google,twoway,Google/avcorp.km/AVC-Users,/My Drive/AVC-Users,continuous
+SHARE - FHMTN1 to FHM4x8,remote2local,SHARE/DOCUMENTS,/SHARE/DOCUMENTS,cron
+2-Way SHARE - FHMTN1 to FHM4x8,twoway,SHARE/DOCUMENTS,/SHARE/DOCUMENTS,cron
+2-Way SHARE - FHMTN1 to FHM4x8,twoway,SHARE/MEDIA,/SHARE/MEDIA,cron
+2-Way SHARE - FHMTN1 to FHM4x8,twoway,SHARE/NWBACKUP,/SHARE/NWBACKUP,cron
+2-Way SHARE - FHMTN1 to FHM4x8,twoway,SHARE/NWMGMT,/SHARE/NWMGMT,cron
+2-Way SHARE - FHMTN1 to FHM4x8,twoway,SHARE/SW,/SHARE/SW,cron
+2-Way SHARE - FHMTN1 to FHM4x8,twoway,SHARE/USERS,/SHARE/USERS,cron
+OD AVC-QNap Active Mirror OneDrive,remote2local,OneDrive/avcorp.km,/OneDrive,continuous
+GD AVC-QNap 2-Way Google - SW,twoway,Google/avcorp.km/AVC-SW,/My Drive/AVC-SW,continuous
+GD ADF-QNAP 2-Way,twoway,SHARE/Google/adf1969/FIELDS-Personal,/My Drive/FIELDS-Personal,continuous
+OD One-Way Sync AVC Test,local2remote,AVCORP_KM/AVC-Company,/OneDrive/AVC-Company,continuous
+OD One-Way Sync AVC Test,local2remote,AVCORP_KM/AVC-Mgmt,/OneDrive/AVC-Mgmt,continuous
+OD One-Way Sync AVC Test,local2remote,AVCORP_KM/AVC-SharedDocs,/OneDrive/AVC-SharedDocs,continuous
