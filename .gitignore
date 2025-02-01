@@ -21,3 +21,4 @@ docker/appdata/dashy/user-data/config-backups/conf-1738190560.backup.yml
 docker/appdata/dashy/user-data/config-backups/conf-1738372167.backup.yml
 docker/appdata/dashy/user-data/config-backups/conf-1738372325.backup.yml
 config/tmux/tmux.conf.out
+*.swp
