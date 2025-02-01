@@ -1,0 +1,285 @@
+---
+# Page meta info, like heading, footer text and nav links
+pageInfo:
+  title: Traefik Links
+  description: Links use tnlocal.divix.biz. Entries with "!!" are PrivateIPs and need to have Traefik Routers created for them.
+  navLinks:
+    - title: PrivateIPs
+      path: "/"
+
+# Optional app settings and configuration
+appConfig:
+  theme: colorful
+
+# Main content - An array of sections, each containing an array of items
+sections:
+  - name: Media & Entertainment
+    items: []
+    displayData:
+      sortBy: default
+      rows: 1
+      cols: 1
+      collapsed: false
+      hideForGuests: false
+    icon: fas fa-photo-video
+  - name: Networking
+    icon: fas fa-network-wired
+    items:
+      - title: Pi-Hole
+        description: DNS Ad-Blocking
+        icon: pi-hole.png
+        url: http://pihole/admin/login.php
+        target: newtab
+        statusCheck: true
+        statusCheckUrl: http://192.168.9.111/admin/login.php
+        id: 0_1064_pihole
+      - title: Traefik
+        description: Traefik Reverse Proxy
+        icon: traefik.png
+        url: https://traefik.tnlocal.divix.biz/dashboard/#/
+        target: newtab
+        statusCheck: true
+        id: 1_1064_traefik
+    displayData:
+      sortBy: default
+      rows: 1
+      cols: 1
+      collapsed: false
+      hideForGuests: false
+  - name: Network Monitoring
+    icon: fas fa-tachometer-alt-fast
+    displayData:
+      sortBy: default
+      rows: 1
+      cols: 1
+      collapsed: false
+      hideForGuests: false
+    items:
+      - title: "!! Grafana"
+        description: Grafana [monitor]
+        icon: grafana.png
+        url: http://192.168.9.104:3000/
+        target: newtab
+        statusCheck: true
+        statusCheckAllowInsecure: true
+        id: 0_1840_grafana
+      - title: "!! InfluxDB"
+        description: InfluxDB [monitor]
+        icon: influxdb.png
+        url: http://192.168.9.104:8086/
+        target: newtab
+        statusCheck: true
+        statusCheckAllowInsecure: true
+        id: 1_1840_influxdb
+      - title: "!! Prometheus"
+        description: Prometheus [monitor]
+        icon: prometheus.png
+        url: http://192.168.9.104:9091/
+        target: newtab
+        statusCheck: true
+        statusCheckAllowInsecure: true
+        id: 2_1840_prometheus
+      - title: "!! NetBox"
+        description: IPAM Network Config Mgmt [monitor]
+        icon: netbox.png
+        url: http://192.168.9.104:8080/
+        target: newtab
+        statusCheck: true
+        id: 3_1840_netbox
+  - name: Servers/VM/NW Mgmt
+    icon: fas fa-monitor-heart-rate
+    displayData:
+      sortBy: default
+      rows: 1
+      cols: 1
+      collapsed: false
+      hideForGuests: false
+    items:
+      - title: TNHL01
+        description: Proxmox Server TNHL01
+        icon: proxmox.png
+        url: https://tnhl01.tnlocal.divix.biz
+        target: newtab
+        statusCheck: true
+        statusCheckAllowInsecure: true
+        id: 0_1605_tnhl
+      - title: "!! TNHL02"
+        description: Proxmox Server TNHL01
+        icon: proxmox.png
+        url: https://192.168.9.150:8006/
+        target: newtab
+        statusCheck: true
+        statusCheckAllowInsecure: true
+        id: 1_1605_tnhl
+      - title: "!! QNAP:FHMTN1"
+        description: QNAP WebUI FHMTN1
+        icon: qnap-alt.png
+        url: http://192.168.9.85:8080/
+        target: newtab
+        statusCheck: true
+        id: 2_1605_qnapfhmtn
+      - title: "!! QNAP:FHM4x8"
+        description: QNAP WebUI FHM4x8
+        icon: qnap-alt.png
+        url: http://192.168.9.87:8080/
+        target: newtab
+        statusCheck: true
+        id: 3_1605_qnapfhmx
+      - title: "!! ZDC1"
+        description: Zentyal NW Domain Controller [TNHL01]
+        icon: windows-admin-center.jpg
+        url: https://192.168.9.201:8443/
+        target: newtab
+        statusCheck: true
+        statusCheckAllowInsecure: true
+        id: 4_1605_zdc
+      - title: "!! PBS (tnhl01)"
+        description: Proxmox Backup Server [TNHL01]
+        icon: proxmox-light.png
+        url: https://192.168.9.101:8007/
+        target: newtab
+        statusCheck: true
+        statusCheckAllowInsecure: true
+        id: 5_1605_pbstnhl
+  - name: Home Control
+    icon: fas fa-house-signal
+    displayData:
+      sortBy: default
+      rows: 1
+      cols: 1
+      collapsed: false
+      hideForGuests: false
+    items: []
+  - name: Productivity
+    icon: fas fa-bookmark
+    displayData:
+      sortBy: default
+      rows: 1
+      cols: 1
+      collapsed: false
+      hideForGuests: false
+    items: []
+  - name: Dashy Docs
+    icon: far fa-rocket
+    displayData:
+      sortBy: default
+      rows: 1
+      cols: 1
+      collapsed: false
+      hideForGuests: false
+    items:
+      - title: GitHub
+        description: Source Code, Issues and Pull Requests
+        icon: fab fa-github-alt
+        url: https://github.com/lissy93/dashy
+        target: newtab
+        id: 0_930_github
+      - title: Docs
+        description: Configuring & Usage Documentation
+        icon: far fa-book
+        url: https://dashy.to/docs
+        target: newtab
+        provider: Dashy.to
+        statusCheck: true
+        id: 1_930_docs
+      - title: WalkXCode GH
+        description: Dashboard Icon List
+        icon: far fa-rocket
+        url: https://github.com/walkxcode/dashboard-icons
+        target: newtab
+        id: 2_930_walkxcodegh
+      - title: WalkXCode Icons
+        description: Page to Display All Icons
+        icon: far fa-rocket
+        url: https://github.com/walkxcode/dashboard-icons/blob/main/ICONS.md
+        target: newtab
+        id: 3_930_walkxcodeicons
+      - title: FontAwesome Icons
+        description: Searchable Font Awesome Icon Library
+        icon: si-fontawesome
+        url: https://fontawesome.com/icons
+        target: newtab
+        id: 4_930_fontawesomeicons
+      - title: SimpleIcons
+        description: Searchable Icon Library
+        icon: si-simpleicons
+        url: https://simpleicons.org/
+        target: newtab
+        statusCheckUrl: https://simpleicons.org/
+        statusCheck: true
+        id: 5_930_simpleicons
+      - title: Ex Conf.YML
+        description: Example Config Files for Dashy
+        icon: si-yaml
+        url: https://gist.github.com/Lissy93/000f712a5ce98f212817d20bc16bab10
+        target: newtab
+        id: 6_930_exconfyml
+      - title: Sub-Pages Issue
+        url: https://github.com/Lissy93/dashy/issues/1258
+        target: newtab
+        id: 7_930_subpagesissue
+  - name: Syncthing
+    icon: syncthing.png
+    displayData:
+      sortBy: default
+      rows: 1
+      cols: 1
+      collapsed: false
+      hideForGuests: false
+    items:
+      - title: FHMTN1
+        icon: syncthing.png
+        url: https://sync-fhmtn1.tnlocal.divix.biz/
+        target: newtab
+        statusCheck: true
+        statusCheckAllowInsecure: true
+        id: 0_951_fhmtn
+      - title: FHM4x8
+        icon: syncthing.png
+        url: https://sync-fhm4x8.tnlocal.divix.biz/
+        target: newtab
+        statusCheck: true
+        statusCheckAllowInsecure: true
+        id: 1_951_fhmx
+      - title: "!! TNHL01"
+        icon: syncthing.png
+        url: https://192.168.9.100:8384/
+        target: newtab
+        statusCheck: true
+        statusCheckAllowInsecure: true
+        id: 2_951_tnhl
+      - title: "!! traefik"
+        icon: syncthing.png
+        url: https://192.168.9.103:8384/
+        target: newtab
+        statusCheck: true
+        statusCheckAllowInsecure: true
+        id: 3_951_traefik
+      - title: "!! monitor"
+        icon: syncthing.png
+        url: https://192.168.9.104:8384/
+        target: newtab
+        statusCheck: true
+        statusCheckAllowInsecure: true
+        id: 4_951_monitor
+      - title: "!! zdc1"
+        icon: syncthing.png
+        url: https://192.168.9.201:8384/
+        target: newtab
+        statusCheck: true
+        statusCheckAllowInsecure: true
+        id: 5_951_zdc
+      - title: "!! pihole"
+        icon: syncthing.png
+        url: https://192.168.9.111:8384/
+        target: newtab
+        statusCheck: true
+        statusCheckAllowInsecure: true
+        id: 6_951_pihole
+      - title: "!! Ubuntu-22v2"
+        icon: syncthing.png
+        url: https://192.168.9.141:8384/
+        target: newtab
+        statusCheck: true
+        statusCheckAllowInsecure: true
+        id: 7_951_ubuntuv

@@ -1,0 +1,37 @@
+// Put your custom themes here.
+// Don't forget to also put your theme name into the config
+// E.g: appConfig: cssThemes: [ 'my-theme' ]
+
+// Example theme:
+// html[data-theme='my-theme'] {
+//   --primary: #00CCB4;
+//   --background: #141b33;
+//   --background-darker: #060913;
+// }
+
+// For more info, see: https://github.com/Lissy93/dashy/blob/master/docs/theming.md
+
+
+html[data-theme='nord-frost-tl'] {
+    --primary: #D8DEE9;
+    --background: #52513b;
+    --background-darker: #2E3440;
+    --item-background: #5e5e43;
+    --item-background-hover: #5a5a50;
+
+    .collapsable:nth-child(1n) {
+        background: #babd9b;
+    }
+
+    .collapsable:nth-child(2n) {
+        background: #d0c988;
+    }
+
+    .collapsable:nth-child(3n) {
+        background: #beb76f;
+    }
+
+    .collapsable:nth-child(4n) {
+        background: #ac9e5e;
+    }
+}
