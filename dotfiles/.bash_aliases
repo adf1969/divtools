@@ -59,7 +59,7 @@ alias pscpu='ps auxf | sort -nr -k 3'
 # DIVTOOL QOL ALIASES
 alias dt='cd $DIVTOOLS'
 alias dtd='cd $DOCKERDIR'
-alias pdiv='sudo chown -R divix $DOCKERDIR $DIVTOOLS/config $DIVTOOLS/scripts'
+alias pdiv='sudo chown -R divix $DOCKERDIR $DIVTOOLS/config $DIVTOOLS/scripts $DIVTOOLS/dotfiles $DIVTOOLS/.git'
 
 # Utility Aliases
 #alias su='sudo -u admin sh'
@@ -102,6 +102,10 @@ alias dlistrp='$DIVTOOLS/scripts/list_restart_policies.sh'
 
 # Syncthing
 alias stfc='find . -type f -not -path "*/.stversions/*" -name "*sync-conflict*"'
+
+# DASHY
+alias fdicon='find $DOCKERDIR/appdata/dashy/dashboard-icons/png -printf "%f\n" | grep -i ' # Find Dashy Icons, Usage: dicon <icon name>
+alias fdicons=fdicon
 
 # VIM Aliases
 #alias vi='nvim'
@@ -183,6 +187,8 @@ if [ -f $DOCKERFILE ] ; then
   alias createdbs='sudo docker compose --profile dbs -f $DOCKERDIR/docker-compose-$HOSTNAME.yml up -d --build --remove-orphans'
   alias startdbs='sudo docker compose --profile dbs -f $DOCKERDIR/docker-compose-$HOSTNAME.yml start'
   
+  # Generic Docker Compose Aliaes
+  alias dc='docker compose'
 else
   # No DOCKER_LOCALFILE - docker files all run according to folder
   alias docker-compose='docker compose'
@@ -394,7 +400,10 @@ case "${HOSTNAME_U}" in
     alias distartpolicy='docker inspect --format '{{.HostConfig.RestartPolicy.Name}}'' #name#
     alias dstart='docker start' #name#
     alias dsetrestart='docker update --restart unless-stopped' #name#  
-
+  ;;
+  TRAEFIK):
+    alias dashyvc='dexec dashy yarn validate-config'
+    alias dashyb='dexec dashy yarn build'
   ;;
 esac
 
