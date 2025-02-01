@@ -1,5 +1,6 @@
-# Ignore .env files in the docker folder and subfolders
+# Ignore .env and .env.host files in the docker folder and subfolders
 docker/**/*.env
+docker/**/*.env.host
 docker/secrets
 docker/appdata/traefik3/acme
 docker/appdata/dashy/dashboard-icons
