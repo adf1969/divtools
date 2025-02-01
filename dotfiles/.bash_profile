@@ -449,6 +449,53 @@ function build_starship_toml_palette() {
     fi
 } # build_starship_toml_palette
 
+update_link() {
+    local SOURCE="$1"
+    local TARGET="$2"
+
+    # Check if the source file exists
+    if [[ -f "$SOURCE" || -d "$SOURCE" ]]; then
+        # Check if the target is already a symbolic link
+        if [[ -L "$TARGET" ]]; then
+            echo "Soft link for $TARGET already exists."
+        else
+            # Create the symbolic link
+            ln -s "$SOURCE" "$TARGET"
+            echo "Soft link created: $TARGET -> $SOURCE"
+        fi
+    else
+        echo "Source file or directory does not exist: $SOURCE"
+    fi    
+}
+
+
+# Create Directory/File Links
+# ~/.tmux.conf -> $DIVTOOLS/config/tmux/.tmux.conf
+# ~/.tmux/ -> $DIVTOOLS/config/tmux
+# ~/.config/tmux -> $DIVTOOLS/config/tmux       # this is a dupe of ~/.tmux/
+#
+tmux_config() {
+    # Where are the tmux config files stored in divtools
+    TM_SOURCE="$DIVTOOLS/config/tmux"
+
+    # ~/.tmux.conf
+    # Define Source/Target of the files to be created in home dir for .tmux.conf
+    CFG_SOURCE="$TM_SOURCE/.tmux.conf"
+    CFG_TARGET="$HOME/.tmux.conf"
+    update_link "$CFG_SOURCE" "$CFG_TARGET"
+
+
+    # ~/.tmux/
+    DTM_TARGET="$HOME/.tmux"
+    update_link "$TM_SOURCE" "$DTM_TARGET"
+
+    # ~/.config/tmux
+    CTM_TARGET="$HOME/.config/tmux"
+    # Ensure the .config folder exists
+    mkdir -p "$HOME/.config"
+    # Map the .config/tmux -> $DIVTOOLS/config/tmux
+    update_link "$TM_SOURCE" "$CTM_TARGET"
+}
 
 
 ### INIT CODE ###
@@ -578,4 +625,7 @@ if has_starship; then
   # Build the ~/.config/starship.toml file
   build_starship_toml
 fi
+
+# TMUX Config
+tmux_config
 
