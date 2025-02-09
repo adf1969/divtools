@@ -46,8 +46,8 @@ command_timeout = 2000
 # and use the os module below
 [username]
 show_always = true
-style_user = "bg:hostc_user"
-style_root = "bg:hostc_root"
+style_user = "fg:hostfg_user bg:hostc_user"
+style_root = "bg:hostc_root fg:hostfg_root"
 format = '[ $user ]($style)'
 disabled = false
 
@@ -58,7 +58,7 @@ style = "bg:#9A348E"
 disabled = true      # Disabled by default
 
 [directory]
-style = "bg:dir_bg"
+style = "bg:dir_bg fg:dir_fg"
 format = "[ $path ]($style)"
 truncation_length = 3
 truncation_symbol = "…/"
@@ -203,8 +203,9 @@ format = '[$symbol]($style)'
 when = '[ "$EUID" != 0 ]'         # Show for NOT root or admin
 
 # For displaying the System I'm on
+# Override in $HOSTNAME.toml file
 [custom.sys_symbol]
 symbol = " "
-style = "bg:hostc_user"
+style = "bg:hostc_user fg:hostfg_user"
 format = '[$symbol]($style)'
 when = "true"
