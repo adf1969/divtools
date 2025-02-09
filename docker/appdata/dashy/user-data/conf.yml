@@ -252,7 +252,7 @@ sections:
         target: newtab
         statusCheck: true
         statusCheckAllowInsecure: true
-        id: 2_951_tnhl
+        id: 2_951_tnhl01
       - title: TNHL02
         icon: syncthing.png
         url: https://192.168.9.150:8384/
