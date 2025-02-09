@@ -44,6 +44,14 @@ sections:
       collapsed: false
       hideForGuests: false
     items:
+      - title: Uptime Kuma
+        description: Uptime Kuma [monitor]
+        icon: uptime-kuma.png
+        url: http://192.168.9.104:3001/
+        target: newtab
+        statusCheck: true
+        statusCheckAllowInsecure: true
+        id: 0_1840_ukuma
       - title: Grafana
         description: Grafana [monitor]
         icon: grafana.png
@@ -91,7 +99,7 @@ sections:
         target: newtab
         statusCheck: true
         statusCheckAllowInsecure: true
-        id: 0_1605_tnhl
+        id: 0_1605_tnhl01
       - title: TNHL02
         description: Proxmox Server TNHL01
         icon: proxmox.png
@@ -99,7 +107,15 @@ sections:
         target: newtab
         statusCheck: true
         statusCheckAllowInsecure: true
-        id: 1_1605_tnhl
+        id: 1_1605_tnhl02
+      - title: TNHL03
+        description: Proxmox Server TNHL03
+        icon: proxmox.png
+        url: https://192.168.9.160:8006/
+        target: newtab
+        statusCheck: true
+        statusCheckAllowInsecure: true
+        id: 0_1605_tnhl03
       - title: QNAP:FHMTN1
         description: QNAP WebUI FHMTN1
         icon: qnap-alt.png

@@ -197,6 +197,38 @@ function echo_green() {
 }
 
 # Install necessary packages
+function install_packages_proxmox() {
+    packages=(sudo git syncthing)
+
+    if [[ "$PKG_MANAGER" == "apt" ]]; then
+        # Add syncthing repository if syncthing is not already installed
+        if ! command -v syncthing &>/dev/null; then
+            run_cmd curl -s https://syncthing.net/release-key.txt | run_cmd gpg --dearmor -o /usr/share/keyrings/syncthing-archive-keyring.gpg
+            echo "deb [signed-by=/usr/share/keyrings/syncthing-archive-keyring.gpg] https://apt.syncthing.net/ syncthing stable" | run_cmd tee /etc/apt/sources.list.d/syncthing.list
+            run_cmd apt update
+        fi
+
+        # Install each package one by one
+        for package in "${packages[@]}"; do
+            echo_green "Installing $package..."
+            if ! run_cmd apt install -y "$package"; then
+                echo_red "Failed to install $package. Continuing with the next package..."
+            fi
+        done
+
+    elif [[ "$PKG_MANAGER" == "opkg" ]]; then
+        # Install each package one by one using opkg
+        for package in "${packages[@]}"; do
+            echo_green "Installing $package..."
+            if ! run_cmd opkg install "$package"; then
+                echo_red "Failed to install $package. Continuing with the next package..."
+            fi
+        done
+    fi
+}
+
+
+# Install necessary packages
 function install_packages() {
     packages=(curl sudo whois syncthing xmlstarlet git git-http vim-nox rclone python3 libssl-dev ca-certificates openssh-client tmux net-tools ccze)
 
@@ -226,6 +258,7 @@ function install_packages() {
         done
     fi
 }
+
 
 
 
@@ -721,6 +754,7 @@ function get_selections() {
     "CREATE_DIVTOOLS_FOLDER" "Create /opt/divtools Folder" OFF \
     "INSTALL_ENTWARE" "Install Entware (QNAP only)" OFF \
     "INSTALL_PACKAGES" "Install Software Packages" OFF \
+    "INSTALL_PACKAGES_PROXMOX" "Install PROXMOX Software Packages" OFF \
     "INSTALL_DOCKER" "Install Docker" OFF \
     "INSTALL_COCKPIT" "Install Cockpit and Modules" OFF \
     "INSTALL_EZA" "Install eza (Modern ls Replacement)" OFF \
@@ -751,6 +785,7 @@ function run_selected_tasks() {
             \"CREATE_DIVTOOLS_FOLDER\") create_divtools_folder ;;
             \"INSTALL_ENTWARE\") install_entware ;;
             \"INSTALL_PACKAGES\") install_packages ;;
+            \"INSTALL_PACKAGES_PROXMOX\") install_packages_proxmox ;;
             \"INSTALL_DOCKER\") install_docker ;;
             \"INSTALL_COCKPIT\") install_cockpit ;;
             \"INSTALL_EZA\") install_eza ;;
