@@ -1,0 +1,23 @@
+http:
+  routers:
+    netbox-service-rtr:
+      rule: 'Host(`netbox.{{env "DOMAINNAME_2"}}`)'
+      entryPoints:
+        - "websecure"
+      middlewares:
+        - chain-no-auth
+      service: "netbox-service"
+      tls:
+        certResolver: "dns-cloudflare"
+        options: tls-opts@file
+  services:
+    netbox-service:
+      loadBalancer:
+        passHostHeader: true
+        serversTransport: "netbox"
+        servers:
+          # Use the Netbox HTTP port since I'm securing it with Traefik
+          - url: "http://192.168.9.104:8080"
+  serversTransports:
+    netbox:
+      insecureSkipVerify: true
