@@ -253,6 +253,20 @@ sections:
         statusCheck: true
         statusCheckAllowInsecure: true
         id: 2_951_tnhl
+      - title: TNHL02
+        icon: syncthing.png
+        url: https://192.168.9.150:8384/
+        target: newtab
+        statusCheck: true
+        statusCheckAllowInsecure: true
+        id: 2_951_tnhl02
+      - title: TNHL03
+        icon: syncthing.png
+        url: https://192.168.9.160:8384/
+        target: newtab
+        statusCheck: true
+        statusCheckAllowInsecure: true
+        id: 2_951_tnhl03
       - title: traefik
         icon: syncthing.png
         url: https://192.168.9.103:8384/
