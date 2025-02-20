@@ -154,7 +154,14 @@ sections:
       cols: 1
       collapsed: false
       hideForGuests: false
-    items: []
+    items:
+      - title: HomeAssistant
+        description: Home Assistant (tnhl02|haos)
+        icon: home-assistant.png
+        url: http://192.168.9.215:8123/
+        target: newtab
+        statusCheck: true
+        id: 0_1605_haos
   - name: Productivity
     icon: fas fa-bookmark
     displayData:

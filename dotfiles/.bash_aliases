@@ -59,6 +59,7 @@ alias pscpu='ps auxf | sort -nr -k 3'
 # DIVTOOL QOL ALIASES
 alias dt='cd $DIVTOOLS'
 alias dtd='cd $DOCKERDIR'
+alias dts='cd $DIVTOOLS/scripts'
 alias pdiv='sudo chown -R divix $DOCKERDIR $DIVTOOLS/config $DIVTOOLS/scripts $DIVTOOLS/dotfiles $DIVTOOLS/.git'
 
 # Utility Aliases
@@ -106,6 +107,13 @@ alias stfc='find . -type f -not -path "*/.stversions/*" -name "*sync-conflict*"'
 # DASHY
 alias fdicon='find $DOCKERDIR/appdata/dashy/dashboard-icons/png -printf "%f\n" | grep -i ' # Find Dashy Icons, Usage: dicon <icon name>
 alias fdicons=fdicon
+
+# Drive/Storage Aliases
+alias lsdrv='lsblk -o NAME,FSTYPE,MOUNTPOINT,SIZE,MODEL'
+alias lszfs='zfs list'
+alias zpstatus='zpool status'
+alias zpga='zpool get all' # Get all the zpool settings, Usage: zpall <pool name>
+alias zfsga='zfs get all' # Get all the zpool settings, Usage: zpall <pool name>
 
 # VIM Aliases
 #alias vi='nvim'
@@ -404,6 +412,10 @@ case "${HOSTNAME_U}" in
   TRAEFIK):
     alias dashyvc='dexec dashy yarn validate-config'
     alias dashyb='dexec dashy yarn build'
+  ;;
+  MONITOR):
+    alias dtnb='cd $DOCKERDIR/include/monitor/netbox'
+    alias nbexp='docker exec -ti netbox-postgres-1 /bin/bash'
   ;;
 esac
 
