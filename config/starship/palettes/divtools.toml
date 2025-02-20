@@ -5,6 +5,7 @@
 hostc_user = "#9A348E"
 hostfg_user = "#FFFFFF"
 hostc_root = "#9a3434"
+hostfg_root = "#FFFFFF"
 dir_bg = "#DA627D"
 dir_fg = "#FFFFFF"
 git_bg = "#1f833a"
