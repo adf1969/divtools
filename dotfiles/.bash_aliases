@@ -5,6 +5,7 @@ echo "$(date): Running $DIVTOOLS/dotfiles/.bash_aliases"
 export DOCKERDIR=/opt/divtools/docker
 export DOCKERFILE=$DOCKERDIR/docker-compose-$HOSTNAME.yml
 export DOCKERDATADIR=/opt
+export VENV_DIR="$DIVTOOLS/scripts/venvs"
 
 force_color_prompt=yes
 
@@ -60,7 +61,7 @@ alias pscpu='ps auxf | sort -nr -k 3'
 alias dt='cd $DIVTOOLS'
 alias dtd='cd $DOCKERDIR'
 alias dts='cd $DIVTOOLS/scripts'
-alias pdiv='sudo chown -R divix $DOCKERDIR $DIVTOOLS/config $DIVTOOLS/scripts $DIVTOOLS/dotfiles $DIVTOOLS/.git'
+alias pdiv='sudo chown -R divix $DOCKERDIR $DIVTOOLS/config $DIVTOOLS/scripts $DIVTOOLS/dotfiles $DIVTOOLS/.git*'
 
 # Utility Aliases
 #alias su='sudo -u admin sh'
@@ -76,6 +77,7 @@ alias gid='getent group'
 alias alg='alias | grep -i '
 # Match all files and color everything after the #. This is to allow ARGS to be shown for the various aliases and found with: "algg <char>"
 alias algg="cat $DIVTOOLS/dotfiles/.bash_aliases $DIVTOOLS/dotfiles/.bash_profile | grep --color=always -E '#.*$' | grep alias | grep -i "
+alias pchk='$DIVTOOLS/scripts/prom_host_check.py' # Checks if hosts are running monitoring apps for Prometheus
 
 # EZA
 
@@ -94,6 +96,115 @@ fi
 alias settitle='source $DIVTOOLS/scripts/settitle'
 alias gitpon='gitpon_func'
 alias gitpoff='gitpoff_func'
+
+# PYTHON Aliases
+export VENV_DIR="${VENV_DIR:-$DIVTOOLS/scripts/venvs}"  # This SHOULD be set above, but just in case, gets set here as well.
+
+# Function to create a virtual environment
+function python_venv_create() {
+    local venv_name="${1:-venv}"  # Default to 'venv' if no name is given
+    local venv_path="$VENV_DIR/$venv_name"
+
+    if [[ -d "$venv_path" ]]; then
+        echo "❌ Virtual environment '$venv_name' already exists at $venv_path"
+        return 1
+    fi
+
+    echo "🚀 Creating virtual environment: $venv_name..."
+    python3 -m venv "$venv_path"
+
+    if [[ $? -eq 0 ]]; then
+        echo "✅ Virtual environment '$venv_name' created successfully!"
+    else
+        echo "❌ Failed to create virtual environment."
+        return 1
+    fi
+}
+
+function python_venv_delete() {
+    local venv_name="$1"
+    
+    if [[ -z "$venv_name" ]]; then
+        echo "❌ Usage: pvdel <venv_name>"
+        return 1
+    fi
+
+    local venv_path="$VENV_DIR/$venv_name"
+
+    if [[ ! -d "$venv_path" ]]; then
+        echo "❌ Virtual environment '$venv_name' not found at $venv_path"
+        return 1
+    fi
+
+    echo "⚠️ Are you sure you want to delete the virtual environment '$venv_name'? (y/N)"
+    read -r confirm
+    if [[ "$confirm" =~ ^[Yy]$ ]]; then
+        rm -rf "$venv_path"
+        echo "✅ Virtual environment '$venv_name' deleted."
+    else
+        echo "❌ Deletion canceled."
+    fi
+}
+
+# Function to activate a virtual environment
+function python_venv_activate() {
+    local venv_name="${1:-venv}"  # Default to 'venv' if no name is given
+    local venv_path="$VENV_DIR/$venv_name"
+
+    if [[ ! -d "$venv_path" ]]; then
+        echo "❌ Virtual environment '$venv_name' not found at $venv_path"
+        return 1
+    fi
+
+    echo "🔗 Activating virtual environment: $venv_name..."
+    source "$venv_path/bin/activate"
+}
+
+# Function to list available virtual environments
+function python_venv_ls() {
+    if [[ ! -d "$VENV_DIR" ]]; then
+        echo "❌ Virtual environment directory '$VENV_DIR' not found!"
+        return 1
+    fi
+
+    local venvs=()
+    for dir in "$VENV_DIR"/*/; do
+        [[ -d "$dir" ]] && venvs+=("$(basename "$dir")")
+    done
+
+    if [[ ${#venvs[@]} -eq 0 ]]; then
+        echo "📂 No virtual environments found in '$VENV_DIR'"
+        return 0
+    fi
+
+    echo "📂 Available Virtual Environments in '$VENV_DIR':"
+    for venv in "${venvs[@]}"; do
+        echo "  - $venv"
+    done
+}
+
+alias pvinstall='sudo apt install python3.10-venv'  # Run this to install python venv if it doesn't exist.
+alias pvcr='python_venv_create'
+alias pvact='python_venv_activate'
+alias pvdel="python_venv_delete"
+alias pvls='python_venv_ls'
+alias pvda='deactivate' # deactivates the venv
+
+# Office365 Monitor Scripts
+# Rules
+alias o365_chk_rules='$DIVTOOLS/scripts/office365/o365_chk_rules.sh'
+alias o365_cru='o365_chk_rules'
+alias o365_crug='o365_chk_rules -get-current'
+alias o365_cruc='o365_chk_rules -compare'
+alias o365_crucl='o365_chk_rules -clear'
+# Roles
+alias o365_chk_roles='$DIVTOOLS/scripts/office365/o365_chk_adm_roles.sh'
+alias o365_cro='o365_chk_roles'
+alias o365_crog='o365_chk_roles -get-current'
+alias o365_croc='o365_chk_roles -compare'
+alias o365_crocl='o365_chk_roles -clear'
+
+
 
 # Generic Docker Aliases
 alias dils='docker image ls'

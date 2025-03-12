@@ -7,6 +7,8 @@ To Execute/Install:<br>
 To Download the `divtools_install.sh` file:<br>
 `wget https://raw.githubusercontent.com/adf1969/divtools/main/divtools_install.sh -O divtools_install.sh`
 
+To Install Starship manually:
+ $ sudo curl -sS https://starship.rs/install.sh | sh
 
 The structure for the divtools files are as follows:
 - **\\**: Root files
