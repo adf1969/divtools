@@ -1,0 +1,48 @@
+# Environment Vars in Use
+# $TZ : The timezone we run in. Format American/Chicago
+# $DOCKERDIR : Usually the divtools/docker dir
+# $DOCKERDATADIR: Usually the /opt dir
+### socket-proxy is broken, using direct
+
+services:
+  # Portainer - WebUI for Containers
+  portainer:
+    container_name: portainer
+    image: portainer/portainer-ce:latest
+    restart: always
+    profiles: ["core", "all"]
+    networks:
+      - t3_proxy
+      - socket_proxy
+    #command: -H tcp://socket-proxy:2375
+    ports:
+      - "8000:8000/tcp" # Agent communication port
+      - "9000:9000/tcp" # HTTP port for the web UI
+      - "9443:9443/tcp" # HTTPS port for the web UI
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock   # Access to the Docker socket
+      - $DOCKERDATADIR/portainer:/data # Bind Mount location to persist data
+    env_file:
+      - $DOCKERDIR/.env        # default .env file for all systems, 
+      - $DOCKERDIR/.env.host   # Host-level ENV vars, overrides .env
+    environment:
+      - TZ=$TZ
+      - LOG_LEVEL=warn # Options: debug, info, warn, error, fatal
+    labels:
+      - "traefik.enable=true"
+      # HTTP Routers
+      - "traefik.http.routers.portainer-rtr.entrypoints=websecure"
+      - "traefik.http.routers.portainer-rtr.rule=Host(`portainer.$DOMAINNAME_1`) || Host(`portainer.$DOMAINNAME_2`)"
+      - "traefik.http.routers.portainer-rtr.tls.certresolver=dns-cloudflare"
+      # Middlewares
+      - "traefik.http.routers.portainer-rtr.middlewares=chain-no-auth@file"
+      # HTTP Services
+      - "traefik.http.routers.portainer-rtr.service=portainer-svc"
+      - "traefik.http.services.portainer-svc.loadbalancer.server.port=9000"
+
+    #healthcheck:
+    #  test: ["CMD", "curl", "-f", "https://localhost:9443"]   # Health check to monitor container
+    #  interval: 1m30s
+    #  timeout: 10s
+    #  retries: 3
+    #  start_period: 30s

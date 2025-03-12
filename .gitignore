@@ -24,3 +24,4 @@ scripts/office365/o365_rules/
 scripts/office365/o365_rules.archive/
 scripts/office365/o365_users/
 scripts/venvs/
+stversions.out
