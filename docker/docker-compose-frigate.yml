@@ -2,8 +2,6 @@
 # Here are my Docker Hosts:
 # - Traefik (traefik) - Proxmox LXC with Ubuntu Server 22.04
 # - DNS / AdBlock Server (pihole) - Proxmox LXC with Ubuntu Server 22.04
-# - FHMTN1 | QNAP Server
-# - FHM4x8 | QNAP Server
 
 ########################### THIS COMPOSE FILE
 # - Portainer
@@ -31,31 +29,30 @@ networks:
         - subnet: ${T3_PROXY_NETWORK_BASE}.0/${T3_PROXY_NETWORK_CIDR}
 
 ########################### SECRETS
-# secrets:
-#   basic_auth_credentials:
-#     file: $DOCKERDIR/secrets/basic_auth_credentials
-#   cf_dns_api_token_traefik3_divix_biz:
-#     file: $DOCKERDIR/secrets/cf_dns_api_token_traefik3_divix_biz
-
+secrets:
+  basic_auth_credentials:
+    file: $DOCKERDIR/secrets/basic_auth_credentials
+  cf_dns_api_token_traefik3_divix_biz:
+    file: $DOCKERDIR/secrets/cf_dns_api_token_traefik3_divix_biz
 
 include:
   ########################### SERVICES
   # PREFIX core = Home Server
-  # HOSTNAME=core - defined in .env
+  # HOSTNAME=edms - defined in .env
 
   # CORE
-  ### DO NOT ADD PORTAINER ON Zentyal systems - they already include that
   #- include/$HOSTNAME/portainer.yml
-  - include/$HOSTNAME/syncthing.yml
-  - include/$HOSTNAME/netbird-client.yml
+  #- include/$HOSTNAME/socket-proxy.yml   #SP+ Uncomment to enable Socket Proxy. Check files for #SP for details
+  #- include/$HOSTNAME/netbird-client.yml
+  #- include/$HOSTNAME/syncthing.yml
 
   # SHARED
-  - include/shared/node-exporter.yml
+  - include/shared/glances.yml
   - include/shared/cadvisor.yml
+  - include/shared/node-exporter.yml
 
-  ## socket-proxy on QNAP has issues...not sure why...
-  #- include/$HOSTNAME/socket-proxy.yml   #SP+ Uncomment to enable Socket Proxy. Check files for #SP for details
-  #- include/$HOSTNAME/netbird-client.yml 
+  # SERVER
+  - include/$HOSTNAME/frigate-compose.yml
   #- include/$HOSTNAME/traefik3_cli.yml  # Use CLI in docker-compose version of Traefik config
   #- include/$HOSTNAME/traefik3_config.yml  # Use Config File ./traefik.yml version of Traefik config
   #- include/$HOSTNAME/oauth.yml
