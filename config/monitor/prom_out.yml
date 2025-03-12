@@ -1,20 +1,5 @@
-global: 
-  scrape_interval: 30s  
-  evaluation_interval: 30s
-  body_size_limit: 15MB
-  #sample_limit: 1500
-  #target_limit: 30
-  #label_limit: 30
-  #label_name_length_limit: 200
-  #label_value_length_limit: 200
-  # scrape_timeout is set to the global default (10s).
-
 scrape_configs: 
-  - job_name: "prometheus" 
-    scrape_interval: 1m 
-    static_configs: 
-      - targets: ["localhost:9090"]
-
+  # Node Exporter Hosts
   - job_name: "node" 
     scrape_interval: 15s
     static_configs: 
@@ -50,39 +35,6 @@ scrape_configs:
           - "192.168.9.217:9100"
         labels:
           instance: "frigate" 
-    metric_relabel_configs:
-      # Add Friendly Labels for various disk storage entries
-      # Instance Specific
-      # FHMTN1
-      - source_labels: [instance, mountpoint]
-        regex: "FHMTN1;/share/CACHEDEV1_DATA"
-        target_label: friendly_name
-        replacement: "DataVol-AVCSHARE"
-      - source_labels: [instance, mountpoint]
-        regex: "FHMTN1;/share/CACHEDEV2_DATA"
-        target_label: friendly_name
-        replacement: "HybridMount1"
-      - source_labels: [instance, mountpoint]
-        regex: "FHMTN1;/share/CACHEDEV3_DATA"
-        target_label: friendly_name
-        replacement: "DataVol-ADFHM"
-
-      # FHM4x8
-      - source_labels: [instance, mountpoint]
-        regex: "FHM4x8;/share/CACHEDEV1_DATA"
-        target_label: friendly_name
-        replacement: "DataVol1"
-
-      # Non-Instance Specific / SHARED
-      - source_labels: [mountpoint]
-        regex: "/"
-        target_label: friendly_name
-        replacement: "root"
-      - source_labels: [mountpoint]
-        regex: "/opt"
-        target_label: friendly_name
-        replacement: "DIVTOOLS"
-
 
   # cAdvisor Hosts
   - job_name: "cadvisor"
@@ -120,9 +72,3 @@ scrape_configs:
           - "192.168.9.217:8082"
         labels:
           instance: "frigate"
-
-
-  # - job_name: "hvhost01" 
-  #   scrape_interval: 5s 
-  #   static_configs: 
-  #   - targets: ["10.1.149.191:9182"]
