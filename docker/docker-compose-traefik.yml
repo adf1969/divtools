@@ -56,7 +56,12 @@ include:
   - include/$HOSTNAME/cloudflare-ddns.yml      
   - include/$HOSTNAME/glances.yml
 
+  # SHARED
+  - include/shared/node-exporter.yml
+  - include/shared/cadvisor.yml
+
+
   # TRAEFIK
-  - include/$HOSTNAME/homepage.yml
+  #- include/$HOSTNAME/homepage.yml
   - include/$HOSTNAME/dashy.yml
-  - include/$HOSTNAME/homarr.yml
+  #- include/$HOSTNAME/homarr.yml
