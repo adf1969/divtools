@@ -28,6 +28,7 @@ $nodejs\
 $nim\
 $rust\
 $scala\
+$python\
 [](fg:app_bg bg:docker_bg)\
 $docker_context\
 [](fg:docker_bg bg:time_bg)\
@@ -144,6 +145,11 @@ format = '[ $symbol ($version) ]($style)'
 symbol = "󰆥 "
 style = "bg:app_bg"
 format = '[ $symbol ($version) ]($style)'
+
+[python]
+symbol = "🐍 "
+format = "[$symbol($virtualenv )]($style)"
+style = "bg:app_bg fg:#102e0d"
 
 [rust]
 symbol = ""
