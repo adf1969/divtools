@@ -2,6 +2,24 @@
 export DIVTOOLS="/opt/divtools"
 export HOSTNAME_U=$(hostname -s | tr '[:lower:]' '[:upper:]')
 
+# Global Env Vars
+export DOCKERDIR=/opt/divtools/docker
+export DOCKERFILE=$DOCKERDIR/docker-compose-$HOSTNAME.yml
+export DOCKERDATADIR=/opt
+
+# Global UID Vars for LXCs. These are what the local LXC UIDs become when read by the HOST.
+# This is because ALL uids in an LXC container are "mapped" to the host as LXC uid + 100000
+# So UID 1400 in the LXC becomes 101400 at the host (proxmox).
+# And UID 0 (root) in the LXC, becomes 100000 at the host (proxmox)
+export LXC_UID_ROOT=100000
+export LXC_UID_DIVIX=101400
+
+update_profile_timestamp() {
+    # Update profile sourced timestamp
+    # This tracks when this profile was LAST sourced so I can update starship with this data
+    mkdir -p "$HOME/.config"
+    date +%s > "$HOME/.config/profile_sourced_timestamp"
+}
 
 # Function to check if Starship is installed
 has_starship() {
@@ -629,3 +647,5 @@ fi
 # TMUX Config
 tmux_config
 
+# Now that we are done building things, update the Profile Timestamp.
+update_profile_timestamp
