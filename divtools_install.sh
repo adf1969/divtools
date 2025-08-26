@@ -1,6 +1,9 @@
 #!/bin/bash
 
 NEW_OPT_LOC="/share/CACHEDEV1_DATA/opt"   # Set to location where you want /opt to be
+DIVTOOLS="/opt/divtools"                  # Default DIVTOOLS path
+DOCKERDATADIR="/opt"                      # Default DOCKERDATADIR path
+DT_LOCAL_BIN_DIR="/usr/local/bin"         # Default binary installation directory
 
 # Check if the script is run as root or a non-root user
 function run_cmd() {
@@ -10,6 +13,92 @@ function run_cmd() {
         $@
     fi
 }
+
+# Check if running on TrueNAS
+function is_truenas() {
+    if [ -f /etc/truenas_version ] || grep -q "TrueNAS" /etc/os-release; then
+        echo "Detected TrueNAS system."
+        return 0
+    else
+        return 1
+    fi
+}
+
+# Check if /usr/local/bin is read-only
+function is_readonly_usr_local_bin() {
+    # Attempt to create a temporary file
+    if ! touch /usr/local/bin/.test_write 2>/dev/null; then
+        echo "/usr/local/bin is read-only."
+        return 0
+    else
+        rm -f /usr/local/bin/.test_write
+        return 1
+    fi
+}
+
+
+# Prompt for environment variables using whiptail
+function prompt_env_vars() {
+    # Set suggested paths for TrueNAS
+    if is_truenas || is_readonly_usr_local_bin; then
+        SUGGESTED_DIVTOOLS="/mnt/tpool/NFS/opt/divtools"
+        SUGGESTED_DOCKERDATADIR="/mnt/tpool/NFS/opt"
+        SUGGESTED_DT_LOCAL_BIN_DIR="/mnt/tpool/NFS/opt/bin"
+    else
+        SUGGESTED_DIVTOOLS="/opt/divtools"
+        SUGGESTED_DOCKERDATADIR="/opt"
+        SUGGESTED_DT_LOCAL_BIN_DIR="/usr/local/bin"
+    fi
+
+    # Prompt for DIVTOOLS
+    DIVTOOLS=$(whiptail --title "Set DIVTOOLS Path" --inputbox \
+        "Enter the path for DIVTOOLS (default: $SUGGESTED_DIVTOOLS):" 10 60 \
+        "$SUGGESTED_DIVTOOLS" 3>&1 1>&2 2>&3)
+    if [[ -z "$DIVTOOLS" ]]; then
+        DIVTOOLS="$SUGGESTED_DIVTOOLS"
+    fi
+
+    # Prompt for DOCKERDATADIR
+    DOCKERDATADIR=$(whiptail --title "Set DOCKERDATADIR Path" --inputbox \
+        "Enter the path for DOCKERDATADIR (default: $SUGGESTED_DOCKERDATADIR):" 10 60 \
+        "$SUGGESTED_DOCKERDATADIR" 3>&1 1>&2 2>&3)
+    if [[ -z "$DOCKERDATADIR" ]]; then
+        DOCKERDATADIR="$SUGGESTED_DOCKERDATADIR"
+    fi
+
+    # Prompt for DT_LOCAL_BIN_DIR
+    DT_LOCAL_BIN_DIR=$(whiptail --title "Set DT_LOCAL_BIN_DIR Path" --inputbox \
+        "Enter the path for local binaries (default: $SUGGESTED_DT_LOCAL_BIN_DIR):" 10 60 \
+        "$SUGGESTED_DT_LOCAL_BIN_DIR" 3>&1 1>&2 2>&3)
+    if [[ -z "$DT_LOCAL_BIN_DIR" ]]; then
+        DT_LOCAL_BIN_DIR="$SUGGESTED_DT_LOCAL_BIN_DIR"
+    fi
+}
+
+# Write environment variables to .env files
+function write_env_files() {
+    local users=("root" "divix")
+    for user in "${users[@]}"; do
+        if id "$user" &>/dev/null; then
+            local home_dir=$(getent passwd "$user" | cut -d: -f6)
+            if [[ -n "$home_dir" ]]; then
+                echo "Writing .env file for user $user at $home_dir/.env"
+                run_cmd mkdir -p "$home_dir"
+                run_cmd bash -c "cat > \"$home_dir/.env\" <<EOL
+# Local Env Overrides
+export DIVTOOLS=\"$DIVTOOLS\"
+export DOCKERDIR=\"\$DIVTOOLS/docker\"
+export DOCKERDATADIR=\"$DOCKERDATADIR\"
+export DT_LOCAL_BIN_DIR=\"$DT_LOCAL_BIN_DIR\"
+export PATH=\"\$DT_LOCAL_BIN_DIR:\$PATH\"
+EOL"
+                run_cmd chown "$user:$user" "$home_dir/.env"
+                run_cmd chmod 600 "$home_dir/.env"
+            fi
+        fi
+    done
+}
+
 
 # Detect OS and set package manager
 function detect_os() {
@@ -153,21 +242,21 @@ function add_divix_user() {
 
 # Create divtools folder and set permissions
 function create_divtools_folder() {
-    # Create /opt/divtools if it doesn't exist
-    if [ ! -d /opt/divtools ]; then
-        run_cmd mkdir -p /opt/divtools
+    # Create $DIVTOOLS if it doesn't exist
+    if [ ! -d "$DIVTOOLS" ]; then
+        run_cmd mkdir -p "$DIVTOOLS"
     fi
 
-    # Set the ownership of /opt/divtools to the "adm" group
-    run_cmd chown :adm /opt/divtools
+    # Set the ownership of $DIVTOOLS to the "adm" group
+    run_cmd chown :adm "$DIVTOOLS"
 
-    # Set the permissions of /opt/divtools to 775
-    run_cmd chmod 775 /opt/divtools
+    # Set the permissions of $DIVTOOLS to 775
+    run_cmd chmod 775 "$DIVTOOLS"
 
-    # Create a symbolic link in the divix home directory to /opt/divtools
+    # Create a symbolic link in the divix home directory to $DIVTOOLS
     if [ -d /home/divix ]; then
         if [ ! -L /home/divix/divtools ]; then
-            run_cmd ln -s /opt/divtools /home/divix/divtools
+            run_cmd ln -s "$DIVTOOLS" /home/divix/divtools
         fi
     fi
 }
@@ -352,25 +441,29 @@ function install_cockpit() {
     fi
 }
 
-# Function to install eza
+# Install eza
 function install_eza() {
     echo "Installing eza..."
 
     if [[ "$OS" == "debian" || "$OS" == "ubuntu" ]]; then
         echo "Detected Debian-based system. Installing eza via APT..."
-        sudo apt update
-        sudo apt install -y gpg
-        sudo mkdir -p /etc/apt/keyrings
-        wget -qO- https://raw.githubusercontent.com/eza-community/eza/main/deb.asc | sudo gpg --dearmor -o /etc/apt/keyrings/gierens.gpg
-        echo "deb [signed-by=/etc/apt/keyrings/gierens.gpg] http://deb.gierens.de stable main" | sudo tee /etc/apt/sources.list.d/gierens.list
-        sudo chmod 644 /etc/apt/keyrings/gierens.gpg /etc/apt/sources.list.d/gierens.list
-        sudo apt update
-        sudo apt install -y eza
+        run_cmd apt update
+        run_cmd apt install -y gpg
+        run_cmd mkdir -p /etc/apt/keyrings
+        run_cmd wget -qO- https://raw.githubusercontent.com/eza-community/eza/main/deb.asc | run_cmd gpg --dearmor -o /etc/apt/keyrings/gierens.gpg
+        echo "deb [signed-by=/etc/apt/keyrings/gierens.gpg] http://deb.gierens.de stable main" | run_cmd tee /etc/apt/sources.list.d/gierens.list
+        run_cmd chmod 644 /etc/apt/keyrings/gierens.gpg /etc/apt/sources.list.d/gierens.list
+        run_cmd apt update
+        run_cmd apt install -y eza
+        # Move eza to DT_LOCAL_BIN_DIR if different from /usr/local/bin
+        if [[ "$DT_LOCAL_BIN_DIR" != "/usr/local/bin" ]]; then
+            run_cmd mv /usr/local/bin/eza "$DT_LOCAL_BIN_DIR/eza"
+        fi
     elif [[ "$OS" == "qts" ]]; then
         echo "Detected QNAP QTS system. Installing eza via Entware..."
         run_cmd opkg install eza
-        if [ ! -f /opt/bin/eza ]; then
-            ln -s /opt/usr/bin/eza /opt/bin/eza
+        if [ ! -f "$DT_LOCAL_BIN_DIR/eza" ]; then
+            run_cmd ln -s /opt/usr/bin/eza "$DT_LOCAL_BIN_DIR/eza"
         fi
     else
         echo "Unsupported operating system for eza installation."
@@ -380,6 +473,31 @@ function install_eza() {
     echo "eza installation completed successfully."
 } # install_eza
 
+
+# Install Starship
+function install_starship() {
+    echo "Installing Starship..."
+    if [[ "$OS" == "debian" || "$OS" == "ubuntu" || "$OS" == "qts" ]]; then
+        # Ensure installation directory exists
+        run_cmd mkdir -p "$DT_LOCAL_BIN_DIR"
+        run_cmd chown 1401:1401 "$DT_LOCAL_BIN_DIR"
+        run_cmd chmod 775 "$DT_LOCAL_BIN_DIR"
+
+        # Install Starship
+        run_cmd curl -sS https://starship.rs/install.sh | sh -s -- -b "$DT_LOCAL_BIN_DIR" -y
+
+        # Verify installation
+        if "$DT_LOCAL_BIN_DIR/starship" --version &> /dev/null; then
+            echo_green "Starship installed successfully."
+        else
+            echo_red "Failed to install Starship."
+            return 1
+        fi
+    else
+        echo "Unsupported OS for Starship installation."
+        return 1
+    fi
+}
 
 # Function to add a Syncthing user
 function add_syncthing_user() {
@@ -525,19 +643,19 @@ function update_git_config() {
     run_cmd sudo -u divix git config --global user.email "andrew@avcorp.biz"
     run_cmd sudo -u divix git config --global url."git@github.com:".insteadOf https://github.com/
     
-    # Mark /opt/divtools as a safe directory for the divix user
-    run_cmd sudo -u divix git config --global --add safe.directory /opt/divtools
+    # Mark $DIVTOOLS as a safe directory for the divix user
+    run_cmd sudo -u divix git config --global --add safe.directory "$DIVTOOLS"
 
     # Configure git for root user
     git config --global user.name "Andrew Fields"
     git config --global user.email "andrew@avcorp.biz"
     git config --global url."git@github.com:".insteadOf https://github.com/
     
-    # Mark /opt/divtools as a safe directory for the root user
-    git config --global --add safe.directory /opt/divtools
+    # Mark $DIVTOOLS as a safe directory for the root user
+    git config --global --add safe.directory "$DIVTOOLS"
 }
 
-# Function to git clone the divtools repository into /opt/divtools
+# Function to git clone the divtools repository into $DIVTOOLS
 function clone_divtools_repo() {
     # Check if the ~/.ssh directory exists, create it if not
     if [ ! -d ~/.ssh ]; then
@@ -572,30 +690,30 @@ function clone_divtools_repo() {
         echo "Public key generated at ~/.ssh/id_ed25519.pub."
     fi
 
-    # Check if the /opt/divtools directory exists
-    if [ ! -d /opt/divtools ]; then
-        echo "/opt/divtools directory does not exist. Creating it first..."
-        run_cmd mkdir -p /opt/divtools
-        run_cmd chown :adm /opt/divtools
-        run_cmd chmod 775 /opt/divtools
+    # Check if the $DIVTOOLS directory exists
+    if [ ! -d "$DIVTOOLS" ]; then
+        echo "$DIVTOOLS directory does not exist. Creating it first..."
+        run_cmd mkdir -p "$DIVTOOLS"
+        run_cmd chown :adm "$DIVTOOLS"
+        run_cmd chmod 775 "$DIVTOOLS"
     fi
 
     # Check if the directory is empty
-    if [ "$(ls -A /opt/divtools)" ]; then
-        echo "/opt/divtools is not empty. Aborting git clone."
+    if [ "$(ls -A "$DIVTOOLS")" ]; then
+        echo "$DIVTOOLS is not empty. Aborting git clone."
         return 1
     fi
 
-    echo "Cloning the divtools repository into /opt/divtools..."
+    echo "Cloning the divtools repository into $DIVTOOLS..."
 
-    # Change directory to /opt/divtools and clone the repository into it
+    # Change directory to $DIVTOOLS and clone the repository into it
     (
-        cd /opt/divtools || exit
+        cd "$DIVTOOLS" || exit
         run_cmd git clone git@github.com:adf1969/divtools.git .
     )
 
     if [ $? -eq 0 ]; then
-        echo "Repository cloned successfully into /opt/divtools."
+        echo "Repository cloned successfully into $DIVTOOLS."
     else
         echo "Failed to clone the repository."
     fi
@@ -605,6 +723,7 @@ function clone_divtools_repo() {
 
 
 # Update /etc/profile
+# Added modifications to handle when DIVTOOLS is NOT in /opt/divtools
 function update_profile() {
     if grep -q "#DIVTOOLS-BEFORE" /etc/profile; then
         # If the DIVTOOLS block exists, replace the content between BEFORE and AFTER
@@ -612,8 +731,14 @@ function update_profile() {
         run_cmd sed -i '/#DIVTOOLS-BEFORE/,/#DIVTOOLS-AFTER/c\
 #DIVTOOLS-BEFORE\n\
 # Source divtools profile\n\
-if [ -f /opt/divtools/dotfiles/.bash_profile ]; then\n\
-    . /opt/divtools/dotfiles/.bash_profile\n\
+if [ -f ~/.env ]; then\n\
+    . ~/.env\n\
+fi\n\
+if [ -z "$DIVTOOLS" ]; then\n\
+    export DIVTOOLS=/opt/divtools\n\
+fi\n\
+if [ -f "$DIVTOOLS/dotfiles/.bash_profile" ]; then\n\
+    . "$DIVTOOLS/dotfiles/.bash_profile"\n\
 fi\n\
 #DIVTOOLS-AFTER' /etc/profile
     else
@@ -623,13 +748,20 @@ fi\n\
 
 #DIVTOOLS-BEFORE
 # Source divtools profile
-if [ -f /opt/divtools/dotfiles/.bash_profile ]; then
-    . /opt/divtools/dotfiles/.bash_profile
+if [ -f ~/.env ]; then
+    . ~/.env
+fi
+if [ -z "\$DIVTOOLS" ]; then
+    export DIVTOOLS=/opt/divtools
+fi
+if [ -f "\$DIVTOOLS/dotfiles/.bash_profile" ]; then
+    . "\$DIVTOOLS/dotfiles/.bash_profile"
 fi
 #DIVTOOLS-AFTER
 EOL
     fi
 }
+
 
 # Update /etc/init.d/container-station.sh
 function update_qnap_container_station() {
@@ -751,19 +883,20 @@ function get_selections() {
     "Choose tasks to run. Use SPACE to select and ENTER to confirm." 20 78 17 \
     "ADD_DIVIX_USER" "Add Divix User" OFF \
     "ADD_SYNCTHING_USER" "Add Syncthing User" OFF \
-    "CREATE_DIVTOOLS_FOLDER" "Create /opt/divtools Folder" OFF \
+    "CREATE_DIVTOOLS_FOLDER" "Create $DIVTOOLS Folder" OFF \
     "INSTALL_ENTWARE" "Install Entware (QNAP only)" OFF \
     "INSTALL_PACKAGES" "Install Software Packages" OFF \
     "INSTALL_PACKAGES_PROXMOX" "Install PROXMOX Software Packages" OFF \
     "INSTALL_DOCKER" "Install Docker" OFF \
     "INSTALL_COCKPIT" "Install Cockpit and Modules" OFF \
     "INSTALL_EZA" "Install eza (Modern ls Replacement)" OFF \
+    "INSTALL_STARSHIP" "Install Starship Shell Prompt" OFF \
     "CONFIGURE_SYNCTHING_BOOT" "Configure Syncthing to Run on Boot" OFF \
     "UPDATE_GIT_CONFIG" "Update Git Config" OFF \
     "UPDATE_PROFILE" "Update /etc/profile" OFF \
     "UPDATE_AUTH_KEYS" "Update authorized_keys" OFF \
     "UPDATE_QNAP_CONTAINER" "$container_station_text" $container_station_option \
-    "CLONE_DIVTOOLS_REPO" "Clone divtools Repository into /opt/divtools" OFF \
+    "CLONE_DIVTOOLS_REPO" "Clone divtools Repository into $DIVTOOLS" OFF \
     "CONFIGURE_UTF8_LOCALE" "Configure en_US.UTF-8 Locale" OFF 3>&1 1>&2 2>&3)
 
     if [[ $? != 0 ]]; then
@@ -789,6 +922,7 @@ function run_selected_tasks() {
             \"INSTALL_DOCKER\") install_docker ;;
             \"INSTALL_COCKPIT\") install_cockpit ;;
             \"INSTALL_EZA\") install_eza ;;
+            \"INSTALL_STARSHIP\") install_starship ;;
             \"CONFIGURE_SYNCTHING_BOOT\") configure_syncthing_boot ;;
             \"UPDATE_GIT_CONFIG\") update_git_config ;;
             \"UPDATE_PROFILE\") update_profile ;;
@@ -806,6 +940,8 @@ function run_selected_tasks() {
 # Main script execution
 function main() {
     detect_os
+    prompt_env_vars
+    write_env_files
     get_selections
     read -p "Are you sure you want to run the selected tasks? (y/n): " confirm_run
     if [[ "$confirm_run" == "y" || "$confirm_run" == "Y" ]]; then
