@@ -47,6 +47,12 @@ alias .5='cd ../../../../..'
 # adding flags
 alias df='df -h'               # human-readable sizes
 alias free='free -m'           # show sizes in MB
+alias dfxo='sudo df -x overlay' # show filesystems, but exclude overlay
+alias dux='sudo du -xh --max-depth=1 --one-file-system 2>/dev/null | sort -h | tail -20'     # show disk usage of top 20 sub-folders of current folder
+alias duf='find . -type f -exec du -h {} + 2>/dev/null | sort -h | tail -20' # Find 20 largest files in this folder
+alias duf100='find . -type f -exec du -h {} + 2>/dev/null | sort -h | tail -100' # Find ALL largest files in this folder
+alias dur='find . -xdev -type f -mtime -1 -printf "%k KB %T+ %p\n" | awk ''{printf "%.2f MB %s %s\n", $1/1024, $2, $3}'' | sort -nr | head -20' # Find the most RECENT 20 files consuming space
+
 
 # ps
 alias psa="ps auxf"
@@ -61,7 +67,11 @@ alias pscpu='ps auxf | sort -nr -k 3'
 alias dt='cd $DIVTOOLS'
 alias dtd='cd $DOCKERDIR'
 alias dts='cd $DIVTOOLS/scripts'
-alias pdiv='sudo chown -R divix $DOCKERDIR $DIVTOOLS/config $DIVTOOLS/scripts $DIVTOOLS/dotfiles $DIVTOOLS/.git*'
+#alias pdiv='sudo chown -R divix $DOCKERDIR $DIVTOOLS/config $DIVTOOLS/scripts $DIVTOOLS/dotfiles $DIVTOOLS/.git*'
+alias pdiv='sudo $DIVTOOLS/scripts/fix_dt_perms.sh'
+alias dt_host_setup='sudo $DIVTOOLS/scripts/dt_host_setup.sh'
+
+alias set_ads_acls='sudo $DIVTOOLS/scripts/set_ads_acls.sh'
 
 # Utility Aliases
 #alias su='sudo -u admin sh'
@@ -204,6 +214,11 @@ alias o365_crog='o365_chk_roles -get-current'
 alias o365_croc='o365_chk_roles -compare'
 alias o365_crocl='o365_chk_roles -clear'
 
+# Akiflow Scripts
+alias aki_uy='$DIVTOOLS/scripts/office365/o365_upd_akiflow.sh --update-from-todoist --category-file o365_upd_akiflow.yaml' # Update YAML file
+alias aki_gc='$DIVTOOLS/scripts/office365/o365_upd_akiflow.sh --gen-ahk-categories'  # Gen Categories
+alias aki='$DIVTOOLS/scripts/office365/o365_upd_akiflow.sh'
+
 
 
 # Generic Docker Aliases
@@ -244,6 +259,7 @@ if [ -f $DOCKERFILE ] ; then
   alias derase='dstopcont ; drmcont ; ddelimages ; dvolprune ; dsysprune' # WARNING: removes everything! 
   alias dprune='ddelimages ; dprunevol ; dprunesys' # remove unused data, volumes, and images (perfect for safe clean up)
   alias dexec='sudo docker exec -ti' # usage: dexec container_name (to access container terminal)
+  alias dcp='sudo docker cp' # usage: dcp container_name src-file dest-file
   alias dpss='sudo docker ps -a' # running docker processes
   #alias dpss='sudo docker ps -a --format "table {{.Names}}\t{{.State}}\t{{.Status}}\t{{.Image}}" | (sed -u 1q; sort)' # running docker processes as nicer table
   alias ddf='sudo docker system df' # docker data usage (/var/lib/docker)
@@ -257,7 +273,7 @@ if [ -f $DOCKERFILE ] ; then
   # DOCKER COMPOSE TRAEFIK 2 - All docker-compose commands start with "dc" 
   case "${ID}" in
     ds918): # synology at this point uses an old version of docker. Therefore, 'docker-compose' instead of 'docker compose'
-      alias dcrun='source $DOCKERDIR/.env.host && sudo docker-compose -f $DOCKERDIR/docker-compose-$HOSTNAME.yml' # /volume1/docker symlinked to /var/services/homes/user/docker
+      alias dcrun='source $DOCKERDIR/secrets/.env.$HOSTNAME && sudo docker-compose -f $DOCKERDIR/docker-compose-$HOSTNAME.yml' # /volume1/docker symlinked to /var/services/homes/user/docker
     ;;
     *):     # Every Other Normal Server
       # Original dcrun
@@ -267,7 +283,7 @@ if [ -f $DOCKERFILE ] ; then
       #alias dcrun='HOSTNAME=$(hostname) sudo docker compose --profile all -f $DOCKERDIR/docker-compose-$HOSTNAME.yml'      
 
       # Pass user .env.host to sudo/dc. This gets $HOSTNAME into the global dc-$HOSTNAME.yml file
-      alias dcrun='source $DOCKERDIR/.env.host && sudo -E docker compose --profile all -f $DOCKERDIR/docker-compose-$HOSTNAME.yml'
+      alias dcrun='source $DOCKERDIR/secrets/env/.env.$HOSTNAME && sudo -E docker compose --profile all -f $DOCKERDIR/docker-compose-$HOSTNAME.yml'
       #alias dcrun='source $DOCKERDIR/.env.host && sudo -E docker compose -f $DOCKERDIR/docker-compose-$HOSTNAME.yml'      
       #alias dcrun='sudo docker compose --profile all -f $DOCKERDIR/docker-compose-$HOSTNAME.yml'
       
@@ -282,7 +298,9 @@ if [ -f $DOCKERFILE ] ; then
   alias dcrestart='dcrun restart ' # usage: dcrestart container_name
   alias dcstart='dcrun start ' # usage: dcstart container_name
   alias dcpull='dcrun pull' # usage: dcpull to pull all new images or dcpull container_name
-  alias traefiklogs='tail -f /opt/traefik/logs/traefik.log' # tail traefik logs
+  alias tfklogst='tail -f /opt/traefik/logs/traefik.log' # tail traefik logs
+  alias tfklogs='cat /opt/traefik/logs/traefik.log' # cat traefik logs
+  alias tfkcerts='$DIVTOOLS/scripts/get_traefik_certs.sh' # get traefik certs from acme.json
   alias dcchk='$DIVTOOLS/scripts/dt_yamlcheck.sh -show-errors $DOCKERDIR/docker-compose-$HOSTNAME.yml'
 
   # Manage "core" services as defined by profiles in docker compose
@@ -411,6 +429,8 @@ alias ping='ping -c 5'
 alias ipe='curl ipinfo.io/ip' # external ip
 alias ipi='ifconfig eth0' # internal ip
 alias header='curl -I' # get web server headers 
+alias lsnw='echo "===== IPs ====="; ip -brief addr; echo "===== Routes ====="; ip route show; echo "===== DNS ====="; cat /etc/resolv.conf'
+alias nocloudinit='sudo $DIVTOOLS/scripts/nw_disable_cloudinit.sh' # disable CloudInit. Used for VMs that default to CloudInit but really don't even use it
 
 # Syncthing Aliases
 if container_exists "syncthing"; then
@@ -437,7 +457,7 @@ fi
 
 # Starship
 if has_starship; then
-  alias bsst="build_starship_toml"
+  alias bsst="build_starship_toml"  
 fi
 
 if has_zfs; then
@@ -526,7 +546,9 @@ case "${HOSTNAME_U}" in
   ;;
   MONITOR):
     alias dtnb='cd $DOCKERDIR/include/monitor/netbox'
-    alias nbexp='docker exec -ti netbox-postgres-1 /bin/bash'
+    alias nbexp='docker exec -ti netbox-postgres-1 /bin/bash'    
+    alias prmetrics="curl -s http://localhost:9091/api/v1/label/__name__/values | jq -r '.data[] ' " # | grep <filter> to filter the list
+    alias prmetricsg="curl -s http://localhost:9091/api/v1/label/__name__/values | jq -r '.data[] | grep " # | grep <filter> to filter the list
   ;;
 esac
 
@@ -541,5 +563,21 @@ case "${ID}" in
     #alias su='sudo -u admin -i'
     alias su='sudo -u admin bash --rcfile /etc/profile'
     alias sup='sudo -u admin bash --rcfile /etc/profile'
+    alias dfxo='df -hT | grep -v -E "overlay|tmpfs"'    
+    alias dux='sudo du -xh --max-depth=1 --one-file-system 2>/dev/null | awk '"'"'{print $1, $2}'"'"' | sort -n -k1 | tail -20' # show disk usage of top 20 sub-folders of current folder
+    alias duf='find . -type f -exec du -k {} + 2>/dev/null | sort -n -k1 | tail -20'    # Find 20 largest files in this folder
+    alias duf100='find . -type f -exec du -k {} + 2>/dev/null | sort -n -k1 | tail -100' # Find 20 largest files in this folder
+    alias edhcp='vi /etc/config/dhcp/dhcpd_eth0.leases' # Dynamic Leases
+    alias edhcpr='vi /etc/dhcp/dhcpd_eth0.conf' # Reservations
+    alias fixqbo=$DIVTOOLS/scripts/qbo/fix_qbo.sh
+    alias cvg='cd /share/homes/divix/DataVol-AVC/AVCSHARE/Company/CVGrocers'
+    alias avak='cd /share/homes/divix/DataVol-AVC/AVCSHARE/Company/AVAK'
+    alias avakbs='cd "/share/homes/divix/DataVol-AVC/AVCSHARE/Company/AVAK/Mgmt-AVAK/Financial/Bank Statements"'
+
   ;;
 esac
+
+# Proxmox Specific Aliases:
+if [ -f /etc/pve/.version ]; then
+  alias setdtacls='sudo $DIVTOOLS/scripts/setup_divtools_acls.sh' # set divtools acls on Promxox Host for internal LXCs
+fi
