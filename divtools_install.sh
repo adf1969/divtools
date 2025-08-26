@@ -77,24 +77,33 @@ function prompt_env_vars() {
 
 # Write environment variables to .env files
 function write_env_files() {
-    local users=("root" "divix")
+    local users=("root" "divix" "syncthing")
     for user in "${users[@]}"; do
         if id "$user" &>/dev/null; then
             local home_dir=$(getent passwd "$user" | cut -d: -f6)
-            if [[ -n "$home_dir" ]]; then
-                echo "Writing .env file for user $user at $home_dir/.env"
-                run_cmd mkdir -p "$home_dir"
-                run_cmd bash -c "cat > \"$home_dir/.env\" <<EOL
-# Local Env Overrides
+            if [[ -z "$home_dir" ]]; then
+                echo_red "Skipping user $user: No home directory found."
+                continue
+            fi
+            echo "Writing .env file for user $user at $home_dir/.env"
+            if ! run_cmd mkdir -p "$home_dir"; then
+                echo_red "Failed to create directory $home_dir for user $user."
+                continue
+            fi
+            if ! echo "# Local Env Overrides
 export DIVTOOLS=\"$DIVTOOLS\"
 export DOCKERDIR=\"\$DIVTOOLS/docker\"
 export DOCKERDATADIR=\"$DOCKERDATADIR\"
 export DT_LOCAL_BIN_DIR=\"$DT_LOCAL_BIN_DIR\"
-export PATH=\"\$DT_LOCAL_BIN_DIR:\$PATH\"
-EOL"
-                run_cmd chown "$user:$user" "$home_dir/.env"
-                run_cmd chmod 600 "$home_dir/.env"
+export PATH=\"\$DT_LOCAL_BIN_DIR:\$PATH\"" | run_cmd tee "$home_dir/.env" > /dev/null; then
+                echo_red "Failed to write $home_dir/.env for user $user."
+                continue
             fi
+            run_cmd chown "$user:$user" "$home_dir/.env"
+            run_cmd chmod 600 "$home_dir/.env"
+            echo_green "Successfully wrote $home_dir/.env for user $user."
+        else
+            echo "Skipping user $user: User does not exist."
         fi
     done
 }

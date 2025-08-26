@@ -4,8 +4,14 @@ export HOSTNAME_U=$(hostname -s | tr '[:lower:]' '[:upper:]')
 
 # Global Env Vars
 export DOCKERDIR=/opt/divtools/docker
-export DOCKERFILE=$DOCKERDIR/docker-compose-$HOSTNAME.yml
 export DOCKERDATADIR=/opt
+
+# Load Local Overrides, if they exist
+if [ -f ~/.env ]; then
+    . ~/.env
+fi
+
+export DOCKERFILE=$DOCKERDIR/docker-compose-$HOSTNAME.yml
 
 # Global UID Vars for LXCs. These are what the local LXC UIDs become when read by the HOST.
 # This is because ALL uids in an LXC container are "mapped" to the host as LXC uid + 100000
@@ -13,6 +19,73 @@ export DOCKERDATADIR=/opt
 # And UID 0 (root) in the LXC, becomes 100000 at the host (proxmox)
 export LXC_UID_ROOT=100000
 export LXC_UID_DIVIX=101400
+
+
+### LOGGING FUNCTION ###
+# Function to log messages with color-coded output based on section
+function log_msg() {
+    local section="$1"
+    local text="$2"
+    local color
+
+    # Map human-readable color names to tput setaf numbers (256-color palette)
+    declare -A color_map=(
+        ["red"]="1"           # Standard red (ERROR)
+        ["yellow"]="3"        # Standard yellow (WARNING)
+        ["green"]="2"         # Standard green (INFO)
+        ["cyan"]="6"          # Standard cyan (DEBUG)
+        ["white"]="7"         # Standard white (default)
+        ["pink"]="13"         # From C_PINK
+        ["orange"]="214"      # From C_ORANGE
+        ["lightgreen"]="119"  # From C_LIGHTGREEN
+        ["purple"]="129"      # From C_PURPLE
+        ["lightblue"]="123"   # From C_LIGHTBLUE
+        ["brown"]="130"       # From C_BROWN
+        ["lightcyan"]="152"   # From C_LIGHTCYAN
+        ["gold"]="220"        # From C_GOLD
+        ["lightpurple"]="177" # From C_LIGHTPURPLE
+        ["darkblue"]="19"     # From C_DARKBLUE
+        ["lightyellow"]="229" # From C_LIGHTYELLOW
+        ["teal"]="37"         # From C_TEAL
+        ["salmon"]="210"      # From C_SALMON
+        ["violet"]="171"      # From C_VIOLET
+        ["lime"]="154"        # From C_LIME
+        ["darkgray"]="236"    # From C_DARKGRAY
+    )
+
+    # Set color based on section
+    case "$section" in
+        STAR)
+            color_name="yellow"
+            ;;
+        TMUX)
+            color="cyan"
+            ;;            
+        ERROR)
+            color_name="red"
+            ;;
+        WARNING)
+            color_name="yellow"
+            ;;
+        INFO)
+            color_name="green"
+            ;;
+        DEBUG)
+            color_name="cyan"
+            ;;
+        *)
+            color_name="white"
+            ;;
+    esac
+
+    # Get the tput color code
+    color=$(tput setaf "${color_map[$color_name]}")
+
+    # Output the message with section and text, resetting color afterward
+    echo -e "${color}[${section}] ${text}$(tput sgr0)"
+}
+
+
 
 update_profile_timestamp() {
     # Update profile sourced timestamp
@@ -249,7 +322,8 @@ function build_starship_toml() {
     build_starship_toml_palette "$STARSHIP_CONFIG_FILE" "$DT_STARSHIP_PALETTE_DIR"
 
     # Output the location of the generated file
-    echo "Starship configuration built successfully at: $STARSHIP_CONFIG_FILE"
+    #echo "Starship configuration built successfully at: $STARSHIP_CONFIG_FILE"
+    log_msg "STAR" "Starship configuration built successfully at: $STARSHIP_CONFIG_FILE"
 } # build_starship_toml
 
 
@@ -275,13 +349,13 @@ function build_starship_toml_preset() {
     local STARSHIP_CONFIG_FILE="$1"
     local DT_STARSHIP_PRESET_DIR="$2"
     local DT_STARSHIP_OVERRIDE_DIR="$3"
-
-    echo "DT_STARSHIP_PRESET is set to '$DT_STARSHIP_PRESET'"
+    local hostname=$(hostname)
+    log_msg "STAR" "DT_STARSHIP_PRESET is set to '$DT_STARSHIP_PRESET'"
 
     # Check if the preset file exists and process it
     local preset_file="$DT_STARSHIP_PRESET_DIR/$DT_STARSHIP_PRESET.toml"
     if [ -f "$preset_file" ]; then
-        echo "Processing preset file: $preset_file"
+        log_msg "STAR" "Processing preset file: $preset_file"
 
         # Add palette reference to the starship.toml file
         cat <<EOF >> "$STARSHIP_CONFIG_FILE"
@@ -293,10 +367,17 @@ palette = "${DT_STARSHIP_PALETTE}"
 EOF
 
         # Extract and handle override sections as before
-        local override_file="$DT_STARSHIP_OVERRIDE_DIR/$HOSTNAME.toml"
+        local hostname_override_file=$(find "$DT_STARSHIP_OVERRIDE_DIR" -maxdepth 1 -type f -iname "${hostname}.toml" | head -n 1)
+        # Fallback to exact case if find doesn't return a result
+        if [ -z "$hostname_override_file" ]; then
+            hostname_override_file="$DT_STARSHIP_OVERRIDE_DIR/${hostname}.toml"
+        fi            
+
+        #local override_file="$DT_STARSHIP_OVERRIDE_DIR/$HOSTNAME.toml"
+        local override_file="$hostname_override_file"        
         local override_sections=()
         if [ -f "$override_file" ]; then
-            echo "Processing override file: $override_file"
+            log_msg "STAR" "Processing override file: $override_file"
             override_sections=($(grep -oP '^\[\K[^]]+' "$override_file"))
         fi
 
@@ -330,7 +411,7 @@ EOF
         local removed_sections=""
         if [ -s "$tmp_removed_sections_file" ]; then
             removed_sections=$(cat "$tmp_removed_sections_file")
-            echo "Removed sections from preset file: $removed_sections"
+            log_msg "STAR" "Removed sections from preset file: $removed_sections"
             rm "$tmp_removed_sections_file"
         fi
 
@@ -342,20 +423,20 @@ EOF
 ###
 EOF
         cat "$tmp_preset_file" >> "$STARSHIP_CONFIG_FILE"
-        echo "Added filtered preset file to $STARSHIP_CONFIG_FILE"
+        log_msg "STAR" "Added filtered preset file to $STARSHIP_CONFIG_FILE"
         rm "$tmp_preset_file"
     fi
 
     # Append the override file directly to the starship.toml
     if [ -f "$override_file" ]; then
-        echo "Appending override file: $override_file to $STARSHIP_CONFIG_FILE"
+        log_msg "STAR" "Appending override file: $override_file to $STARSHIP_CONFIG_FILE"
         cat <<EOF >> "$STARSHIP_CONFIG_FILE"
 ###
 ### Source: $override_file
 ###
 EOF
         cat "$override_file" >> "$STARSHIP_CONFIG_FILE"
-        echo "Added override file to $STARSHIP_CONFIG_FILE"
+        log_msg "STAR" "Added override file to $STARSHIP_CONFIG_FILE"
     fi
 } # build_starship_toml_preset
 
@@ -366,7 +447,12 @@ function build_starship_toml_palette() {
     local STARSHIP_CONFIG_FILE=$1
     local hostname=$(hostname)
     local palette_file="$DT_STARSHIP_PALETTE_DIR/$DT_STARSHIP_PALETTE.toml"
-    local hostname_palette_file="$DT_STARSHIP_PALETTE_DIR/$DT_STARSHIP_PALETTE-${hostname}.toml"
+    #local hostname_palette_file="$DT_STARSHIP_PALETTE_DIR/$DT_STARSHIP_PALETTE-${hostname}.toml"
+    local hostname_palette_file=$(find "$DT_STARSHIP_PALETTE_DIR" -maxdepth 1 -type f -iname "divtools-${hostname}.toml" | head -n 1)
+    # Fallback to exact case if find doesn't return a result
+    if [ -z "$hostname_palette_file" ]; then
+        hostname_palette_file="$DT_STARSHIP_PALETTE_DIR/divtools-${hostname}.toml"
+    fi    
 
     # Associative arrays to hold palette entries and comments per section
     declare -A palette_sections
@@ -378,7 +464,7 @@ function build_starship_toml_palette() {
         local file=$1
         local source_label=$2
         local current_section=""
-        echo "Parsing palette file: $file"
+        log_msg "STAR" "Parsing palette file: $file"
 
         while IFS= read -r line; do
             #echo "Reading line: $line"  # Debug: Output each line
@@ -392,7 +478,7 @@ function build_starship_toml_palette() {
             # Detect the palette section
             if [[ $line =~ ^\[palettes\.(.*)\]$ ]]; then
                 current_section="${BASH_REMATCH[1]}"
-                echo "Detected palette section: $current_section"
+                log_msg "STAR" "Detected palette section: $current_section"
                 continue
             fi
 
@@ -416,30 +502,30 @@ function build_starship_toml_palette() {
                     #echo "Stored color entry: $key = $value from $source_label with comment: $comment"
                 fi
             else
-                echo "Line did not match expected pattern: $line"
+                log_msg "STAR" "Line did not match expected pattern: $line"
             fi
         done < "$file"
     }
 
     # Parse the main palette file
     if [ -f "$palette_file" ]; then
-        echo "Processing main palette file: $palette_file"
+        log_msg "STAR" "Processing main palette file: $palette_file"
         parse_palette_file "$palette_file" "divtools"
     else
-        echo "Main palette file not found: $palette_file"
+        log_msg "STAR" "Main palette file not found: $palette_file"
     fi
 
     # Parse the hostname-specific palette file and override entries
     if [ -f "$hostname_palette_file" ] && [ -s "$hostname_palette_file" ]; then
-        echo "Processing hostname-specific palette file: $hostname_palette_file"
+        log_msg "STAR" "Processing hostname-specific palette file: $hostname_palette_file"
         parse_palette_file "$hostname_palette_file" "$hostname"
     else
-        echo "Hostname-specific palette file not found or empty: $hostname_palette_file"
+        log_msg "STAR" "Hostname-specific palette file not found or empty: $hostname_palette_file"
     fi
 
     # Write the combined palette to the starship.toml file
     if [ ${#palette_sections[@]} -eq 0 ]; then
-        echo "No palette entries found to write to $STARSHIP_CONFIG_FILE"
+        log_msg "STAR" "No palette entries found to write to $STARSHIP_CONFIG_FILE"
     else
         echo -e "\n# Color Palette: $DT_STARSHIP_PALETTE" >> "$STARSHIP_CONFIG_FILE"
         echo -e "\n###\n### Source:   $palette_file" >> "$STARSHIP_CONFIG_FILE"
@@ -460,10 +546,10 @@ function build_starship_toml_palette() {
                     echo "$key = \"$value\" # $source" >> "$STARSHIP_CONFIG_FILE"
                 fi
             done
-            echo "Written entries for section: $section"
+            log_msg "STAR" "Written entries for section: $section"
         done
 
-        echo "Combined and written palette entries to $STARSHIP_CONFIG_FILE"
+        log_msg "STAR" "Combined and written palette entries to $STARSHIP_CONFIG_FILE"
     fi
 } # build_starship_toml_palette
 
