@@ -11,6 +11,91 @@ force_color_prompt=yes
 
 ### FUNCTIONS ###
 
+# Function to load .env and .env.$HOSTNAME files with case-insensitive handling
+load_env_files() {
+    # Ensure HOSTNAME is set
+    if [ -z "$HOSTNAME" ]; then
+        export HOSTNAME=$(hostname)
+    fi
+
+    # Define case variations
+    local hostname_upper=$(echo "$HOSTNAME" | tr '[:lower:]' '[:upper:]')
+    local hostname_lower=$(echo "$HOSTNAME" | tr '[:upper:]' '[:lower:]')
+
+    # Define paths
+    local env_file="$DIVTOOLS/docker/.env"
+    local env_file_exact="$DIVTOOLS/docker/secrets/env/.env.$HOSTNAME"
+    local env_file_upper="$DIVTOOLS/docker/secrets/env/.env.$hostname_upper"
+    local env_file_lower="$DIVTOOLS/docker/secrets/env/.env.$hostname_lower"
+    local selected_env_file=""
+    local selected_hostname="$HOSTNAME"
+
+    # Source general .env file for InfluxDB settings
+    if [ -f "$env_file" ]; then
+        source "$env_file"
+        log_msg "INFO" "Sourced InfluxDB settings from $env_file"
+        if [ -z "$INFLUXDB_IP" ] || [ -z "$INFLUXDB_PORT" ] || [ -z "$INFLUXDB_API_TOKEN" ] || [ -z "$INFLUXDB_ORG" ] || [ -z "$INFLUXDB_BUCKET" ]; then
+            log_msg "WARNING" "Missing required InfluxDB settings in $env_file. Falling back to defaults."
+            export INFLUXDB_IP="<influxdb-ip>"
+            export INFLUXDB_PORT="8086"
+            export INFLUXDB_API_TOKEN="<your-influxdb-token>"
+            export INFLUXDB_ORG="your-org"
+            export INFLUXDB_BUCKET="proxmox"
+        fi
+    else
+        log_msg "WARNING" "InfluxDB .env file not found at $env_file. Using defaults."
+        export INFLUXDB_IP="<influxdb-ip>"
+        export INFLUXDB_PORT="8086"
+        export INFLUXDB_API_TOKEN="<your-influxdb-token>"
+        export INFLUXDB_ORG="your-org"
+        export INFLUXDB_BUCKET="proxmox"
+    fi
+
+    # Try exact case first for host-specific .env file
+    if [ -f "$env_file_exact" ]; then
+        selected_env_file="$env_file_exact"
+    # If HOSTNAME is not uppercase, try uppercase
+    elif [ "$HOSTNAME" != "$hostname_upper" ] && [ -f "$env_file_upper" ]; then
+        selected_env_file="$env_file_upper"
+        selected_hostname="$hostname_upper"
+    # Try lowercase
+    elif [ -f "$env_file_lower" ]; then
+        selected_env_file="$env_file_lower"
+        selected_hostname="$hostname_lower"
+    else
+        log_msg "WARNING" "Host-specific .env file not found for $HOSTNAME, $hostname_upper, or $hostname_lower."
+    fi
+
+    # Source the selected .env file if it exists
+    if [ -n "$selected_env_file" ]; then
+        source "$selected_env_file"
+        log_msg "INFO" "Sourced host-specific settings from $selected_env_file"
+        # Update HOSTNAME if fallback was used
+        export HOSTNAME="$selected_hostname"
+    fi
+
+    # Set default environment variables if not already set
+    if [ -z "$DIVTOOLS" ]; then
+        if is_truenas || is_readonly_usr_local_bin; then
+            export DIVTOOLS="/mnt/tpool/NFS/opt/divtools"
+            export DOCKERDATADIR="/mnt/tpool/NFS/opt"
+            export DT_LOCAL_BIN_DIR="/mnt/tpool/NFS/opt/bin"
+        else
+            export DIVTOOLS="/opt/divtools"
+            export DOCKERDATADIR="/opt"
+            export DT_LOCAL_BIN_DIR="/usr/local/bin"
+        fi
+        log_msg "INFO" "Set default environment variables: DIVTOOLS=$DIVTOOLS, DOCKERDATADIR=$DOCKERDATADIR, DT_LOCAL_BIN_DIR=$DT_LOCAL_BIN_DIR"
+    fi
+
+    # Ensure PATH includes DT_LOCAL_BIN_DIR
+    if [[ ! ":$PATH:" =~ ":$DT_LOCAL_BIN_DIR:" ]]; then
+        export PATH="$DT_LOCAL_BIN_DIR:$PATH"
+        log_msg "INFO" "Added $DT_LOCAL_BIN_DIR to PATH."
+    fi
+} # load_env_files
+
+
 container_exists() {
   local container_name=$1
 
@@ -26,6 +111,96 @@ container_exists() {
     return 1  # Container does not exist
   fi
 }
+
+# Function for dcrun to handle case-insensitive .env sourcing
+dcrun_f() {
+  # Ensure HOSTNAME is set
+  if [ -z "$HOSTNAME" ]; then
+    export HOSTNAME=$(hostname)
+  fi
+
+  # Define case variations
+  local hostname_upper=$(echo "$HOSTNAME" | tr '[:lower:]' '[:upper:]')
+  local hostname_lower=$(echo "$HOSTNAME" | tr '[:upper:]' '[:lower:]')
+
+  # Define paths
+  local env_file_common="$DOCKERDIR/.env"
+  local env_file_exact="$DOCKERDIR/secrets/env/.env.$HOSTNAME"
+  local env_file_upper="$DOCKERDIR/secrets/env/.env.$hostname_upper"
+  local env_file_lower="$DOCKERDIR/secrets/env/.env.$hostname_lower"
+  local compose_file_exact="$DOCKERDIR/docker-compose-$HOSTNAME.yml"
+  local compose_file_upper="$DOCKERDIR/docker-compose-$hostname_upper.yml"
+  local compose_file_lower="$DOCKERDIR/docker-compose-$hostname_lower.yml"
+  local selected_env_file=""
+  local selected_compose_file=""
+  local selected_hostname="$HOSTNAME"
+  local profile_args=""
+  local filtered_args=()
+  local skip_next=0
+
+  # Filter out --profile and its value from $@
+  for arg in "$@"; do
+    if [[ "$arg" == "--profile" ]]; then
+      profile_args="$arg"
+      skip_next=1
+      continue
+    elif [[ $skip_next -eq 1 ]]; then
+      profile_args="$profile_args $arg"
+      skip_next=0
+      continue
+    fi
+    filtered_args+=("$arg")
+  done
+
+  # Source common .env file if it exists
+  if [ -f "$env_file_common" ]; then
+    echo "Sourcing common defaults: $env_file_common"
+    source "$env_file_common"
+  else
+    echo "Warning: Common $env_file_common not found, proceeding without defaults."
+  fi
+
+  # Try exact case first
+  if [ -f "$env_file_exact" ]; then
+    selected_env_file="$env_file_exact"
+    selected_compose_file="$compose_file_exact"
+  # If HOSTNAME is not uppercase, try uppercase
+  elif [ "$HOSTNAME" != "$hostname_upper" ] && [ -f "$env_file_upper" ]; then
+    selected_env_file="$env_file_upper"
+    selected_compose_file="$compose_file_upper"
+    selected_hostname="$hostname_upper"
+  # Try lowercase
+  elif [ -f "$env_file_lower" ]; then
+    selected_env_file="$env_file_lower"
+    selected_compose_file="$compose_file_lower"
+    selected_hostname="$hostname_lower"
+  else
+    echo "Error: None of $env_file_exact, $env_file_upper, or $env_file_lower found."
+    return 1
+  fi
+
+  # Update HOSTNAME if fallback was used
+  export HOSTNAME="$selected_hostname"
+
+  # Source the selected host-specific .env file and run docker compose
+  echo "Sourcing host-specific overrides: $selected_env_file"
+  local compose_cmd=""
+  if [ -n "$profile_args" ]; then
+    compose_cmd="sudo -E docker compose -f $selected_compose_file $profile_args ${filtered_args[*]}"
+  else
+    compose_cmd="sudo -E docker compose --profile all -f $selected_compose_file ${filtered_args[*]}"
+  fi
+  echo "Executing command: $compose_cmd"
+  if [ "$TEST_MODE" == "1" ]; then
+    log INFO "TEST MODE: Would execute: $compose_cmd"
+  else
+    source "$selected_env_file" && eval "$compose_cmd"
+  fi
+}
+
+
+
+
 
 # Source Dotfiles
 alias sep='source /etc/profile'
@@ -52,6 +227,8 @@ alias dux='sudo du -xh --max-depth=1 --one-file-system 2>/dev/null | sort -h | t
 alias duf='find . -type f -exec du -h {} + 2>/dev/null | sort -h | tail -20' # Find 20 largest files in this folder
 alias duf100='find . -type f -exec du -h {} + 2>/dev/null | sort -h | tail -100' # Find ALL largest files in this folder
 alias dur='find . -xdev -type f -mtime -1 -printf "%k KB %T+ %p\n" | awk ''{printf "%.2f MB %s %s\n", $1/1024, $2, $3}'' | sort -nr | head -20' # Find the most RECENT 20 files consuming space
+alias dush='$DIVTOOLS/scripts/disk_usage.sh'
+alias flf='$DIVTOOLS/scripts/find_largest_files.sh'
 
 
 # ps
@@ -70,6 +247,7 @@ alias dts='cd $DIVTOOLS/scripts'
 #alias pdiv='sudo chown -R divix $DOCKERDIR $DIVTOOLS/config $DIVTOOLS/scripts $DIVTOOLS/dotfiles $DIVTOOLS/.git*'
 alias pdiv='sudo $DIVTOOLS/scripts/fix_dt_perms.sh'
 alias dt_host_setup='sudo $DIVTOOLS/scripts/dt_host_setup.sh'
+alias dt_set_tz='sudo $DIVTOOLS/scripts/dt_set_tz.sh'
 
 alias set_ads_acls='sudo $DIVTOOLS/scripts/set_ads_acls.sh'
 
@@ -230,6 +408,10 @@ alias dlistrp='$DIVTOOLS/scripts/list_restart_policies.sh'
 # Syncthing
 alias stfc='find . -type f -not -path "*/.stversions/*" -name "*sync-conflict*"'
 
+# NFS
+# ./add_nfs_mount.sh -mp /mnt/nfs/divtools -nfs-host 10.1.1.71 -nfs-path /mnt/tpool/sys/u-shared -test
+alias add_nfs_dt='$DIVTOOLS/scripts/add_nfs_mount.sh -mp /mnt/NAS1-1/u-shared -nfs-host NAS1-1 -nfs-path /mnt/tpool/sys/u-shared'
+
 # DASHY
 alias fdicon='find $DOCKERDIR/appdata/dashy/dashboard-icons/png -printf "%f\n" | grep -i ' # Find Dashy Icons, Usage: dicon <icon name>
 alias fdicons=fdicon
@@ -283,7 +465,8 @@ if [ -f $DOCKERFILE ] ; then
       #alias dcrun='HOSTNAME=$(hostname) sudo docker compose --profile all -f $DOCKERDIR/docker-compose-$HOSTNAME.yml'      
 
       # Pass user .env.host to sudo/dc. This gets $HOSTNAME into the global dc-$HOSTNAME.yml file
-      alias dcrun='source $DOCKERDIR/secrets/env/.env.$HOSTNAME && sudo -E docker compose --profile all -f $DOCKERDIR/docker-compose-$HOSTNAME.yml'
+      #alias dcrun='source $DOCKERDIR/secrets/env/.env.$HOSTNAME && sudo -E docker compose --profile all -f $DOCKERDIR/docker-compose-$HOSTNAME.yml'
+      alias dcrun='dcrun_f'  # Use the dcrun_f function defined above
       #alias dcrun='source $DOCKERDIR/.env.host && sudo -E docker compose -f $DOCKERDIR/docker-compose-$HOSTNAME.yml'      
       #alias dcrun='sudo docker compose --profile all -f $DOCKERDIR/docker-compose-$HOSTNAME.yml'
       
@@ -419,6 +602,7 @@ alias rinstall='sudo apt-get -f install --reinstall'
 alias uninstall='sudo apt-get remove'
 alias search='sudo apt-cache search'
 alias addkey='sudo apt-key adv --recv-keys --keyserver keyserver.ubuntu.com'
+alias aptlist='sudo apt list --installed'
 
 
 # NETWORKING
@@ -549,6 +733,7 @@ case "${HOSTNAME_U}" in
     alias nbexp='docker exec -ti netbox-postgres-1 /bin/bash'    
     alias prmetrics="curl -s http://localhost:9091/api/v1/label/__name__/values | jq -r '.data[] ' " # | grep <filter> to filter the list
     alias prmetricsg="curl -s http://localhost:9091/api/v1/label/__name__/values | jq -r '.data[] | grep " # | grep <filter> to filter the list
+    alias ptchk='sudo docker exec -ti prometheus promtool check config /etc/prometheus/prometheus.yml' # Check the Promtool Config
   ;;
 esac
 

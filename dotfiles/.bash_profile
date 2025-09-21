@@ -11,6 +11,14 @@ if [ -f ~/.env ]; then
     . ~/.env
 fi
 
+# Clear any residual Starship environment variables
+unset STARSHIP_START_TIME STARSHIP_PREEXEC_READY STARSHIP_SHELL STARSHIP_SESSION_KEY
+
+# Initialize prompt with fallback
+unset PS1
+unset PROMPT_COMMAND
+PROMPT_COMMAND="set_title; build_prompt"
+
 export DOCKERFILE=$DOCKERDIR/docker-compose-$HOSTNAME.yml
 
 # Global UID Vars for LXCs. These are what the local LXC UIDs become when read by the HOST.
@@ -23,7 +31,7 @@ export LXC_UID_DIVIX=101400
 
 ### LOGGING FUNCTION ###
 # Function to log messages with color-coded output based on section
-function log_msg() {
+function log_msg_tput() {
     local section="$1"
     local text="$2"
     local color
@@ -85,6 +93,68 @@ function log_msg() {
     echo -e "${color}[${section}] ${text}$(tput sgr0)"
 }
 
+# Function to log messages with color-coded output based on section
+function log_msg() {
+    local section="$1"
+    local text="$2"
+    local color
+
+    # Map human-readable color names to ANSI escape codes (256-color palette)
+    declare -A color_map=(
+        ["red"]="\e[31m"          # Standard red (matches C_RED)
+        ["yellow"]="\e[33m"       # Standard yellow (matches C_YELLOW)
+        ["green"]="\e[32m"        # Standard green (matches C_GREEN)
+        ["cyan"]="\e[36m"         # Standard cyan (matches C_CYAN)
+        ["white"]="\e[37m"        # Standard white (matches C_WHITE)
+        ["pink"]="\e[38;5;13m"    # Matches C_PINK
+        ["orange"]="\e[38;5;214m" # Matches C_ORANGE
+        ["lightgreen"]="\e[38;5;119m" # Matches C_LIGHTGREEN
+        ["purple"]="\e[38;5;129m" # Matches C_PURPLE
+        ["lightblue"]="\e[38;5;123m" # Matches C_LIGHTBLUE
+        ["brown"]="\e[38;5;130m"  # Matches C_BROWN
+        ["lightcyan"]="\e[38;5;152m" # Matches C_LIGHTCYAN
+        ["gold"]="\e[38;5;220m"   # Matches C_GOLD
+        ["lightpurple"]="\e[38;5;177m" # Matches C_LIGHTPURPLE
+        ["darkblue"]="\e[38;5;19m" # Matches C_DARKBLUE
+        ["lightyellow"]="\e[38;5;229m" # Matches C_LIGHTYELLOW
+        ["teal"]="\e[38;5;37m"    # Matches C_TEAL
+        ["salmon"]="\e[38;5;210m" # Matches C_SALMON
+        ["violet"]="\e[38;5;171m" # Matches C_VIOLET
+        ["lime"]="\e[38;5;154m"   # Matches C_LIME
+        ["darkgray"]="\e[38;5;236m" # Matches C_DARKGRAY
+    )
+
+    # Set color based on section
+    case "$section" in
+        STAR)
+            color_name="yellow"
+            ;;
+        TMUX)
+            color_name="cyan"
+            ;;
+        ERROR)
+            color_name="red"
+            ;;
+        WARNING)
+            color_name="yellow"
+            ;;
+        INFO)
+            color_name="green"
+            ;;
+        DEBUG)
+            color_name="cyan"
+            ;;
+        *)
+            color_name="white"
+            ;;
+    esac
+
+    # Get the color code
+    color="${color_map[$color_name]}"
+
+    # Output the message with section and text, resetting color afterward
+    echo -e "${color}[${section}] ${text}\e[m"
+}
 
 
 update_profile_timestamp() {
@@ -94,12 +164,20 @@ update_profile_timestamp() {
     date +%s > "$HOME/.config/profile_sourced_timestamp"
 }
 
-# Function to check if Starship is installed
+# Function to check if Starship is installed and functional
+# has_starship() {
+#     command -v starship &> /dev/null && starship --version &> /dev/null
+# }
+
+# Function to check if Starship is installed and functional
 has_starship() {
-  command -v starship &> /dev/null
+    local starship_bin
+    # Search for starship in PATH or common QNAP locations
+    starship_bin=$(command -v starship 2>/dev/null || find /mnt/tpool/local/bin /opt/bin -type f -name starship 2>/dev/null | head -n 1)
+    [ -n "$starship_bin" ] && [ -x "$starship_bin" ] && "$starship_bin" --version &>/dev/null
 }
 
-# Function to check if Starship is installed
+# Function to check if EZA is installed
 has_eza() {
   command -v eza &> /dev/null
 }
@@ -707,31 +785,72 @@ if [[ $- == *i* ]]; then
 fi
 
 
+# # Usage example in your script
+# if [[ $- == *i* ]]; then
+#   # interactive shell
+#   if ! has_starship; then
+#     # Only set PROMPT_COMMAND if Starship is not installed
+#     PROMPT_COMMAND="set_title; build_prompt"
+#   fi
+
+#   # set locale
+#   export LANG=en_US.UTF-8
+
+#   # Apply changes
+#   source ${DIVTOOLS}/dotfiles/.bash_aliases
+# fi
+
+# if has_starship; then
+#   # Call Starship if it is installed
+#   eval "$(starship init bash)"
+
+#   # Build the ~/.config/starship.toml file
+#   build_starship_toml
+# fi
+
+# # TMUX Config
+# tmux_config
+
 # Usage example in your script
 if [[ $- == *i* ]]; then
-  # interactive shell
-  if ! has_starship; then
-    # Only set PROMPT_COMMAND if Starship is not installed
-    PROMPT_COMMAND="set_title; build_prompt"
-  fi
+    # interactive shell
+    # Set locale
+    export LANG=en_US.UTF-8
 
-  # set locale
-  export LANG=en_US.UTF-8
+    # Apply changes
+    source ${DIVTOOLS}/dotfiles/.bash_aliases
 
-  # Apply changes
-  source ${DIVTOOLS}/dotfiles/.bash_aliases
+    # Clear any residual Starship environment variables
+    unset STARSHIP_START_TIME STARSHIP_PREEXEC_READY STARSHIP_SHELL STARSHIP_SESSION_KEY
+
+    # Initialize prompt with fallback
+    unset PS1  # Clear PS1 to avoid conflicts
+    PROMPT_COMMAND="set_title; build_prompt"  # Default to custom prompt
+
+    # Attempt Starship initialization if available
+    if has_starship; then
+        echo "STARSHIP EXISTS"
+        # Run starship init in a subshell and capture output
+        starship_output=$(starship init bash 2>/dev/null)
+        if [ $? -eq 0 ] && [ -n "$starship_output" ]; then
+            eval "$starship_output"
+            # Only build starship.toml if initialization succeeded
+            build_starship_toml
+            log_msg "INFO" "Starship initialized successfully."
+        else
+            log_msg "WARNING" "Starship initialization failed; falling back to custom prompt."
+            unset PS1
+            PROMPT_COMMAND="set_title; build_prompt"
+        fi
+    else
+        log_msg "INFO" "Starship not installed; using custom prompt."
+        unset PS1
+        PROMPT_COMMAND="set_title; build_prompt"
+    fi
+
+    # TMUX Config
+    tmux_config
 fi
-
-if has_starship; then
-  # Call Starship if it is installed
-  eval "$(starship init bash)"
-
-  # Build the ~/.config/starship.toml file
-  build_starship_toml
-fi
-
-# TMUX Config
-tmux_config
 
 # Now that we are done building things, update the Profile Timestamp.
 update_profile_timestamp
