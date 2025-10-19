@@ -5,14 +5,46 @@ DIVTOOLS="/opt/divtools"                  # Default DIVTOOLS path
 DOCKERDATADIR="/opt"                      # Default DOCKERDATADIR path
 DT_LOCAL_BIN_DIR="/usr/local/bin"         # Default binary installation directory
 
-# Check if the script is run as root or a non-root user
-function run_cmd() {
-    if [[ $EUID -ne 0 ]]; then
-        sudo $@
-    else
-        $@
+# Logging function with color-coded output
+log() {
+    local level="$1"
+    local message="$2"
+    local color
+
+    # Default colors for logging
+    case "$level" in
+        DEBUG) color="\e[37m" ;; # White
+        INFO)  color="\e[36m" ;; # Cyan
+        WARN)  color="\e[33m" ;; # Yellow
+        ERROR) color="\e[31m" ;; # Red
+        *)     color="\e[37m" ;; # Default to white
+    esac
+
+    echo -e "${color}[${level}] ${message}\e[m"
+    if [ "$DEBUG_MODE" -eq 1 ]; then
+        echo -e "\e[37m[DEBUG] ${message}\e[m"
     fi
-}
+} # log
+
+# Check if the script is run as root or a non-root user
+run_cmd() {
+    if [ "$TEST_MODE" -eq 1 ]; then
+        log "INFO" "TEST MODE: Would run command: $@"
+        return
+    fi
+
+    if [[ $EUID -ne 0 ]]; then
+        if [ "$DEBUG_MODE" -eq 1 ]; then
+            log "DEBUG" "Running sudo command: sudo $@"
+        fi
+        sudo "$@"
+    else
+        if [ "$DEBUG_MODE" -eq 1 ]; then
+            log "DEBUG" "Running command as root: $@"
+        fi
+        "$@"
+    fi
+} # run_cmd
 
 # Set whiptail colors for better contrast and selection highlighting
 # Last Updated: 9/7/2025 6:58:45 PM CDT
@@ -63,73 +95,24 @@ function is_readonly_usr_local_bin() {
     fi
 }
 
-# Initialize environment variables for sourced usage
-function init_env_vars() {
-    # Check if ~/.env exists for the current user
-    local home_dir=$(getent passwd "$(whoami)" | cut -d: -f6)
-    if [ -f "$home_dir/.env" ]; then
-        source "$home_dir/.env"
-        echo "Sourced environment variables from $home_dir/.env"
-    fi
-
-    # Source general .env file for InfluxDB settings
-    local env_file="$DIVTOOLS/docker/.env"
-    if [ -f "$env_file" ]; then
-        source "$env_file"
-        echo "Sourced InfluxDB settings from $env_file"
-        if [ -z "$INFLUXDB_IP" ] || [ -z "$INFLUXDB_PORT" ] || [ -z "$INFLUXDB_API_TOKEN" ] || [ -z "$INFLUXDB_ORG" ] || [ -z "$INFLUXDB_BUCKET" ]; then
-            echo_red "Missing required InfluxDB settings in $env_file. Falling back to defaults."
-            export INFLUXDB_IP="<influxdb-ip>"
-            export INFLUXDB_PORT="8086"
-            export INFLUXDB_API_TOKEN="<your-influxdb-token>"
-            export INFLUXDB_ORG="your-org"
-            export INFLUXDB_BUCKET="proxmox"
+# Initialize environment variables using load_env_files from .bash_aliases
+init_env_vars() {
+    local bash_aliases="$DIVTOOLS/dotfiles/.bash_aliases"
+    if [ -f "$bash_aliases" ]; then
+        source "$bash_aliases"
+        if declare -f load_env_files > /dev/null; then
+            load_env_files
+            log "INFO" "Environment variables initialized using load_env_files from .bash_aliases."
+        else
+            log "ERROR" "load_env_files function not found in $bash_aliases."
+            exit 1
         fi
     else
-        echo_red "InfluxDB .env file not found at $env_file. Using defaults."
-        export INFLUXDB_IP="<influxdb-ip>"
-        export INFLUXDB_PORT="8086"
-        export INFLUXDB_API_TOKEN="<your-influxdb-token>"
-        export INFLUXDB_ORG="your-org"
-        export INFLUXDB_BUCKET="proxmox"
+        log "ERROR" ".bash_aliases not found at $bash_aliases."
+        exit 1
     fi
-    # Source host-specific .env.host file
-    if [ -z "$DIVTOOLS" ]; then
-        if is_truenas || is_readonly_usr_local_bin; then
-            export DIVTOOLS="/mnt/tpool/NFS/opt/divtools"
-        else
-            export DIVTOOLS="/opt/divtools"
-        fi
-    fi
+} # init_env_vars
 
-    local env_host_file="$DIVTOOLS/docker/.env.host"
-    if [ -f "$env_host_file" ]; then
-        source "$env_host_file"
-        echo "Sourced host-specific settings from $env_host_file"
-    else
-        echo "Host-specific .env.host file not found at $env_host_file. Using hostname command for HOSTNAME."
-        export HOSTNAME=$(hostname)
-    fi    
-
-    # Set default environment variables if not already set
-    if [ -z "$DIVTOOLS" ]; then
-        if is_truenas || is_readonly_usr_local_bin; then
-            export DIVTOOLS="/mnt/tpool/NFS/opt/divtools"
-            export DOCKERDATADIR="/mnt/tpool/NFS/opt"
-            export DT_LOCAL_BIN_DIR="/mnt/tpool/NFS/opt/bin"
-        else
-            export DIVTOOLS="/opt/divtools"
-            export DOCKERDATADIR="/opt"
-            export DT_LOCAL_BIN_DIR="/usr/local/bin"
-        fi
-        echo "Set default environment variables: DIVTOOLS=$DIVTOOLS, DOCKERDATADIR=$DOCKERDATADIR, DT_LOCAL_BIN_DIR=$DT_LOCAL_BIN_DIR"
-    fi
-
-    # Ensure PATH includes DT_LOCAL_BIN_DIR
-    if [[ ! ":$PATH:" =~ ":$DT_LOCAL_BIN_DIR:" ]]; then
-        export PATH="$DT_LOCAL_BIN_DIR:$PATH"
-    fi
-}
 
 # Prompt for environment variables using whiptail only if not already set
 # Last Updated: 9/7/2025 6:49:45 PM CDT
@@ -171,18 +154,22 @@ function prompt_env_vars() {
 }
 
 # Write environment variables to .env files
-function write_env_files() {
+write_env_files() {
     local users=("root" "divix" "syncthing")
     for user in "${users[@]}"; do
         if id "$user" &>/dev/null; then
             local home_dir=$(getent passwd "$user" | cut -d: -f6)
             if [[ -z "$home_dir" ]]; then
-                echo_red "Skipping user $user: No home directory found."
+                log "WARN" "Skipping user $user: No home directory found."
                 continue
             fi
-            echo "Writing .env file for user $user at $home_dir/.env"
+            log "INFO" "Writing .env file for user $user at $home_dir/.env"
             if ! run_cmd mkdir -p "$home_dir"; then
-                echo_red "Failed to create directory $home_dir for user $user."
+                log "ERROR" "Failed to create directory $home_dir for user $user."
+                continue
+            fi
+            if [ "$TEST_MODE" -eq 1 ]; then
+                log "INFO" "TEST MODE: Would write .env file for $user with: DIVTOOLS=$DIVTOOLS, DOCKERDIR=$DIVTOOLS/docker, DOCKERDATADIR=$DOCKERDATADIR, DT_LOCAL_BIN_DIR=$DT_LOCAL_BIN_DIR"
                 continue
             fi
             if ! echo "# Local Env Overrides
@@ -191,17 +178,17 @@ export DOCKERDIR=\"\$DIVTOOLS/docker\"
 export DOCKERDATADIR=\"$DOCKERDATADIR\"
 export DT_LOCAL_BIN_DIR=\"$DT_LOCAL_BIN_DIR\"
 export PATH=\"\$DT_LOCAL_BIN_DIR:\$PATH\"" | run_cmd tee "$home_dir/.env" > /dev/null; then
-                echo_red "Failed to write $home_dir/.env for user $user."
+                log "ERROR" "Failed to write $home_dir/.env for user $user."
                 continue
             fi
             run_cmd chown "$user:$user" "$home_dir/.env"
             run_cmd chmod 600 "$home_dir/.env"
-            echo_green "Successfully wrote $home_dir/.env for user $user."
+            log "INFO" "Successfully wrote $home_dir/.env for user $user."
         else
-            echo "Skipping user $user: User does not exist."
+            log "INFO" "Skipping user $user: User does not exist."
         fi
     done
-}
+} # write_env_files
 
 
 # Detect OS and set package manager
@@ -1476,11 +1463,13 @@ function clone_divtools_repo() {
 
 
 # Update /etc/profile
-# Added modifications to handle when DIVTOOLS is NOT in /opt/divtools
-function update_profile() {
+update_profile() {
     if grep -q "#DIVTOOLS-BEFORE" /etc/profile; then
-        # If the DIVTOOLS block exists, replace the content between BEFORE and AFTER
-        echo "Updating Divtools entry in /etc/profile."
+        log "INFO" "Updating Divtools entry in /etc/profile."
+        if [ "$TEST_MODE" -eq 1 ]; then
+            log "INFO" "TEST MODE: Would update /etc/profile with DIVTOOLS settings"
+            return
+        fi
         run_cmd sed -i '/#DIVTOOLS-BEFORE/,/#DIVTOOLS-AFTER/c\
 #DIVTOOLS-BEFORE\n\
 # Source divtools profile\n\
@@ -1495,10 +1484,12 @@ if [ -f "$DIVTOOLS/dotfiles/.bash_profile" ]; then\n\
 fi\n\
 #DIVTOOLS-AFTER' /etc/profile
     else
-        # If the DIVTOOLS block doesn't exist, append it to the file
-        echo "Adding Divtools entry to /etc/profile."
+        log "INFO" "Adding Divtools entry to /etc/profile."
+        if [ "$TEST_MODE" -eq 1 ]; then
+            log "INFO" "TEST MODE: Would append DIVTOOLS settings to /etc/profile"
+            return
+        fi
         run_cmd tee -a /etc/profile > /dev/null <<EOL
-
 #DIVTOOLS-BEFORE
 # Source divtools profile
 if [ -f ~/.env ]; then
@@ -1513,18 +1504,19 @@ fi
 #DIVTOOLS-AFTER
 EOL
     fi
-}
-
+} # update_profile
 
 # Update /etc/init.d/container-station.sh
-function update_qnap_container_station() {
-    # Define the path to the startup script
+update_qnap_container_station() {
     local STARTUP_SCRIPT_PATH="$NEW_OPT_LOC/divtools/qnap_cfg/etc/config/adf_custom_startup.sh"
     local INIT_SCRIPT="/etc/init.d/container-station.sh"
 
-    # Check if the DIVTOOLS block already exists
     if grep -q "#DIVTOOLS-BEFORE" "$INIT_SCRIPT"; then
-        echo "Updating Divtools Custom QNAP Startup entry in $INIT_SCRIPT."
+        log "INFO" "Updating Divtools Custom QNAP Startup entry in $INIT_SCRIPT."
+        if [ "$TEST_MODE" -eq 1 ]; then
+            log "INFO" "TEST MODE: Would update $INIT_SCRIPT with startup script $STARTUP_SCRIPT_PATH"
+            return
+        fi
         awk -v script_path="$STARTUP_SCRIPT_PATH" '
             BEGIN {found=0}
             /#DIVTOOLS-BEFORE/ {found=1; print "#DIVTOOLS-BEFORE"; next}
@@ -1539,12 +1531,15 @@ function update_qnap_container_station() {
                     print "fi"
                     print "#DIVTOOLS-AFTER"
                 }
-            }' "$INIT_SCRIPT" | tee "$INIT_SCRIPT.tmp" > /dev/null
+            }' "$INIT_SCRIPT" | run_cmd tee "$INIT_SCRIPT.tmp" > /dev/null
         run_cmd mv "$INIT_SCRIPT.tmp" "$INIT_SCRIPT"
     else
-        # Check if "exit 0" exists and insert before it, or append at the end
         if grep -q "exit 0" "$INIT_SCRIPT"; then
-            echo "Inserting Divtools Custom QNAP Startup entry before 'exit 0' in $INIT_SCRIPT."
+            log "INFO" "Inserting Divtools Custom QNAP Startup entry before 'exit 0' in $INIT_SCRIPT."
+            if [ "$TEST_MODE" -eq 1 ]; then
+                log "INFO" "TEST MODE: Would insert startup script $STARTUP_SCRIPT_PATH before exit 0 in $INIT_SCRIPT"
+                return
+            fi
             awk -v script_path="$STARTUP_SCRIPT_PATH" '
                 /exit 0/ {
                     print "#DIVTOOLS-BEFORE"
@@ -1557,12 +1552,15 @@ function update_qnap_container_station() {
                     next
                 }
                 {print}
-            ' "$INIT_SCRIPT" | tee "$INIT_SCRIPT.tmp" > /dev/null
+            ' "$INIT_SCRIPT" | run_cmd tee "$INIT_SCRIPT.tmp" > /dev/null
             run_cmd mv "$INIT_SCRIPT.tmp" "$INIT_SCRIPT"
         else
-            echo "Adding Divtools Custom QNAP Startup entry to the end of $INIT_SCRIPT."
-            tee -a "$INIT_SCRIPT" > /dev/null <<EOL
-
+            log "INFO" "Adding Divtools Custom QNAP Startup entry to the end of $INIT_SCRIPT."
+            if [ "$TEST_MODE" -eq 1 ]; then
+                log "INFO" "TEST MODE: Would append startup script $STARTUP_SCRIPT_PATH to $INIT_SCRIPT"
+                return
+            fi
+            run_cmd tee -a "$INIT_SCRIPT" > /dev/null <<EOL
 #DIVTOOLS-BEFORE
 # Run Custom QNAP Startup
 if [ -f ${STARTUP_SCRIPT_PATH} ]; then
@@ -1572,27 +1570,33 @@ fi
 EOL
         fi
     fi
-}
-
-
+} # update_qnap_container_station
 
 # Update authorized_keys
-function update_authorized_keys() {
+update_authorized_keys() {
     authorized_keys_url="https://raw.githubusercontent.com/adf1969/divtools/main/.ssh/authorized_keys"
     for user in divix drupal syncthing; do
         if id "$user" &>/dev/null; then
-            mkdir -p /home/$user/.ssh
-            run_cmd curl -s $authorized_keys_url -o /home/$user/.ssh/authorized_keys
-            run_cmd chown $user:$user /home/$user/.ssh/authorized_keys
+            if [ "$TEST_MODE" -eq 1 ]; then
+                log "INFO" "TEST MODE: Would update authorized_keys for $user"
+                continue
+            fi
+            run_cmd mkdir -p /home/$user/.ssh
+            run_cmd curl -s "$authorized_keys_url" -o /home/$user/.ssh/authorized_keys
+            run_cmd chown "$user:$user" /home/$user/.ssh/authorized_keys
             run_cmd chmod 600 /home/$user/.ssh/authorized_keys
+            log "INFO" "Updated authorized_keys for $user"
         fi
     done
-    if [[ "$OS" == "ubuntu" || "$OS" == "debian" ]]; then
-        run_cmd curl -s $authorized_keys_url -o /root/.ssh/authorized_keys
-    elif [[ "$OS" == "qts" ]]; then
-        run_cmd curl -s $authorized_keys_url -o /root/.ssh/authorized_keys
+    if [[ "$OS" == "ubuntu" || "$OS" == "debian" || "$OS" == "qts" ]]; then
+        if [ "$TEST_MODE" -eq 1 ]; then
+            log "INFO" "TEST MODE: Would update authorized_keys for root"
+            return
+        fi
+        run_cmd curl -s "$authorized_keys_url" -o /root/.ssh/authorized_keys
+        log "INFO" "Updated authorized_keys for root"
     fi
-}
+} # update_authorized_keys
 
 
 # Function to configure en_US.UTF-8 locale
@@ -1632,11 +1636,11 @@ function get_selections() {
         container_station_text="Update QNAP Container Station"
     else
         container_station_option="OFF"
-        container_station_text="Update QNAP Container Station (Container Station not installed)"
+        container_station_text="Update QNAP Container Station (C.Station not installed)"
     fi
 
     selections=$(whiptail --fb --title "Select Tasks" --checklist \
-    "Choose tasks to run. Use SPACE to select and ENTER to confirm." 20 78 22 \
+    "Choose tasks to run. Use SPACE to select and ENTER to confirm." 30 96 22 \
     "SET_ENV_VARS" "Set Divtools Environment Variables" OFF \
     "ADD_DIVIX_USER" "Add Divix User" OFF \
     "ADD_SYNCTHING_USER" "Add Syncthing User" OFF \
