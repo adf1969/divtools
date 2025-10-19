@@ -5,7 +5,9 @@ DIVTOOLS="/opt/divtools"                  # Default DIVTOOLS path
 DOCKERDATADIR="/opt"                      # Default DOCKERDATADIR path
 DT_LOCAL_BIN_DIR="/usr/local/bin"         # Default binary installation directory
 
-# Logging function with color-coded output
+
+# Last Updated: 10/18/2025 9:21:28 PM CDT
+# Logging function with color-coded output; respects global DEBUG_MODE.
 log() {
     local level="$1"
     local message="$2"
@@ -21,30 +23,66 @@ log() {
     esac
 
     echo -e "${color}[${level}] ${message}\e[m"
-    if [ "$DEBUG_MODE" -eq 1 ]; then
+    # Only echo debug if flag is set (safe numeric check)
+    if [ "${DEBUG_MODE:-0}" -eq 1 ] && [ "$level" = "DEBUG" ]; then
         echo -e "\e[37m[DEBUG] ${message}\e[m"
     fi
-} # log
+}
 
-# Check if the script is run as root or a non-root user
+
+# Last Updated: 10/18/2025 9:30:00 PM CDT
+# Sets default flags; defers full bash profile sourcing until after potential clone (for fresh systems).
+
+# Default flags (support -test and -debug via getopts)
+TEST_MODE=0
+DEBUG_MODE=0
+while getopts ":td" opt; do
+  case $opt in
+    t) TEST_MODE=1 ;;
+    d) DEBUG_MODE=1 ;;
+    \?) log "WARN" "Invalid option -$OPTARG"; exit 1 ;;
+  esac
+done
+
+# Defer sourcing until we know $DIVTOOLS exists (e.g., post-clone); use basic echo for early logs
+source_profile_if_ready() {
+    if [ -f "$DIVTOOLS/dotfiles/.bash_profile" ]; then
+        source "$DIVTOOLS/dotfiles/.bash_profile"
+        log "INFO" "Full bash profile chain sourced successfully."
+    else
+        log "WARN" "Skipping .bash_profile source (dir not ready); basic logging only until clone."
+    fi
+}
+# Call it early but non-fatally
+source_profile_if_ready
+
+
+
+# Last Updated: 10/18/2025 9:21:28 PM CDT
+# Runs commands with sudo if non-root, supports test/debug modes with colored logging.
 run_cmd() {
-    if [ "$TEST_MODE" -eq 1 ]; then
+    # Safe numeric check: Default to 0 if unset/empty
+    local test_mode_num=${TEST_MODE:-0}
+    local debug_mode_num=${DEBUG_MODE:-0}
+
+    if [ "$test_mode_num" -eq 1 ]; then
         log "INFO" "TEST MODE: Would run command: $@"
         return
     fi
 
     if [[ $EUID -ne 0 ]]; then
-        if [ "$DEBUG_MODE" -eq 1 ]; then
+        if [ "$debug_mode_num" -eq 1 ]; then
             log "DEBUG" "Running sudo command: sudo $@"
         fi
         sudo "$@"
     else
-        if [ "$DEBUG_MODE" -eq 1 ]; then
+        if [ "$debug_mode_num" -eq 1 ]; then
             log "DEBUG" "Running command as root: $@"
         fi
         "$@"
     fi
-} # run_cmd
+}
+
 
 # Set whiptail colors for better contrast and selection highlighting
 # Last Updated: 9/7/2025 6:58:45 PM CDT
@@ -95,23 +133,18 @@ function is_readonly_usr_local_bin() {
     fi
 }
 
-# Initialize environment variables using load_env_files from .bash_aliases
+
+# Last Updated: 10/18/2025 9:26:00 PM CDT
+# Initializes environment variables using load_env_files from .bash_aliases if available; optional to avoid halting on missing def.
 init_env_vars() {
-    local bash_aliases="$DIVTOOLS/dotfiles/.bash_aliases"
-    if [ -f "$bash_aliases" ]; then
-        source "$bash_aliases"
-        if declare -f load_env_files > /dev/null; then
-            load_env_files
-            log "INFO" "Environment variables initialized using load_env_files from .bash_aliases."
-        else
-            log "ERROR" "load_env_files function not found in $bash_aliases."
-            exit 1
-        fi
+    # Global source already handled; just load env if function exists
+    if declare -f load_env_files > /dev/null; then
+        load_env_files
+        log "INFO" "Environment variables initialized using load_env_files from .bash_aliases."
     else
-        log "ERROR" ".bash_aliases not found at $bash_aliases."
-        exit 1
+        log "WARN" "load_env_files function not found after sourcing .bash_profile. Skipping; envs set via prompts/files."
     fi
-} # init_env_vars
+}
 
 
 # Prompt for environment variables using whiptail only if not already set
@@ -1706,7 +1739,7 @@ function run_selected_tasks() {
 
 
 # Main script execution
-# Last Updated: 9/7/2025 6:49:45 PM CDT
+# Last Updated: 10/18/2025 9:29:31 PM
 function main() {
     detect_os
     # Only prompt for env vars if explicitly selected or not set
@@ -1714,6 +1747,7 @@ function main() {
         prompt_env_vars
     fi
     write_env_files
+    source_profile_if_ready  # Re-check/source now that envs are set (and clone may have run)
     get_selections
     read -p "Are you sure you want to run the selected tasks? (y/n): " confirm_run
     if [[ "$confirm_run" == "y" || "$confirm_run" == "Y" ]]; then
@@ -1722,6 +1756,7 @@ function main() {
         echo "Tasks cancelled."
     fi
 }
+
 
 # Initialize environment variables when script is sourced or run
 init_env_vars
