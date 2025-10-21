@@ -361,7 +361,107 @@ function add_divix_user() {
 } # add_divix_user
 
 
+# Function to mount NFS share from host /opt/divtools on VM
+# Requests host name, tests connectivity, adds /etc/hosts entry if needed, updates /etc/fstab, mounts, and confirms
+# Exits script if mount fails and user chooses to exit
+# Last Updated: 10/21/2025 10:00:00 AM CDT
+function nfs_mount_host_divtools() {
+    # Check if already mounted
+    if mountpoint -q /opt/divtools 2>/dev/null; then
+        log "INFO" "/opt/divtools is already mounted."
+        return 0
+    fi
 
+    # Install nfs-common if not installed (assuming Debian/Ubuntu)
+    if ! dpkg -l | grep -q "^ii  nfs-common "; then
+        log "INFO" "Installing nfs-common..."
+        if [ "$TEST_MODE" -eq 1 ]; then
+            log "INFO" "TEST MODE: Would install nfs-common"
+        else
+            run_cmd apt update
+            run_cmd apt install -y nfs-common
+        fi
+        log "INFO" "nfs-common installed."
+    else
+        log "INFO" "nfs-common is already installed."
+    fi
+
+    # Request hostname
+    local HOSTNAME=$(whiptail --title "NFS Host Configuration" --inputbox \
+        "Enter the hostname of the NFS host (Proxmox host):" 10 60 \
+        3>&1 1>&2 2>&3)
+    if [[ $? != 0 || -z "$HOSTNAME" ]]; then
+        log "ERROR" "Hostname not provided. Aborting NFS mount."
+        return 1
+    fi
+
+    # Test ping
+    if ! ping -c1 -W2 "$HOSTNAME" &>/dev/null; then
+        log "WARN" "Ping to $HOSTNAME failed. Requesting IP address."
+        local IP=$(whiptail --title "NFS Host IP" --inputbox \
+            "Enter the IP address of the host $HOSTNAME:" 10 60 \
+            3>&1 1>&2 2>&3)
+        if [[ $? != 0 || -z "$IP" ]]; then
+            log "ERROR" "IP address not provided. Aborting NFS mount."
+            return 1
+        fi
+        # Add to /etc/hosts if not exists
+        if ! grep -q "^$IP\s\+$HOSTNAME" /etc/hosts 2>/dev/null; then
+            log "INFO" "Adding $IP $HOSTNAME to /etc/hosts."
+            if [ "$TEST_MODE" -eq 1 ]; then
+                log "INFO" "TEST MODE: Would add $IP $HOSTNAME to /etc/hosts"
+            else
+                echo "$IP $HOSTNAME" | run_cmd tee -a /etc/hosts > /dev/null
+            fi
+        else
+            log "INFO" "$IP $HOSTNAME already in /etc/hosts."
+        fi
+    else
+        log "INFO" "Ping to $HOSTNAME succeeded."
+    fi
+
+    # Create mount point
+    run_cmd mkdir -p /opt/divtools
+
+    # Define fstab entry
+    local fstab_entry="$HOSTNAME:/opt/divtools /opt/divtools nfs defaults 0 0"
+
+    # Add to /etc/fstab if not exists
+    if ! grep -q "^$fstab_entry$" /etc/fstab 2>/dev/null; then
+        log "INFO" "Adding NFS mount entry to /etc/fstab."
+        if [ "$TEST_MODE" -eq 1 ]; then
+            log "INFO" "TEST MODE: Would add to /etc/fstab: $fstab_entry"
+        else
+            echo "$fstab_entry" | run_cmd tee -a /etc/fstab > /dev/null
+        fi
+    else
+        log "INFO" "NFS mount entry already in /etc/fstab."
+    fi
+
+    # Mount
+    log "INFO" "Mounting /opt/divtools..."
+    if [ "$TEST_MODE" -eq 1 ]; then
+        log "INFO" "TEST MODE: Would run mount /opt/divtools"
+    else
+        run_cmd mount /opt/divtools
+    fi
+
+    # Confirm mount
+    if mountpoint -q /opt/divtools 2>/dev/null; then
+        log "INFO" "/opt/divtools mounted successfully."
+        return 0
+    else
+        log "ERROR" "/opt/divtools mount failed."
+        if whiptail --title "Mount Failed" --yesno \
+            "The NFS mount for /opt/divtools failed.\n\nOther installation tasks may fail without it.\n\nDo you want to continue anyway? (No will exit the script)" 12 60; then
+            log "WARN" "Continuing despite mount failure."
+            return 1
+        else
+            log "INFO" "Exiting script due to mount failure."
+            exit 1
+        fi
+    fi
+} # nfs_mount_host_divtools
 
 
 # Create divtools folder and set permissions
@@ -628,7 +728,7 @@ EOF
 
 # Install necessary packages for Proxmox
 function install_packages_proxmox() {
-    packages=(sudo git syncthing)
+    packages=(sudo git syncthing nfs-kernel-server acl)
 
     if [[ "$PKG_MANAGER" == "apt" ]]; then
         # Add syncthing repository if syncthing is not already installed
@@ -667,6 +767,52 @@ function install_packages_proxmox() {
         done
     fi
 }
+
+# Function to configure NFS sharing for /opt/divtools on Proxmox hosts
+# Checks if NFS server is installed, adds export entry if missing, and applies changes
+# Last Updated: 10/21/2025 10:00:00 AM CDT
+function share_divtools_nfs() {
+    if [ ! -f /etc/pve/.version ]; then
+        log "ERROR" "NFS sharing for /opt/divtools is only supported on Proxmox hosts."
+        return 1
+    fi
+
+    # Install nfs-kernel-server if not installed
+    if ! dpkg -l | grep -q "^ii  nfs-kernel-server "; then
+        log "INFO" "Installing nfs-kernel-server..."
+        if [ "$TEST_MODE" -eq 1 ]; then
+            log "INFO" "TEST MODE: Would install nfs-kernel-server"
+            return
+        fi
+        run_cmd apt update
+        run_cmd apt install -y nfs-kernel-server
+        log "INFO" "nfs-kernel-server installed."
+    else
+        log "INFO" "nfs-kernel-server is already installed."
+    fi
+
+    # Define the export entry and comment
+    local comment="# Share the /opt/divtools folder to all local systems 10.x.x.x and allows ROOT access"
+    local export_entry="/opt/divtools 192.168.0.0/16(rw,sync,no_subtree_check,no_root_squash) 10.0.0.0/8(rw,sync,no_subtree_check,no_root_squash)"
+
+    # Check if the export entry already exists
+    if ! grep -q "^$export_entry$" /etc/exports 2>/dev/null; then
+        log "INFO" "Adding NFS export entry for /opt/divtools to /etc/exports."
+        if [ "$TEST_MODE" -eq 1 ]; then
+            log "INFO" "TEST MODE: Would append to /etc/exports:\n$comment\n$export_entry"
+            return
+        fi
+        echo "$comment" | run_cmd tee -a /etc/exports > /dev/null
+        echo "$export_entry" | run_cmd tee -a /etc/exports > /dev/null
+        run_cmd exportfs -ra
+        log "INFO" "NFS export entry added and applied successfully."
+    else
+        log "INFO" "NFS export entry for /opt/divtools already exists in /etc/exports."
+        # Re-apply exports in case of changes
+        run_cmd exportfs -ra
+        log "INFO" "NFS exports re-applied."
+    fi
+} # share_divtools_nfs
 
 
 # Install necessary packages
@@ -1672,8 +1818,25 @@ function get_selections() {
         container_station_text="Update QNAP Container Station (C.Station not installed)"
     fi
 
+    # Check for Proxmox NFS sharing option
+    local nfs_share_option="OFF"
+    local nfs_share_text="Share /opt/divtools via NFS (Proxmox only)"
+    if [ -f /etc/pve/.version ]; then
+        nfs_share_option="OFF"
+        nfs_share_text="Share /opt/divtools via NFS"
+    fi
+
+    # Check for NFS mount option (VM only)
+    local nfs_mount_option="OFF"
+    local nfs_mount_text="NFS Mount host:/opt/divtools (VM only)"
+    if [[ ! -f /etc/pve/.version ]]; then
+        nfs_mount_option="OFF"
+        nfs_mount_text="NFS Mount host:/opt/divtools"
+    fi
+
     selections=$(whiptail --fb --title "Select Tasks" --checklist \
     "Choose tasks to run. Use SPACE to select and ENTER to confirm." 30 96 22 \
+    "NFS_MOUNT_HOST_DIVTOOLS" "$nfs_mount_text" $nfs_mount_option \
     "SET_ENV_VARS" "Set Divtools Environment Variables" OFF \
     "ADD_DIVIX_USER" "Add Divix User" OFF \
     "ADD_SYNCTHING_USER" "Add Syncthing User" OFF \
@@ -1681,6 +1844,7 @@ function get_selections() {
     "INSTALL_ENTWARE" "Install Entware (QNAP only)" OFF \
     "INSTALL_PACKAGES" "Install Software Packages" OFF \
     "INSTALL_PACKAGES_PROXMOX" "Install PROXMOX Software Packages" OFF \
+    "SHARE_DIVTOOLS_NFS" "$nfs_share_text" $nfs_share_option \
     "INSTALL_DOCKER" "Install Docker" OFF \
     "INSTALL_COCKPIT" "Install Cockpit and Modules" OFF \
     "INSTALL_EZA" "Install eza (Modern ls Replacement)" OFF \
@@ -1710,6 +1874,7 @@ function get_selections() {
 function run_selected_tasks() {
     for selection in $selections; do
         case $selection in
+            \"NFS_MOUNT_HOST_DIVTOOLS\") nfs_mount_host_divtools ;;
             \"SET_ENV_VARS\") prompt_env_vars ;;
             \"ADD_DIVIX_USER\") add_divix_user ;;
             \"ADD_SYNCTHING_USER\") add_syncthing_user ;;
@@ -1717,6 +1882,7 @@ function run_selected_tasks() {
             \"INSTALL_ENTWARE\") install_entware ;;
             \"INSTALL_PACKAGES\") install_packages ;;
             \"INSTALL_PACKAGES_PROXMOX\") install_packages_proxmox ;;
+            \"SHARE_DIVTOOLS_NFS\") share_divtools_nfs ;;
             \"INSTALL_DOCKER\") install_docker ;;
             \"INSTALL_COCKPIT\") install_cockpit ;;
             \"INSTALL_EZA\") install_eza ;;
@@ -1739,7 +1905,7 @@ function run_selected_tasks() {
 
 
 # Main script execution
-# Last Updated: 10/18/2025 9:29:31 PM
+# Last Updated: 10/21/2025 10:00:00 AM CDT
 function main() {
     detect_os
     # Only prompt for env vars if explicitly selected or not set
@@ -1747,10 +1913,21 @@ function main() {
         prompt_env_vars
     fi
     write_env_files
-    source_profile_if_ready  # Re-check/source now that envs are set (and clone may have run)
     get_selections
     read -p "Are you sure you want to run the selected tasks? (y/n): " confirm_run
     if [[ "$confirm_run" == "y" || "$confirm_run" == "Y" ]]; then
+        # Run NFS mount first if selected
+        local nfs_selected=false
+        for selection in $selections; do
+            if [[ "$selection" == \"NFS_MOUNT_HOST_DIVTOOLS\" ]]; then
+                nfs_selected=true
+                break
+            fi
+        done
+        if [[ "$nfs_selected" == true ]]; then
+            nfs_mount_host_divtools
+            # The function handles exit if user chooses to exit on failure
+        fi
         run_selected_tasks
     else
         echo "Tasks cancelled."
