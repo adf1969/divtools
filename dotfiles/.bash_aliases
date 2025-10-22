@@ -198,6 +198,127 @@ dcrun_f() {
   fi
 }
 
+# Last Updated: 9/21/2025 11:05:45 PM CDT
+# Colorizes df output with configurable usage ranges and styled header
+df_color() {
+    # Display disk usage with color highlighting for configurable usage ranges
+    # Header in bright black background with dark blue foreground
+    # Supports -debug flag for detailed output
+    # Excludes overlay and tmpfs filesystems
+    local YELLOW="\e[33m"          # Matches C_YELLOW in .bash_profile
+    local RED="\e[31m"             # Matches C_RED
+    local GREEN="\e[32m"           # Matches C_GREEN
+    local ORANGE="\e[38;5;214m"    # Matches C_ORANGE
+    local WHITE="\e[37m"           # Matches C_WHITE
+    local RESET="\e[m"
+    local HEADER_BG="\e[100m"      # Bright black background (C_BG_BRIGHTBLACK)
+    local HEADER_FG="\e[38;5;19m"  # Dark blue foreground (C_DARKBLUE)
+    local DEBUG=0
+    local df_output
+    local lines
+    local i
+
+    # Parse optional -debug flag
+    if [[ "$1" == "-debug" ]]; then
+        DEBUG=1
+        shift
+    fi
+
+    # Debug: Log start of df execution
+    if [[ $DEBUG -eq 1 ]]; then
+        echo "[DEBUG] Starting df command execution"
+    fi
+
+    # Run df with sudo and timeout to prevent hanging
+    if ! df_output=$(timeout --signal=SIGTERM 10 df -h -x overlay -x tmpfs 2>/dev/null); then
+        echo "Error: Failed to execute df command, timed out after 10 seconds, or sudo authentication failed."
+        if [[ $DEBUG -eq 1 ]]; then
+            echo "[DEBUG] df command failed or timed out"
+        fi
+        return 1
+    fi
+
+    # Debug: Log raw df output
+    if [[ $DEBUG -eq 1 ]]; then
+        echo "[DEBUG] Raw df output:"
+        echo "$df_output"
+    fi
+
+    # Split output into an array of lines
+    if [[ $DEBUG -eq 1 ]]; then
+        echo "[DEBUG] Splitting df output into lines"
+    fi
+    mapfile -t lines <<< "$df_output"
+
+    # Check if output is empty
+    if [[ ${#lines[@]} -eq 0 ]]; then
+        echo "Error: No output from df command."
+        if [[ $DEBUG -eq 1 ]]; then
+            echo "[DEBUG] No lines in df output"
+        fi
+        return 1
+    fi
+
+    # Print header (first line) with bright black background and dark blue foreground
+    if [[ $DEBUG -eq 1 ]]; then
+        echo "[DEBUG] Printing header: ${lines[0]}"
+    fi
+    echo -e "${HEADER_BG}${HEADER_FG}${lines[0]}${RESET}"
+
+    # Define usage ranges and colors
+    declare -A USAGE_RANGES=(
+        ["Excellent"]="0-30:$GREEN"
+        ["Normal"]="31-69:$WHITE"
+        ["Warn"]="70-79:$YELLOW"
+        ["Error"]="80-89:$ORANGE"
+        ["Critical"]="90-100:$RED"
+    )
+
+    # Process each line (skip header)
+    for ((i=1; i<${#lines[@]}; i++)); do
+        local line="${lines[i]}"
+        # Extract usage percentage (5th column, removing % sign)
+        local usage
+        if [[ $DEBUG -eq 1 ]]; then
+            echo "[DEBUG] Processing line $i: $line"
+        fi
+        usage=$(echo "$line" | awk '{print $5}' | tr -d '%')
+        
+        # Debug: Log parsed usage
+        if [[ $DEBUG -eq 1 ]]; then
+            echo "[DEBUG] Line $i: Usage=$usage"
+        fi
+
+        # Skip lines with invalid usage values
+        if [[ -z "$usage" || ! "$usage" =~ ^[0-9]+$ ]]; then
+            if [[ $DEBUG -eq 1 ]]; then
+                echo "[DEBUG] Skipping invalid usage for line $i"
+            fi
+            echo "$line"
+            continue
+        fi
+
+        # Determine color based on usage range
+        local color=""
+        for range in "${!USAGE_RANGES[@]}"; do
+            IFS=':-' read -r min max col <<< "${USAGE_RANGES[$range]}"
+            if [[ "$usage" -ge "$min" && "$usage" -le "$max" ]]; then
+                color="$col"
+                if [[ $DEBUG -eq 1 ]]; then
+                    echo "[DEBUG] Line $i: Usage $usage falls in range $range ($min-$max), using color $color"
+                fi
+                break
+            fi
+        done
+
+        # Apply color if found, otherwise print without color
+        if [[ -n "$color" ]]; then
+            echo -e "${color}${line}${RESET}"
+        else
+            echo "$line"
+        fi
+    done
+} # df_color
 
 
 
@@ -220,15 +341,22 @@ alias .3='cd ../../..'
 alias .4='cd ../../../..'
 alias .5='cd ../../../../..'
 # adding flags
-alias df='df -h'               # human-readable sizes
+
+
+
+
+#alias df='df -h'               # human-readable sizes
+alias dfh='df -h'               # human-readable sizes
+alias dfc='df_color'             # human-readable, colored, no overlay, tmpfs
 alias free='free -m'           # show sizes in MB
-alias dfxo='sudo df -x overlay' # show filesystems, but exclude overlay
+alias dfxo='sudo df -x overlay -x tmpfs' # show filesystems, but exclude overlay
 alias dux='sudo du -xh --max-depth=1 --one-file-system 2>/dev/null | sort -h | tail -20'     # show disk usage of top 20 sub-folders of current folder
 alias duf='find . -type f -exec du -h {} + 2>/dev/null | sort -h | tail -20' # Find 20 largest files in this folder
 alias duf100='find . -type f -exec du -h {} + 2>/dev/null | sort -h | tail -100' # Find ALL largest files in this folder
 alias dur='find . -xdev -type f -mtime -1 -printf "%k KB %T+ %p\n" | awk ''{printf "%.2f MB %s %s\n", $1/1024, $2, $3}'' | sort -nr | head -20' # Find the most RECENT 20 files consuming space
 alias dush='$DIVTOOLS/scripts/disk_usage.sh'
 alias flf='$DIVTOOLS/scripts/find_largest_files.sh'
+alias lfu='$DIVTOOLS/scripts/log_file_usage.sh'  # List file usage in current directory and subdirectories
 
 
 # ps
@@ -250,6 +378,14 @@ alias dt_host_setup='sudo $DIVTOOLS/scripts/dt_host_setup.sh'
 alias dt_set_tz='sudo $DIVTOOLS/scripts/dt_set_tz.sh'
 
 alias set_ads_acls='sudo $DIVTOOLS/scripts/set_ads_acls.sh'
+
+# PVE / Proxmox
+alias pve_host_check='sudo $DIVTOOLS/scripts/pve_host_check.sh'
+alias pve_snapshot='sudo $DIVTOOLS/scripts/pve/pve_snapshot.sh'
+
+# NVidial Aliases
+alias nv_cfg_blacklist='sudo $DIVTOOLS/scripts/nvidia/nv_cfg_blacklist.sh' # Blacklist Nouveau drivers
+alias nv_install_ctk='sudo $DIVTOOLS/scripts/nvidia/nv_install_ctk.sh' # Install NVIDIA Container Toolkit
 
 # Utility Aliases
 #alias su='sudo -u admin sh'
@@ -377,6 +513,10 @@ alias pvact='python_venv_activate'
 alias pvdel="python_venv_delete"
 alias pvls='python_venv_ls'
 alias pvda='deactivate' # deactivates the venv
+
+
+# FRIGATE Scripts
+alias fg_media_rev='$DIVTOOLS/scripts/frigate/fg_media_rev.sh'
 
 # Office365 Monitor Scripts
 # Rules
@@ -523,6 +663,12 @@ fi
 # GIT
 alias greset='git fetch origin && git reset --hard origin/main'
 alias ggraph='git log --all --decorate --oneline --graph'
+# Show Ignored files from git status
+alias gitsi='echo "Git Ignored Files"; git status --ignored --porcelain | grep "^!! "'
+# Show only untracked files from git status
+alias gitsu='echo "Git Untracked Files"; git status --porcelain | grep "^?? " | sed "s/^?? //"'
+# Show only modified (unstaged) files from git status
+alias gitsm='echo "Git Modified/Uncommitted Files"; git status --porcelain | grep "^ M " | sed "s/^ M //"'
 
 # SSH
 alias ssha='eval $(ssh-agent) && ssh-add'
