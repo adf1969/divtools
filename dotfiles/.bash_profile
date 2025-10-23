@@ -153,7 +153,7 @@ function log_msg() {
     color="${color_map[$color_name]}"
 
     # Output the message with section and text, resetting color afterward
-    echo -e "${color}[${section}] ${text}\e[m"
+    echo -e "${color}[${section}] ${text}\e[m" >&2
 }
 
 
@@ -678,6 +678,487 @@ tmux_config() {
     # Map the .config/tmux -> $DIVTOOLS/config/tmux
     update_link "$TM_SOURCE" "$CTM_TARGET"
 }
+
+
+
+### DOCKER FUNCTIONS ###
+
+
+### ENV VAR FUNCTIONS ###
+
+# Function to check InfluxDB environment variables and set defaults if missing
+# Last Updated: 10/22/2025 9:17:00 PM CDT
+confirm_influxdb_vars() {
+    # Check if all required InfluxDB variables are set
+    if [ -z "$INFLUXDB_IP" ] || [ -z "$INFLUXDB_PORT" ] || [ -z "$INFLUXDB_API_TOKEN" ] || [ -z "$INFLUXDB_ORG" ] || [ -z "$INFLUXDB_BUCKET" ]; then
+        [ "${DT_DEBUG,,}" == "1" -o "${DT_DEBUG,,}" == "true" ] && log_msg "WARNING" "Missing required InfluxDB settings in environment (expected in ${DOCKERDIR}/sites/s00-shared/.env.s00-shared). Falling back to defaults." >&2
+        export INFLUXDB_IP="<influxdb-ip>"
+        export INFLUXDB_PORT="8086"
+        export INFLUXDB_API_TOKEN="<your-influxdb-token>"
+        export INFLUXDB_ORG="your-org"
+        export INFLUXDB_BUCKET="proxmox"
+    else
+        [ "${DT_DEBUG,,}" == "1" -o "${DT_DEBUG,,}" == "true" ] && log_msg "DEBUG" "InfluxDB variables set: INFLUXDB_IP=${INFLUXDB_IP}, INFLUXDB_PORT=${INFLUXDB_PORT}, INFLUXDB_API_TOKEN=****, INFLUXDB_ORG=${INFLUXDB_ORG}, INFLUXDB_BUCKET=${INFLUXDB_BUCKET}" >&2
+    fi
+} # confirm_influxdb_vars
+
+
+# Function to find file with case-insensitive variations
+# Last Updated: 10/22/2025 8:35:00 PM CDT
+find_file_case_insensitive() {
+    local dir="$1"
+    local prefix="$2"
+    local var="$3"
+    local suffix="$4"
+    local candidates=()
+
+    if [ -z "${var}" ]; then
+        local filename="${prefix}${suffix}"
+        local upper_filename=$(echo "${filename}" | tr '[:lower:]' '[:upper:]')
+        local lower_filename=$(echo "${filename}" | tr '[:upper:]' '[:lower:]')
+        candidates=("${dir}/${filename}" "${dir}/${upper_filename}" "${dir}/${lower_filename}")
+    else
+        local exact="${dir}/${prefix}${var}${suffix}"
+        local upper_var=$(echo "${var}" | tr '[:lower:]' '[:upper:]')
+        local lower_var=$(echo "${var}" | tr '[:upper:]' '[:lower:]')
+        local upper="${dir}/${prefix}${upper_var}${suffix}"
+        local lower="${dir}/${prefix}${lower_var}${suffix}"
+        candidates=("${exact}" "${upper}" "${lower}")
+    fi
+
+    for candidate in "${candidates[@]}"; do
+        if [ -f "${candidate}" ]; then
+            echo "${candidate}"
+            return 0
+        fi
+    done
+
+    return 1
+} # find_file_case_insensitive
+
+
+# Function to load .env files with case-insensitive handling for V2 structure
+# Last Updated: 10/22/2025 9:17:00 PM CDT
+load_env_files() {
+    # Ensure HOSTNAME is set
+    if [ -z "$HOSTNAME" ]; then
+        export HOSTNAME=$(hostname)
+        [ "${DT_DEBUG,,}" == "1" -o "${DT_DEBUG,,}" == "true" ] && log_msg "DEBUG" "Set HOSTNAME=${HOSTNAME}" >&2
+    fi
+
+    # Define paths
+    local docker_dir="${DOCKERDIR:-/opt/divtools/docker}"
+    local site_name="${SITE_NAME:-default}"
+    local shared_dir="${docker_dir}/sites/s00-shared"
+    local site_dir="${docker_dir}/sites/${site_name}"
+    local host_dir="${site_dir}/${HOSTNAME}"
+    local shared_env_file
+    local site_env_file
+    local host_env_file
+
+    # Source shared .env file (V2 location)
+    shared_env_file=$(find_file_case_insensitive "${shared_dir}" ".env." "s00-shared" "")
+    if [ -n "${shared_env_file}" ]; then
+        source "${shared_env_file}"
+        log_msg "INFO" "Sourced shared settings from ${shared_env_file}" >&2
+        [ "${DT_DEBUG,,}" == "1" -o "${DT_DEBUG,,}" == "true" ] && log_msg "DEBUG" "Loaded shared env: HOSTNAME=${HOSTNAME}, SITE_NAME=${SITE_NAME}" >&2
+    else
+        [ "${DT_DEBUG,,}" == "1" -o "${DT_DEBUG,,}" == "true" ] && log_msg "WARNING" "Shared .env file not found in ${shared_dir} for s00-shared." >&2
+    fi
+
+    # Source site-specific .env file (V2 location)
+    site_env_file=$(find_file_case_insensitive "${site_dir}" ".env." "${site_name}" "")
+    if [ -n "${site_env_file}" ]; then
+        source "${site_env_file}"
+        log_msg "INFO" "Sourced site-specific settings from ${site_env_file}" >&2
+        [ "${DT_DEBUG,,}" == "1" -o "${DT_DEBUG,,}" == "true" ] && log_msg "DEBUG" "Loaded site env: HOSTNAME=${HOSTNAME}, SITE_NAME=${SITE_NAME}" >&2
+    else
+        [ "${DT_DEBUG,,}" == "1" -o "${DT_DEBUG,,}" == "true" ] && log_msg "WARNING" "Site-specific .env file not found in ${site_dir} for ${site_name}." >&2
+    fi
+
+    # Source host-specific .env file (V2 location)
+    host_env_file=$(find_file_case_insensitive "${host_dir}" ".env." "${HOSTNAME}" "")
+    if [ -n "${host_env_file}" ]; then
+        source "${host_env_file}"
+        log_msg "INFO" "Sourced host-specific settings from ${host_env_file}" >&2
+        [ "${DT_DEBUG,,}" == "1" -o "${DT_DEBUG,,}" == "true" ] && log_msg "DEBUG" "Loaded host env: HOSTNAME=${HOSTNAME}, SITE_NAME=${SITE_NAME}" >&2
+    else
+        [ "${DT_DEBUG,,}" == "1" -o "${DT_DEBUG,,}" == "true" ] && log_msg "WARNING" "Host-specific .env file not found in ${host_dir} for ${HOSTNAME}." >&2
+    fi
+
+    # Set default environment variables if not already set
+    if [ -z "$DIVTOOLS" ]; then
+        if is_truenas || is_readonly_usr_local_bin; then
+            export DIVTOOLS="/mnt/tpool/NFS/opt/divtools"
+            export DOCKERDATADIR="/mnt/tpool/NFS/opt"
+            export DT_LOCAL_BIN_DIR="/mnt/tpool/NFS/opt/bin"
+        else
+            export DIVTOOLS="/opt/divtools"
+            export DOCKERDATADIR="/opt"
+            export DT_LOCAL_BIN_DIR="/usr/local/bin"
+        fi
+        log_msg "INFO" "Set default environment variables: DIVTOOLS=$DIVTOOLS, DOCKERDATADIR=$DOCKERDATADIR, DT_LOCAL_BIN_DIR=$DT_LOCAL_BIN_DIR" >&2
+        [ "${DT_DEBUG,,}" == "1" -o "${DT_DEBUG,,}" == "true" ] && log_msg "DEBUG" "Set defaults: DIVTOOLS=${DIVTOOLS}, DOCKERDATADIR=${DOCKERDATADIR}, DT_LOCAL_BIN_DIR=${DT_LOCAL_BIN_DIR}" >&2
+    fi
+
+    # Ensure PATH includes DT_LOCAL_BIN_DIR
+    if [[ ! ":$PATH:" =~ ":$DT_LOCAL_BIN_DIR:" ]]; then
+        export PATH="$DT_LOCAL_BIN_DIR:$PATH"
+        log_msg "INFO" "Added $DT_LOCAL_BIN_DIR to PATH." >&2
+    fi
+
+    # Check InfluxDB variables
+    confirm_influxdb_vars
+} # load_env_files
+
+
+
+container_exists() {
+  local container_name=$1
+
+  # Check if Docker is installed
+  if ! command -v docker &> /dev/null; then
+    return 1
+  fi
+
+  # Check if the container exists (in any state)
+  if docker ps -a --format '{{.Names}}' | grep -q "^${container_name}$"; then
+    return 0  # Container exists
+  else
+    return 1  # Container does not exist
+  fi
+}
+
+
+#### DCRUN_F FUNCTIONS: BEGIN
+
+# Function to locate the Docker Compose file (V1 or V2 structure)
+# Last Updated: 10/22/2025 8:35:00 PM CDT
+get_docker_compose_file() {
+    local selected_compose
+    local hostname="${HOSTNAME:-$(hostname)}"
+    local docker_dir="${DOCKERDIR:-/opt/divtools/docker}"
+    local site_name="${SITE_NAME:-default}"
+    local docker_sitedir="${docker_dir}/sites/${site_name}"
+    local docker_hostdir="${docker_sitedir}/${hostname}"
+
+    [ "${DT_DEBUG,,}" == "1" -o "${DT_DEBUG,,}" == "true" ] && log_msg "DEBUG" "Checking V1: ${docker_dir}/docker-compose-${hostname}.yml, V2: ${docker_hostdir}/dc-${hostname}.yml with HOSTNAME=${hostname}, SITE_NAME=${site_name}" >&2
+
+    # Check V1 location
+    selected_compose=$(find_file_case_insensitive "${docker_dir}" "docker-compose-" "${hostname}" ".yml")
+    if [ -n "${selected_compose}" ]; then
+        [ "${DT_DEBUG,,}" == "1" -o "${DT_DEBUG,,}" == "true" ] && log_msg "DEBUG" "Detected V1 compose file: ${selected_compose}" >&2
+        echo "${selected_compose}"
+        return 0
+    fi
+
+    # Check V2 location
+    selected_compose=$(find_file_case_insensitive "${docker_hostdir}" "dc-" "${hostname}" ".yml")
+    if [ -n "${selected_compose}" ]; then
+        [ "${DT_DEBUG,,}" == "1" -o "${DT_DEBUG,,}" == "true" ] && log_msg "DEBUG" "Detected V2 compose file: ${selected_compose}" >&2
+        echo "${selected_compose}"
+        return 0
+    fi
+
+    log_msg "ERROR" "No docker compose file found in V1 (${docker_dir}/docker-compose-${hostname}.yml) or V2 (${docker_hostdir}/dc-${hostname}.yml) locations." >&2
+    return 1
+} # get_docker_compose_file
+
+
+
+# Function for dcrun to handle docker compose execution with environment setup
+# Last Updated: 10/22/2025 8:35:00 PM CDT
+dcrun_f() {
+    # Set defaults
+    TEST_MODE=0
+    DEBUG_MODE=0
+    if [[ "${DT_DEBUG,,}" == "1" || "${DT_DEBUG,,}" == "true" ]]; then
+        DEBUG_MODE=1
+        log_msg "DEBUG" "Debug mode enabled via DT_DEBUG=${DT_DEBUG}" >&2
+    fi
+
+    # Parse and filter custom flags (-test, -dt-debug, --profile)
+    local profile_args=""
+    local filtered_args=()
+    local skip_next=0
+    for arg in "$@"; do
+        if [[ "${arg}" == "-test" ]]; then
+            TEST_MODE=1
+            log_msg "DEBUG" "Test mode enabled via -test flag" >&2
+            continue
+        elif [[ "${arg}" == "-dt-debug" ]]; then
+            DEBUG_MODE=1
+            log_msg "DEBUG" "Debug mode enabled via -dt-debug flag" >&2
+            continue
+        elif [[ "${arg}" == "--profile" ]]; then
+            profile_args="${arg}"
+            skip_next=1
+            continue
+        elif [[ ${skip_next} -eq 1 ]]; then
+            profile_args="${profile_args} ${arg}"
+            skip_next=0
+            continue
+        fi
+        filtered_args+=("${arg}")
+    done
+
+    # Log initial state
+    [ ${DEBUG_MODE} -eq 1 ] && log_msg "DEBUG" "Initial args: $@, Filtered args: ${filtered_args[*]}, Profile args: ${profile_args}, TEST_MODE=${TEST_MODE}, DEBUG_MODE=${DEBUG_MODE}" >&2
+
+    # Rely on load_env_files() for environment setup
+    if ! declare -f load_env_files >/dev/null; then
+        log_msg "ERROR" "load_env_files function not found. Ensure it is defined in .bash_aliases." >&2
+        return 1
+    fi
+    load_env_files
+    [ ${DEBUG_MODE} -eq 1 ] && log_msg "DEBUG" "After load_env_files: HOSTNAME=${HOSTNAME}, SITE_NAME=${SITE_NAME}, DIVTOOLS=${DIVTOOLS}, DOCKERDIR=${DOCKERDIR}" >&2
+
+    # Compute directories based on loaded vars
+    export DOCKER_SHAREDDIR="${DOCKERDIR}/sites/s00-shared"
+    export DOCKER_SITEDIR="${DOCKERDIR}/sites/${SITE_NAME:-default}"
+    export DOCKER_HOSTDIR="${DOCKER_SITEDIR}/${HOSTNAME}"
+    [ ${DEBUG_MODE} -eq 1 ] && log_msg "DEBUG" "Exported: DOCKER_SHAREDDIR=${DOCKER_SHAREDDIR}, DOCKER_SITEDIR=${DOCKER_SITEDIR}, DOCKER_HOSTDIR=${DOCKER_HOSTDIR}" >&2
+
+    # Get docker compose file
+    local selected_compose
+    selected_compose=$(get_docker_compose_file)
+    if [ -z "${selected_compose}" ]; then
+        log_msg "ERROR" "Failed to locate docker compose file." >&2
+        return 1
+    fi
+    log_msg "INFO" "Using compose file: ${selected_compose}" >&2
+    [ ${DEBUG_MODE} -eq 1 ] && log_msg "DEBUG" "Selected compose file: ${selected_compose}" >&2
+
+    # Build docker compose command
+    local compose_cmd=""
+    if [ -n "${profile_args}" ]; then
+        compose_cmd="sudo -E docker compose -f ${selected_compose} ${profile_args} ${filtered_args[*]}"
+    else
+        compose_cmd="sudo -E docker compose --profile all -f ${selected_compose} ${filtered_args[*]}"
+    fi
+
+    log_msg "INFO" "Executing command: ${compose_cmd}" >&2
+    [ ${DEBUG_MODE} -eq 1 ] && log_msg "DEBUG" "Full command: ${compose_cmd}" >&2
+
+    if [ "${TEST_MODE}" -eq 1 ]; then
+        log_msg "INFO" "TEST MODE: Would execute: ${compose_cmd}" >&2
+    else
+        eval "${compose_cmd}"
+    fi
+} # dcrun_f
+
+#### DCRUN_F FUNCTIONS: END
+
+
+# Last Updated: 9/21/2025 11:05:45 PM CDT
+# Colorizes df output with configurable usage ranges and styled header
+df_color() {
+    # Display disk usage with color highlighting for configurable usage ranges
+    # Header in bright black background with dark blue foreground
+    # Supports -debug flag for detailed output
+    # Excludes overlay and tmpfs filesystems
+    local YELLOW="\e[33m"          # Matches C_YELLOW in .bash_profile
+    local RED="\e[31m"             # Matches C_RED
+    local GREEN="\e[32m"           # Matches C_GREEN
+    local ORANGE="\e[38;5;214m"    # Matches C_ORANGE
+    local WHITE="\e[37m"           # Matches C_WHITE
+    local RESET="\e[m"
+    local HEADER_BG="\e[100m"      # Bright black background (C_BG_BRIGHTBLACK)
+    local HEADER_FG="\e[38;5;19m"  # Dark blue foreground (C_DARKBLUE)
+    local DEBUG=0
+    local df_output
+    local lines
+    local i
+
+    # Parse optional -debug flag
+    if [[ "$1" == "-debug" ]]; then
+        DEBUG=1
+        shift
+    fi
+
+    # Debug: Log start of df execution
+    if [[ $DEBUG -eq 1 ]]; then
+        echo "[DEBUG] Starting df command execution"
+    fi
+
+    # Run df with sudo and timeout to prevent hanging
+    if ! df_output=$(timeout --signal=SIGTERM 10 df -h -x overlay -x tmpfs 2>/dev/null); then
+        echo "Error: Failed to execute df command, timed out after 10 seconds, or sudo authentication failed."
+        if [[ $DEBUG -eq 1 ]]; then
+            echo "[DEBUG] df command failed or timed out"
+        fi
+        return 1
+    fi
+
+    # Debug: Log raw df output
+    if [[ $DEBUG -eq 1 ]]; then
+        echo "[DEBUG] Raw df output:"
+        echo "$df_output"
+    fi
+
+    # Split output into an array of lines
+    if [[ $DEBUG -eq 1 ]]; then
+        echo "[DEBUG] Splitting df output into lines"
+    fi
+    mapfile -t lines <<< "$df_output"
+
+    # Check if output is empty
+    if [[ ${#lines[@]} -eq 0 ]]; then
+        echo "Error: No output from df command."
+        if [[ $DEBUG -eq 1 ]]; then
+            echo "[DEBUG] No lines in df output"
+        fi
+        return 1
+    fi
+
+    # Print header (first line) with bright black background and dark blue foreground
+    if [[ $DEBUG -eq 1 ]]; then
+        echo "[DEBUG] Printing header: ${lines[0]}"
+    fi
+    echo -e "${HEADER_BG}${HEADER_FG}${lines[0]}${RESET}"
+
+    # Define usage ranges and colors
+    declare -A USAGE_RANGES=(
+        ["Excellent"]="0-30:$GREEN"
+        ["Normal"]="31-69:$WHITE"
+        ["Warn"]="70-79:$YELLOW"
+        ["Error"]="80-89:$ORANGE"
+        ["Critical"]="90-100:$RED"
+    )
+
+    # Process each line (skip header)
+    for ((i=1; i<${#lines[@]}; i++)); do
+        local line="${lines[i]}"
+        # Extract usage percentage (5th column, removing % sign)
+        local usage
+        if [[ $DEBUG -eq 1 ]]; then
+            echo "[DEBUG] Processing line $i: $line"
+        fi
+        usage=$(echo "$line" | awk '{print $5}' | tr -d '%')
+        
+        # Debug: Log parsed usage
+        if [[ $DEBUG -eq 1 ]]; then
+            echo "[DEBUG] Line $i: Usage=$usage"
+        fi
+
+        # Skip lines with invalid usage values
+        if [[ -z "$usage" || ! "$usage" =~ ^[0-9]+$ ]]; then
+            if [[ $DEBUG -eq 1 ]]; then
+                echo "[DEBUG] Skipping invalid usage for line $i"
+            fi
+            echo "$line"
+            continue
+        fi
+
+        # Determine color based on usage range
+        local color=""
+        for range in "${!USAGE_RANGES[@]}"; do
+            IFS=':-' read -r min max col <<< "${USAGE_RANGES[$range]}"
+            if [[ "$usage" -ge "$min" && "$usage" -le "$max" ]]; then
+                color="$col"
+                if [[ $DEBUG -eq 1 ]]; then
+                    echo "[DEBUG] Line $i: Usage $usage falls in range $range ($min-$max), using color $color"
+                fi
+                break
+            fi
+        done
+
+        # Apply color if found, otherwise print without color
+        if [[ -n "$color" ]]; then
+            echo -e "${color}${line}${RESET}"
+        else
+            echo "$line"
+        fi
+    done
+} # df_color
+
+### PYTHON FUNCTIONS ###
+
+export VENV_DIR="$DIVTOOLS/scripts/venvs"
+
+# Function to create a virtual environment
+function python_venv_create() {
+    local venv_name="${1:-venv}"  # Default to 'venv' if no name is given
+    local venv_path="$VENV_DIR/$venv_name"
+
+    if [[ -d "$venv_path" ]]; then
+        echo "❌ Virtual environment '$venv_name' already exists at $venv_path"
+        return 1
+    fi
+
+    echo "🚀 Creating virtual environment: $venv_name..."
+    python3 -m venv "$venv_path"
+
+    if [[ $? -eq 0 ]]; then
+        echo "✅ Virtual environment '$venv_name' created successfully!"
+    else
+        echo "❌ Failed to create virtual environment."
+        return 1
+    fi
+}
+
+function python_venv_delete() {
+    local venv_name="$1"
+    
+    if [[ -z "$venv_name" ]]; then
+        echo "❌ Usage: pvdel <venv_name>"
+        return 1
+    fi
+
+    local venv_path="$VENV_DIR/$venv_name"
+
+    if [[ ! -d "$venv_path" ]]; then
+        echo "❌ Virtual environment '$venv_name' not found at $venv_path"
+        return 1
+    fi
+
+    echo "⚠️ Are you sure you want to delete the virtual environment '$venv_name'? (y/N)"
+    read -r confirm
+    if [[ "$confirm" =~ ^[Yy]$ ]]; then
+        rm -rf "$venv_path"
+        echo "✅ Virtual environment '$venv_name' deleted."
+    else
+        echo "❌ Deletion canceled."
+    fi
+}
+
+# Function to activate a virtual environment
+function python_venv_activate() {
+    local venv_name="${1:-venv}"  # Default to 'venv' if no name is given
+    local venv_path="$VENV_DIR/$venv_name"
+
+    if [[ ! -d "$venv_path" ]]; then
+        echo "❌ Virtual environment '$venv_name' not found at $venv_path"
+        return 1
+    fi
+
+    echo "🔗 Activating virtual environment: $venv_name..."
+    source "$venv_path/bin/activate"
+}
+
+# Function to list available virtual environments
+function python_venv_ls() {
+    if [[ ! -d "$VENV_DIR" ]]; then
+        echo "❌ Virtual environment directory '$VENV_DIR' not found!"
+        return 1
+    fi
+
+    local venvs=()
+    for dir in "$VENV_DIR"/*/; do
+        [[ -d "$dir" ]] && venvs+=("$(basename "$dir")")
+    done
+
+    if [[ ${#venvs[@]} -eq 0 ]]; then
+        echo "📂 No virtual environments found in '$VENV_DIR'"
+        return 0
+    fi
+
+    echo "📂 Available Virtual Environments in '$VENV_DIR':"
+    for venv in "${venvs[@]}"; do
+        echo "  - $venv"
+    done
+}
+
 
 
 ### INIT CODE ###
