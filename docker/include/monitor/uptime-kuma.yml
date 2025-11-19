@@ -22,4 +22,9 @@ services:
     env_file:
       - $DOCKERDIR/.env        # default .env file for all systems, 
       - $DOCKERDIR/.env.host   # Host-level ENV vars, overrides .env      
+    environment: 
+      - PUID=1400
+      - PGID=1400 
+      - TZ=$TZ
+
     

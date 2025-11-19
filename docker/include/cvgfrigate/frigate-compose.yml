@@ -1,0 +1,57 @@
+## HOSTNAME: CVGFRIGATE ##
+
+# Environment Vars in Use
+# $TZ : The timezone we run in. Format American/Chicago
+# $DOCKERDIR : Usually the divtools/docker dir
+# $DOCKERDATADIR: Usually the /opt dir
+# $HOSTNAME: defined in .env
+# $FRIGATE_CAMUSER: defined in .host.env (default is "admin")
+# $FRIGATE_AC_CAMUSER_PW: defined in .host.env
+# Section Order: CIRPNVEUE
+
+services:
+  frigate:
+    container_name: frigate
+    privileged: true
+    restart: unless-stopped
+    image: ghcr.io/blakeblackshear/frigate:stable
+    shm_size: "1024mb" # update for your cameras based on calculation
+    # Launch custom Divix Startup script. This does any special camera setups that might be needed
+    # This doesn't work, it causes frigate to start/stop/start/stop
+    #command: ["/bin/bash", "-c", "/config/div_startup.sh"]
+    # This also does NOT work, it just never launches frigate.
+    #entrypoint: ["/bin/sh", "-c", "/init & /bin/bash /config/div_startup.sh"]
+
+    runtime: nvidia
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]  
+    devices:
+      - /dev/bus/usb:/dev/bus/usb
+      #- /dev/apex_0:/dev/apex_0 # passes a PCIe Coral
+    volumes:
+      # bind-mount vi so I can edit files in docker container
+      - /etc/localtime:/etc/localtime:ro
+      - $DOCKERDIR/config/cvg/frigate:/config      
+      - $DOCKERDATADIR/frigate/media:/media/frigate      
+      - type: tmpfs # Optional: 1GB of memory, reduces SSD/SD Card wear
+        target: /tmp/cache
+        tmpfs:
+          size: 1000000000
+    ports:
+      - "5000:5000"       # Default Frigate Port for HTTP Client
+      - "8554:8554"       # RTSP feeds
+      - "8555:8555/tcp"   # WebRTC over tcp
+      - "8555:8555/udp"   # WebRTC over udp
+      - "1984:1984"       # go2rtc api
+    environment:
+      - NVIDIA_VISIBLE_DEVICES=all
+      - NVIDIA_DRIVER_CAPABILITIES=all
+      - FRIGATE_CAM_ADMIN_U=${FRIGATE_CAM_ADMIN_U}
+      - FRIGATE_CAM_ADMIN_P=${FRIGATE_CAM_ADMIN_P}
+      - FRIGATE_CAM_U=${FRIGATE_CAM_U}
+      - FRIGATE_CAM_P=${FRIGATE_CAM_P}      

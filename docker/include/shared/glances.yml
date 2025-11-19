@@ -10,9 +10,8 @@
 # ln -s secrets/.env.defaults .env
 # ln -s secrets/.env.$HOSTNAME .env.host
 # env_file:
-#   - $DOCKERDIR/.env        # default .env file for all systems, 
+#   - $DOCKERDIR/.env        # default .env file for all systems,
 #   - $DOCKERDIR/.env.host   # Host-level ENV vars, overrides .env
-
 
 services:
   glances:
@@ -21,15 +20,17 @@ services:
     restart: always
     pid: host
     network_mode: host # Ensures direct network access
+    profiles: [shared]
     privileged: true # for access to host network stats
-    volumes:    
+    volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       - $DOCKERDIR/appdata/glances/common/glances.conf:/etc/glances/glances.conf
       #Uncomment the below line if you want glances to display host OS detail instead of container's
       - /etc/os-release:/etc/os-release:ro
     env_file:
-      - $DOCKERDIR/.env        # default .env file for all systems
-      - $DOCKERDIR/.env.host   # Host-level ENV vars, overrides .env
+      - $DOCKERDIR/.env # default .env file for all systems
+      #- $DOCKERDIR/.env.host   # Host-level ENV vars, overrides .env
+      - $DOCKERDIR/secrets/env/.env.$HOSTNAME # This is INSTEAD of the soft-link since those can't work on SHARED /opt/divtools folders across systems
     environment:
       - "GLANCES_OPT=-w"
     labels:
@@ -38,7 +39,6 @@ services:
     # secrets:
     #   - source: glances_password
     #     target: /root/.config/glances/glances.pwd
-
 # secrets:
 #   glances_password:
 #     file: $DOCKERDIR/secrets/glances_password

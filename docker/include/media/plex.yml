@@ -1,0 +1,42 @@
+# Environment Vars in Use
+# $TZ : The timezone we run in. Format American/Chicago
+# $DOCKERDIR : Usually the divtools/docker dir
+# $DOCKERDATADIR: Usually the /opt dir
+# $HOSTNAME: defined in .env
+# $GF_SECURITY_ADMIN_USER: defined in .env (default is "admin")
+# $GF_SECURITY_ADMIN_PASSWORD: defined in .env
+# Section Order: CIRPNVEUE
+#
+# $MEDIA_DIR=/mnt/FieldsHm/MEDIA
+
+# Plex Media Server Name: media
+services:
+  plex:
+    container_name: plex
+    image: lscr.io/linuxserver/plex:latest
+    restart: unless-stopped
+    #networks:
+    network_mode: host
+    profiles: [plex]
+    # Ports are UNNEEDED when using host network mode
+    #ports:
+    #  - 32400:32400
+    volumes:
+      - $MEDIA_DIR:/media
+      - $DOCKERDATADIR/plex:/config # Config, Cache, Metadata, Transcoder files
+    env_file:
+      - $DOCKERDIR/.env # default .env file for all systems,
+    environment:
+      - PUID=$LXC_UID_DIVIX
+      - PGID=$LXC_UID_DIVIX
+      - NVIDIA_VISIBLE_DEVICES=all
+      - NVIDIA_DRIVER_CAPABILITIES=compute,utility,video
+      - PLEX_CLAIM=claim-F5rgqfRANLCR6oytyJgH
+      - VERSION=latest # enable auto-updates
+    runtime: nvidia
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              capabilities: [gpu]

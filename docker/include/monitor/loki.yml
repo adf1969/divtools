@@ -1,0 +1,20 @@
+# Environment Vars in Use
+# $TZ : The timezone we run in. Format American/Chicago
+# $DOCKERDIR : Usually the divtools/docker dir
+# $DOCKERDATADIR: Usually the /opt dir
+# $HOSTNAME: defined in .env
+# $GF_SECURITY_ADMIN_USER: defined in .env (default is "admin")
+# $GF_SECURITY_ADMIN_PASSWORD: defined in .env
+# Section Order: CIRPNVEUE
+
+services:
+  loki:
+    image: grafana/loki:2.9.2
+    container_name: loki
+    command: -config.file=/etc/loki/loki-config.yaml
+    ports:
+      - "3100:3100"
+    volumes:
+      - $DOCKERDIR/appdata/loki/loki-config.yaml:/etc/loki/loki-config.yaml:ro
+      - $DOCKERDATADIR/loki:/loki
+    user: "1400:1400" # divix | divix

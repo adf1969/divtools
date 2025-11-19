@@ -16,6 +16,7 @@ services:
       - 3000:3000
     #networks:
     volumes:
+      - $DOCKERDIR/appdata/grafana/grafana.ini:/etc/grafana/grafana.ini
       - $DOCKERDATADIR/grafana/data:/var/lib/grafana 
       - $DOCKERDATADIR/grafana/logs:/var/log/grafana
     user: "1400:1400" # divix | divix

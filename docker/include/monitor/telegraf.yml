@@ -1,0 +1,37 @@
+# Environment Vars in Use
+# $TZ : The timezone we run in. Format American/Chicago
+# $DOCKERDIR : Usually the divtools/docker dir
+# $DOCKERDATADIR: Usually the /opt dir
+# $HOSTNAME: defined in .env
+# $GF_SECURITY_ADMIN_USER: defined in .env (default is "admin")
+# $GF_SECURITY_ADMIN_PASSWORD: defined in .env
+# Section Order: CIRPNVEUE
+
+telegraf:
+    container_name: telegraf
+    image: telegraf:latest
+    restart: unless-stopped
+    user: telegraf:1400 #you need to find the GID of Docker if not added to Sudo group
+    #networks:
+    #  - grafana-monitoring
+    volumes:
+        - '$DOCKERDIR/appdata/$HOSTNAME/telegraf/telegraf.conf:/etc/telegraf/telegraf.conf:ro'
+        - '/:/hostfs:ro' # to monitor docker-vm
+        - '/var/run/docker.sock:/var/run/docker.sock' # to monitor docker containers
+        - '$DOCKERDIR/appdata/$HOSTNAME/telegraf/mibs:/usr/share/snmp/mibs' # mibs files [e.g., sophos]
+    env_file:
+      - $DOCKERDIR/.env        # default .env file for all systems, 
+      - $DOCKERDIR/.env.host   # Host-level ENV vars, overrides .env           
+    environment:
+        - HOST_ETC=/hostfs/etc
+        - HOST_PROC=/hostfs/proc
+        - HOST_SYS=/hostfs/sys
+        - HOST_VAR=/hostfs/var
+        - HOST_RUN=/hostfs/run
+        - HOST_MOUNT_PREFIX=/hostfs
+        - INFLUXDB_HOST
+        - INFLUXDB_PORT
+        - INFLUXDB_API_TOKEN
+        - INFLUXDB_ORG
+        - INFLUXDB_BUCKET
+    

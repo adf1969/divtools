@@ -10,13 +10,15 @@
 services:
   cadvisor:
     container_name: cadvisor
-    image: gcr.io/cadvisor/cadvisor:v0.51.0    
+    image: gcr.io/cadvisor/cadvisor:v0.51.0
     restart: unless-stopped
+    profiles: [shared]
     ports:
       - $CADVISOR_PORT:8080
     env_file:
-      - $DOCKERDIR/.env        # default .env file for all systems, 
-      - $DOCKERDIR/.env.host   # Host-level ENV vars, overrides .env
+      - $DOCKERDIR/.env # default .env file for all systems,
+      #- $DOCKERDIR/.env.host   # Host-level ENV vars, overrides .env
+      - $DOCKERDIR/secrets/env/.env.$HOSTNAME # This is INSTEAD of the soft-link since those can't work on SHARED /opt/divtools folders across systems
     volumes:
       - /:/rootfs:ro
       - /run:/run:ro
@@ -26,4 +28,3 @@ services:
     devices:
       - /dev/kmsg
     privileged: true
-    
