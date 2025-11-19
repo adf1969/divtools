@@ -8,5 +8,42 @@
             "match": "\\.sh$",
             "command": "git update-index --chmod=+x ${file}"
         }
-    ]
+    ],
+    "chat.mcp.serverSampling": {
+        "divtools/.vscode/mcp.json: postgres_dthostmon_ws_readwrite": {
+            "allowedModels": [
+                "copilot/claude-haiku-4.5",
+                "copilot/gpt-5-mini",
+                "copilot/claude-sonnet-4.5",
+                "copilot/gpt-4.1",
+                "copilot/gpt-4o",
+                "copilot/grok-code-fast-1"
+            ]
+        },
+        "divtools/.vscode/mcp.json: postgres_dthostmon_ws_readonly": {
+            "allowedModels": [
+                "copilot/gpt-5-mini",
+                "copilot/claude-haiku-4.5",
+                "copilot/claude-sonnet-4.5",
+                "copilot/grok-code-fast-1"
+            ]
+        }
+    },
+    "todo-tree.general.excludeGlobs": [
+        "**/node_modules/**",
+        "**/dist/**",
+        "**/build/**",
+        "**/.git/**",
+        "**/.venv/**",
+        "**/venv/**",
+        "**/venvs/**",
+        "**/.env",
+        "**/.env.*",
+        "**/secrets/**",
+        "**/qnap_cfg/**",
+        "**/docker/archive/**",
+        "**/*.sync-conflict*"
+    ],
+    "todo-tree.general.showExcludedGlobs": false,
+    "todo-tree.regex.regex": "(^|//|#|<!--|;|/\\*|\\*)\\s*(❓ OUTSTANDING|TODO|FIXME|HACK|BUG)\\b"
 }

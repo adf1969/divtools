@@ -1,0 +1,22 @@
+{
+	"servers": {
+		"postgres_dthostmon_ws_readonly": {
+			"command": "npx",
+			"args": [
+				"-y",
+				"@modelcontextprotocol/server-postgres@0.6.2",
+				"postgresql://divix:3mpms3@10.1.1.74/dthostmon"
+			],
+			"type": "stdio"
+		},
+		"postgres_dthostmon_ws_readwrite": {
+			"command": "node",
+			"args": [
+				"/home/divix/divtools/mcp-servers/postgres-readwrite/server.js",
+				"postgresql://divix:3mpms3@10.1.1.74/dthostmon"
+			],
+			"type": "stdio"
+		}
+	},
+	"inputs": []
+}
