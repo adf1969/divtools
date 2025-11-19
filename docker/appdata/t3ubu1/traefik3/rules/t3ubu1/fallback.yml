@@ -1,0 +1,28 @@
+http:
+  routers:
+    fallback-redirect-http:
+      rule: "PathPrefix(`/`)"
+      entryPoints:
+        - web
+      middlewares:
+        - redirect-to-https
+      service: noop@internal
+      priority: 1
+
+    fallback-https-landing:
+      rule: "PathPrefix(`/`)"
+      entryPoints:
+        - websecure
+      middlewares:
+        - chain-no-auth
+      service: api@internal
+      tls:
+        certResolver: dns-cloudflare
+        options: tls-opts@file
+      priority: 1
+
+  middlewares:
+    redirect-to-https:
+      redirectScheme:
+        scheme: https
+        permanent: true

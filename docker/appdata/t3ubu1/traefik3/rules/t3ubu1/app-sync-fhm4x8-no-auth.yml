@@ -1,0 +1,23 @@
+http:
+  routers:
+    sync-fhm4x8-service-rtr:
+      rule: 'Host(`sync-fhm4x8.{{env "DOMAINNAME_2"}}`)'
+      entryPoints:
+        - "websecure"
+      middlewares:
+        - chain-no-auth
+      service: "sync-fhm4x8-service"
+      tls:
+        certResolver: "dns-cloudflare"
+        options: tls-opts@file
+  services:
+    sync-fhm4x8-service:
+      loadBalancer:
+        passHostHeader: true
+        serversTransport: "sync-fhm4x8"
+        servers:
+          # Use the SyncThing Port stored in env
+          - url: 'https://192.168.9.87:{{env "SYNCTHING_PORT"}}'
+  serversTransports:
+    sync-fhm4x8:
+      insecureSkipVerify: true

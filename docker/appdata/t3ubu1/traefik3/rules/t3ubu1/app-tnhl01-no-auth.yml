@@ -1,0 +1,24 @@
+http:
+  routers:
+    tnhl01-service-rtr:
+      rule: 'Host(`tnhl01.{{env "DOMAINNAME_2"}}`)'
+      entryPoints:
+        - "websecure"
+      middlewares:
+        - chain-no-auth
+      #- strip-proxmox-prefix
+      service: "tnhl01-service"
+      tls:
+        certResolver: "dns-cloudflare"
+        options: tls-opts@file
+  services:
+    tnhl01-service:
+      loadBalancer:
+        passHostHeader: true
+        serversTransport: "tnhl01"
+        servers:
+          # Use the Proxmox SECURE port since that is what Proxmox REQUIRES
+          - url: "https://192.168.9.100:8006"
+  serversTransports:
+    tnhl01:
+      insecureSkipVerify: true

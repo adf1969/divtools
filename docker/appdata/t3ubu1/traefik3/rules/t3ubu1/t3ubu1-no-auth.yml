@@ -1,0 +1,13 @@
+http:
+  routers:
+    t3ubu1-rtr:
+      #rule: 'Host(`traefik.{{env "DOMAINNAME_2"}}`)'
+      rule: 'Host(`t3ubu1.{{env "DOMAINNAME_1"}}`) || Host(`t3ubu1.{{env "DOMAINNAME_2"}}`) || Host(`t3ubu1_alt.{{env "DOMAINNAME_1"}}`)'
+      entryPoints:
+        - "websecure"
+      middlewares:
+        - chain-no-auth
+      service: api@internal
+      tls:
+        certResolver: "dns-cloudflare"
+        options: tls-opts@file
