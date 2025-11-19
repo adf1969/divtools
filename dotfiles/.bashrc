@@ -1,6 +1,18 @@
 # ~/.bashrc: executed by bash(1) for non-login interactive shells.
+# Last Updated: 11/11/2025 9:35:00 PM CDT
 
 echo "Running /opt/divtools/dotfiles/.bashrc"
+
+# VSCode terminal compatibility fix
+# VSCode integrated terminal runs as non-login shell (bash -i) which only sources .bashrc
+# Regular SSH/console login runs as login shell (bash --login) which sources /etc/profile
+# /etc/profile sources the centralized divtools .bash_profile
+# This check ensures divtools .bash_profile loads in VSCode WITHOUT double-loading in regular shells
+# Last Updated: 11/11/2025 9:40:00 PM CDT
+if [ -z "$BASH_PROFILE_LOADED" ] && [ -f "/opt/divtools/dotfiles/.bash_profile" ]; then
+    export BASH_PROFILE_LOADED=1
+    source "/opt/divtools/dotfiles/.bash_profile"
+fi
 
 export PATH=\
 /bin:\

@@ -1,5 +1,6 @@
 # aliases
-echo "$(date): Running $DIVTOOLS/dotfiles/.bash_aliases"
+# Last Updated: 11/11/2025
+log_msg "INFO" "Running $DIVTOOLS/dotfiles/.bash_aliases"
 
 # Global Env Vars
 export DOCKERDIR=/opt/divtools/docker
@@ -14,7 +15,9 @@ force_color_prompt=yes
 
 
 # Source Dotfiles
+# sep: Source /etc/profile. Override DT_VERBOSE with: export DT_VERBOSE=0 && sep
 alias sep='source /etc/profile'
+alias sepv="export DT_VERBOSE=2 && sep"
 alias sbrc='source ~/.bashrc'
 alias sba='source $DIVTOOLS/dotfiles/.bash_aliases'
 alias sbp='source $DIVTOOLS/dotfiles/.bash_profile'
@@ -62,16 +65,29 @@ alias pscpu='ps auxf | sort -nr -k 3'
 alias dt='cd $DIVTOOLS'
 alias dtd='cd $DOCKERDIR'
 alias dts='cd $DIVTOOLS/scripts'
+alias dtp='cd $DIVTOOLS/projects'
+alias dtds='cd $DOCKER_SITEDIR'
+alias dtdh='cd $DOCKER_HOSTDIR'
 #alias pdiv='sudo chown -R divix $DOCKERDIR $DIVTOOLS/config $DIVTOOLS/scripts $DIVTOOLS/dotfiles $DIVTOOLS/.git*'
 alias pdiv='sudo $DIVTOOLS/scripts/fix_dt_perms.sh'
 alias dt_host_setup='sudo $DIVTOOLS/scripts/dt_host_setup.sh'
 alias dt_set_tz='sudo $DIVTOOLS/scripts/dt_set_tz.sh'
+alias dt_host_setup='sudo $DIVTOOLS/scripts/dt_host_setup.sh'
+
+# DT Host Log Aliases
+alias dt_host_log='sudo $DIVTOOLS/scripts/util/host_chg_mon/host_change_log.sh'
+alias dt_hl='sudo $DIVTOOLS/scripts/util/host_chg_mon/host_change_log.sh'
+alias dt_hlm='sudo $DIVTOOLS/scripts/util/host_chg_mon/host_change_log.sh manifest'
+
+
 
 alias set_ads_acls='sudo $DIVTOOLS/scripts/set_ads_acls.sh'
 
 # PVE / Proxmox
 alias pve_host_check='sudo $DIVTOOLS/scripts/pve_host_check.sh'
 alias pve_snapshot='sudo $DIVTOOLS/scripts/pve/pve_snapshot.sh'
+alias cdq='cd /etc/pve/local/qemu-server'
+alias cdl='cd /etc/pve/local/lxc'
 
 # NVidial Aliases
 alias nv_cfg_blacklist='sudo $DIVTOOLS/scripts/nvidia/nv_cfg_blacklist.sh' # Blacklist Nouveau drivers
@@ -106,6 +122,12 @@ if has_eza; then
   alias l...='eza -al --color=always --group --group-directories-first ../../../' # ls on directory 3 levels up
 fi
 
+# OPENCODE
+if has_opencode; then
+  alias oc='opencode'
+fi
+
+
 # Title Aliases
 alias settitle='source $DIVTOOLS/scripts/settitle'
 alias gitpon='gitpon_func'
@@ -115,7 +137,7 @@ alias gitpoff='gitpoff_func'
 export VENV_DIR="${VENV_DIR:-$DIVTOOLS/scripts/venvs}"  # This SHOULD be set above, but just in case, gets set here as well.
 
 
-
+## the python_venv_* functions are defined in .bash_profile
 alias pvinstall='sudo apt install python3.10-venv'  # Run this to install python venv if it doesn't exist.
 alias pvcr='python_venv_create'
 alias pvact='python_venv_activate'
@@ -126,6 +148,7 @@ alias pvda='deactivate' # deactivates the venv
 
 # FRIGATE Scripts
 alias fg_media_rev='$DIVTOOLS/scripts/frigate/fg_media_rev.sh'
+alias fg_rtsp_ping='$DIVTOOLS/scripts/frigate/fg_rtsp_ping.sh'
 
 # Office365 Monitor Scripts
 # Rules
@@ -152,6 +175,7 @@ alias aki='$DIVTOOLS/scripts/office365/o365_upd_akiflow.sh'
 alias dils='docker image ls'
 alias dpsn='docker container ls --format '\''table {{.ID}}\t{{.Names}}\t{{.Image}}\t{{.RunningFor}}\t{{.Status}}\t{{.Size}}'\''' 
 alias dps='$DIVTOOLS/scripts/docker_ps.sh'
+alias dpsv='$DIVTOOLS/scripts/docker_ps.sh -v'
 alias dlistrp='$DIVTOOLS/scripts/list_restart_policies.sh'
 
 # Syncthing
@@ -164,6 +188,12 @@ alias add_nfs_dt='$DIVTOOLS/scripts/add_nfs_mount.sh -mp /mnt/NAS1-1/u-shared -n
 # DASHY
 alias fdicon='find $DOCKERDIR/appdata/dashy/dashboard-icons/png -printf "%f\n" | grep -i ' # Find Dashy Icons, Usage: dicon <icon name>
 alias fdicons=fdicon
+
+# POSTGRES
+
+alias pg_setup='sudo $DIVTOOLS/scripts/postgres/pg_setup.sh'  # Setup Postgres and pgAdmin
+alias pg_update_servers='$DIVTOOLS/scripts/postgres/pg_update_servers.sh'  # Update pgAdmin servers from YAML
+
 
 # Drive/Storage Aliases
 alias lsdrv='lsblk -o NAME,FSTYPE,MOUNTPOINT,SIZE,MODEL'
@@ -226,15 +256,27 @@ if [ -f $DOCKERFILE ] ; then
   alias dclogs='dcrun logs -tf --tail="50" ' # usage: dclogs container_name
   alias dcup='dcrun up -d --build --remove-orphans' # up the stack
   alias dcdown='dcrun down --remove-orphans' # down the stack
-  alias dcrec='dcrun up -d --force-recreate --remove-orphans' # usage: dcrec container_name
+  alias dcrec='dcrun up -d --force-recreate --no-deps --remove-orphans' # usage: dcrec container_name (recreates only the specified service, not dependencies)
+  alias dcrecall='dcrun up -d --force-recreate --remove-orphans' # usage: dcrecall container_name (recreates service AND its dependencies)
+  alias dcreset='dcreset_f' # usage: dcreset container_name (stops, removes, and recreates container - useful for fixing orphaned containers from other projects)
+  alias dcproject='dcproject' # usage: dcproject [container_name] (shows which docker-compose project containers belong to)
   alias dcstop='dcrun stop' # usage: dcstop container_name
   alias dcrestart='dcrun restart ' # usage: dcrestart container_name
   alias dcstart='dcrun start ' # usage: dcstart container_name
   alias dcpull='dcrun pull' # usage: dcpull to pull all new images or dcpull container_name
+  alias dcbuild='dcrun build' # usage: dcbuild [service_name] - builds custom Docker images from Dockerfiles
   alias tfklogst='tail -f /opt/traefik/logs/traefik.log' # tail traefik logs
   alias tfklogs='cat /opt/traefik/logs/traefik.log' # cat traefik logs
   alias tfkcerts='$DIVTOOLS/scripts/get_traefik_certs.sh' # get traefik certs from acme.json
-  alias dcchk='$DIVTOOLS/scripts/dt_yamlcheck.sh -show-errors $DOCKERDIR/docker-compose-$HOSTNAME.yml'
+  alias dcchk='$DIVTOOLS/scripts/dt_yamlcheck.sh' # Check YAML files (minimal: checkmarks + missing vars only)
+  alias dcchk_err='$DIVTOOLS/scripts/dt_yamlcheck.sh -show-errors' # Check YAML files and show yamllint errors
+  alias dcchk_all='$DIVTOOLS/scripts/dt_yamlcheck.sh -show-errors -show-env -hide-commented' # Check YAML files with full output (errors + all env vars)
+  alias dtyc='$DIVTOOLS/scripts/dt_yamlcheck.sh' # Check YAML files (minimal: checkmarks + missing vars only)
+  alias dtyce='$DIVTOOLS/scripts/dt_yamlcheck.sh --show-env --hide-commented' # Check YAML files 
+  alias dtycv='$DIVTOOLS/scripts/dt_yamlcheck.sh --show-vol' # Check YAML files 
+  alias dtycev='$DIVTOOLS/scripts/dt_yamlcheck.sh --show-env --show-vol --hide-commented' # Check YAML files 
+  alias dtyc_err='$DIVTOOLS/scripts/dt_yamlcheck.sh -show-errors' # Check YAML files and show yamllint errors
+  alias dtyc_all='$DIVTOOLS/scripts/dt_yamlcheck.sh -show-errors -show-env -hide-commented' # Check YAML files with full output (errors + all env vars)
 
   # Manage "core" services as defined by profiles in docker compose
   alias startcore='sudo docker compose --profile core -f $DOCKERDIR/docker-compose-$HOSTNAME.yml start'
@@ -491,6 +533,15 @@ case "${HOSTNAME_U}" in
     alias prmetricsg="curl -s http://localhost:9091/api/v1/label/__name__/values | jq -r '.data[] | grep " # | grep <filter> to filter the list
     alias ptchk='sudo docker exec -ti prometheus promtool check config /etc/prometheus/prometheus.yml' # Check the Promtool Config
   ;;
+  TNAPP01):
+    alias dtplane='cd $DOCKER_HOSTDIR/plane && ./setup.sh'
+    alias pl-start='cd $DOCKER_HOSTDIR/plane && ./setup.sh start'
+    alias pl-stop='cd $DOCKER_HOSTDIR/plane && ./setup.sh stop'
+    alias pl-restart='cd $DOCKER_HOSTDIR/plane && ./setup.sh restart'
+    alias pl-logs='docker logs -f plane-proxy'
+    alias pl-status='docker ps --filter "name=plane-"'
+    alias pl-update='cd $DOCKER_HOSTDIR/plane && ./setup.sh upgrade'    
+  ;;
 esac
 
 # OS Specific Aliases
@@ -521,4 +572,6 @@ esac
 # Proxmox Specific Aliases:
 if [ -f /etc/pve/.version ]; then
   alias setdtacls='sudo $DIVTOOLS/scripts/setup_divtools_acls.sh' # set divtools acls on Promxox Host for internal LXCs
+  alias pve_tpu_chk='sudo $DIVTOOLS/scripts/frigate/proxmox_coral_check.sh' # Check Proxmox TPU status
+  alias pve_tpu_fix='sudo $DIVTOOLS/scripts/frigate/proxmox_coral_fix.sh' # Fix Proxmox TPU status
 fi

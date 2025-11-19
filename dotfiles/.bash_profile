@@ -1,3 +1,7 @@
+# Set flag to prevent double-sourcing when .bashrc loads .bash_profile for VSCode
+# Last Updated: 11/11/2025 9:35:00 PM CDT
+export BASH_PROFILE_LOADED=1
+
 # Exports
 export DIVTOOLS="/opt/divtools"
 export HOSTNAME_U=$(hostname -s | tr '[:lower:]' '[:upper:]')
@@ -6,9 +10,109 @@ export HOSTNAME_U=$(hostname -s | tr '[:lower:]' '[:upper:]')
 export DOCKERDIR=/opt/divtools/docker
 export DOCKERDATADIR=/opt
 
+################################################################################
+# DIVTOOLS VERBOSITY CONTROL SYSTEM
+# Last Updated: 11/11/2025
+#
+# OVERVIEW:
+#   This system provides fine-grained control over output verbosity during
+#   profile initialization. It uses a global DT_VERBOSE level combined with
+#   section-specific thresholds to control which messages are displayed.
+#
+# GLOBAL VERBOSITY LEVEL (DT_VERBOSE):
+#   0 = Silent       (only errors/critical output)
+#   1 = Minimal      (errors + warnings)
+#   2 = Normal       (errors + warnings + info/key operations)
+#   3 = Verbose      (errors + warnings + info + debug messages)
+#   4 = Debug        (everything, including low-level details)
+#
+# USAGE:
+#   Default behavior (DT_VERBOSE=2):
+#     source /etc/profile
+#     sep              (using alias)
+#
+#   Silent mode (suppress STAR, SAMBA, etc.):
+#     export DT_VERBOSE=0 && source /etc/profile
+#     export DT_VERBOSE=0 && sep
+#
+#   Debug mode (see everything):
+#     export DT_VERBOSE=4 && source /etc/profile
+#     export DT_VERBOSE=4 && sep
+#
+# SECTION-LEVEL THRESHOLDS:
+#   Each section (STAR, SAMBA, INFO, etc.) has a minimum DT_VERBOSE level
+#   required for its messages to display. These are defined in DT_VERBOSITY_LEVELS
+#   and can be overridden in .env files at the site or host level.
+#
+# CUSTOMIZATION:
+#   To change defaults, either:
+#   1. Set DT_VERBOSE in your shell before sourcing this file
+#   2. Add to ~/.env or site/.env.hostname files:
+#        export DT_VERBOSE=1
+#        declare -gxA DT_VERBOSITY_LEVELS=(["STAR"]=3 ["SAMBA"]=1 ...)
+#
+# EXAMPLES:
+#   Silence just Starship output:
+#     Add to ~/.env: declare -gxA DT_VERBOSITY_LEVELS=(["STAR"]=999)
+#
+#   Only show errors:
+#     export DT_VERBOSE=0 && sep
+#
+#   Full debug output:
+#     export DT_VERBOSE=4 && sep
+#
+################################################################################
+
+export DT_VERBOSE=${DT_VERBOSE:-2}
+
+# Section-level verbosity thresholds (minimum DT_VERBOSE level to output)
+# Set these to control output per section (STAR, SAMBA, etc.)
+# Lower numbers = more restrictive (0=always, 1=only if DT_VERBOSE>=1, etc.)
+declare -gxA DT_VERBOSITY_LEVELS=(
+    ["STAR"]=2           # Starship build messages
+    ["SAMBA"]=2          # Samba-related messages
+    ["TMUX"]=2           # Tmux configuration messages
+    ["INFO"]=2           # General info messages
+    ["WARN"]=1           # Warning messages (show at higher levels)
+    ["ERROR"]=0          # Error messages (always show)
+    ["DEBUG"]=3          # Debug messages (only at DT_VERBOSE=3+)
+)
+
+################################################################################
+
 # Load Local Overrides, if they exist
 if [ -f ~/.env ]; then
     . ~/.env
+fi
+
+# Check for SITE_NAME and warn if missing
+# Last Updated: 11/5/2025 2:45:00 PM CST
+if [ -z "$SITE_NAME" ]; then
+    # Try /root/.env if running as root
+    if [ "$HOME" = "/root" ] && [ -f "/root/.env" ]; then
+        . /root/.env
+    fi
+    # Try /home/divix/.env as fallback
+    if [ -z "$SITE_NAME" ] && [ -f "/home/divix/.env" ]; then
+        . /home/divix/.env
+    fi
+    
+    # If still not set, display prominent warning
+    if [ -z "$SITE_NAME" ]; then
+        echo -e "\e[48;5;52m\e[97m╔═════════════════════════════════════════════════════════════════════════════╗\e[m" >&2
+        echo -e "\e[48;5;52m\e[97m║                            ⚠️  CRITICAL WARNING ⚠️                           ║\e[m" >&2
+        echo -e "\e[48;5;52m\e[97m╠═════════════════════════════════════════════════════════════════════════════╣\e[m" >&2
+        echo -e "\e[48;5;52m\e[97m║  SITE_NAME environment variable is NOT SET!                                ║\e[m" >&2
+        echo -e "\e[48;5;52m\e[97m║                                                                             ║\e[m" >&2
+        echo -e "\e[48;5;52m\e[97m║  This will cause ALL docker compose scripts to FAIL!                       ║\e[m" >&2
+        echo -e "\e[48;5;52m\e[97m║                                                                             ║\e[m" >&2
+        echo -e "\e[48;5;52m\e[97m║  To fix this issue:                                                         ║\e[m" >&2
+        echo -e "\e[48;5;52m\e[97m║  1. Run: \$DIVTOOLS/scripts/dt_host_setup.sh                                ║\e[m" >&2
+        echo -e "\e[48;5;52m\e[97m║     OR                                                                      ║\e[m" >&2
+        echo -e "\e[48;5;52m\e[97m║  2. Add to ~/.env:  export SITE_NAME=<your-site-name>                      ║\e[m" >&2
+        echo -e "\e[48;5;52m\e[97m╚═════════════════════════════════════════════════════════════════════════════╝\e[m" >&2
+        echo "" >&2
+    fi
 fi
 
 # Clear any residual Starship environment variables
@@ -94,10 +198,75 @@ function log_msg_tput() {
 }
 
 # Function to log messages with color-coded output based on section
+# Respects DT_VERBOSE and DT_VERBOSITY_LEVELS settings
+# Last Updated: 11/11/2025
+#
+# USAGE:
+#   log_msg "SECTION" "message"           # Basic usage
+#   log_msg "SECTION:TAG" "message"       # Use custom color tag (TAG becomes color_tag)
+#   log_msg "SECTION:!ts" "message"       # Suppress timestamp (for use in .bash_profile)
+#   log_msg "SECTION:raw" "message"       # Raw output (no timestamp, no section tag)
+#
+# EXAMPLES:
+#   log_msg "INFO" "Starting initialization"
+#   log_msg "STAR:cyan" "Using cyan instead of yellow"
+#   log_msg "INFO:!ts" "No timestamp on this message"
+#   log_msg "ERROR:raw" "Just the message, no extras"
+#
+# IMPORTANT: Sync Notes
+# ═══════════════════════════════════════════════════════════════════════════
+# This is the PRIMARY logging implementation used throughout the codebase.
+# When adding new sections or colors, update BOTH:
+# 1. This function: /home/divix/divtools/dotfiles/.bash_profile (log_msg)
+# 2. Fallback function: /home/divix/divtools/scripts/util/logging.sh (log)
+# 
+# The logging.sh script will prefer this implementation when .bash_profile
+# is already sourced, but falls back to log() if not available.
+# ═══════════════════════════════════════════════════════════════════════════
 function log_msg() {
-    local section="$1"
+    local section_str="$1"
     local text="$2"
     local color
+    local color_name="white"
+    local section=""
+    local no_timestamp=0
+    local no_tag=0
+    local prefix_str=""
+    
+    # Parse section string by splitting on :
+    # Supports: "SECTION", "SECTION:TAG", "SECTION:!ts", "SECTION:raw"
+    IFS=':' read -r -a parts <<< "$section_str"
+    section="${parts[0]}"
+    color_name="$section"  # Default to section for color
+    
+    # Process additional parts as modifiers
+    for (( i=1; i<${#parts[@]}; i++ )); do
+        local part="${parts[i]}"
+        local part_lower="${part,,}"
+        if [[ "$part_lower" == "!ts" ]]; then
+            no_timestamp=1
+        elif [[ "$part_lower" == "raw" ]]; then
+            no_timestamp=1
+            no_tag=1
+        else
+            # Use as custom color tag
+            color_name="$part"
+        fi
+    done
+    
+    # Ensure DT_VERBOSE is set
+    if [ -z "$DT_VERBOSE" ]; then
+        export DT_VERBOSE=2
+    fi
+    
+    # Check if this section's verbosity threshold is met
+    # DT_VERBOSITY_LEVELS is an associative array with thresholds for each section
+    local verbosity_threshold=${DT_VERBOSITY_LEVELS[$section]:-2}
+    
+    # Only output if current verbosity level >= section's threshold
+    if [ "$DT_VERBOSE" -lt "$verbosity_threshold" ]; then
+        return 0  # Silently return without outputting
+    fi
 
     # Map human-readable color names to ANSI escape codes (256-color palette)
     declare -A color_map=(
@@ -124,36 +293,44 @@ function log_msg() {
         ["darkgray"]="\e[38;5;236m" # Matches C_DARKGRAY
     )
 
-    # Set color based on section
-    case "$section" in
-        STAR)
-            color_name="yellow"
+    # Set color based on color_name (which is either section or custom tag)
+    case "$color_name" in
+        SAMBA|samba)
+            color="\e[38;5;123m"  # Light blue
             ;;
-        TMUX)
-            color_name="cyan"
+        STAR|star)
+            color="\e[33m"        # Yellow
+            ;;            
+        TMUX|tmux)        
+            color="\e[36m"        # Cyan
             ;;
-        ERROR)
-            color_name="red"
+        ERROR|error)
+            color="\e[31m"        # Red
             ;;
-        WARNING)
-            color_name="yellow"
+        WARN|WARNING|warn|warning)
+            color="\e[33m"        # Yellow
             ;;
-        INFO)
-            color_name="green"
+        INFO|info)
+            color="\e[32m"        # Green
             ;;
-        DEBUG)
-            color_name="cyan"
+        DEBUG|debug)
+            color="\e[36m"        # Cyan
             ;;
         *)
-            color_name="white"
+            # Try to look up in color_map as fallback
+            color="${color_map[$color_name]:-\e[37m}"  # Default to white
             ;;
     esac
 
-    # Get the color code
-    color="${color_map[$color_name]}"
+    # Build the output
+    local output=""
+    if [[ $no_tag -eq 0 ]]; then
+        prefix_str="[$section] "
+    fi
+    output="${prefix_str}${text}"
 
-    # Output the message with section and text, resetting color afterward
-    echo -e "${color}[${section}] ${text}\e[m" >&2
+    # Output the message with color, resetting color afterward
+    echo -e "${color}${output}\e[m" >&2
 }
 
 
@@ -177,6 +354,11 @@ has_starship() {
     [ -n "$starship_bin" ] && [ -x "$starship_bin" ] && "$starship_bin" --version &>/dev/null
 }
 
+# Function to check if ZFS filesystem
+has_opencode() {
+  command -v opencode &> /dev/null
+}
+
 # Function to check if EZA is installed
 has_eza() {
   command -v eza &> /dev/null
@@ -195,18 +377,29 @@ has_qm() {
 # Function to add a directory to PATH if it exists
 function add_to_path() {
     local dir="$1"
+    local section="${2:-INFO}"  # Default section is INFO
+    local silent="${3:-0}"      # Default is verbose (0 = verbose, 1 = silent)
 
     # Check if the directory exists
     if [[ -d "$dir" ]]; then
         # Check if it's already in PATH
         if [[ ":$PATH:" != *":$dir:"* ]]; then
             export PATH="$dir:$PATH"
-            echo "Added $dir to PATH."
+            if [[ "$silent" -eq 0 ]]; then
+                log_msg "$section" "Added $dir to PATH."
+            fi
+            return 0
         else
-            echo "$dir is already in PATH."
+            if [[ "$silent" -eq 0 ]]; then
+                log_msg "$section" "$dir is already in PATH."
+            fi
+            return 0
         fi
     else
-        echo "Directory $dir does not exist."
+        if [[ "$silent" -eq 0 ]]; then
+            log_msg "$section" "Directory $dir does not exist."
+        fi
+        return 1
     fi
 }
 
@@ -634,19 +827,20 @@ function build_starship_toml_palette() {
 update_link() {
     local SOURCE="$1"
     local TARGET="$2"
+    local SECTION="${3:-INFO}"  # Default section is INFO, can be overridden
 
     # Check if the source file exists
     if [[ -f "$SOURCE" || -d "$SOURCE" ]]; then
         # Check if the target is already a symbolic link
         if [[ -L "$TARGET" ]]; then
-            echo "Soft link for $TARGET already exists."
+            log_msg "$SECTION" "Soft link for $TARGET already exists."
         else
             # Create the symbolic link
             ln -s "$SOURCE" "$TARGET"
-            echo "Soft link created: $TARGET -> $SOURCE"
+            log_msg "$SECTION" "Soft link created: $TARGET -> $SOURCE"
         fi
     else
-        echo "Source file or directory does not exist: $SOURCE"
+        log_msg "WARN" "Source file or directory does not exist: $SOURCE"
     fi    
 }
 
@@ -664,19 +858,19 @@ tmux_config() {
     # Define Source/Target of the files to be created in home dir for .tmux.conf
     CFG_SOURCE="$TM_SOURCE/.tmux.conf"
     CFG_TARGET="$HOME/.tmux.conf"
-    update_link "$CFG_SOURCE" "$CFG_TARGET"
+    update_link "$CFG_SOURCE" "$CFG_TARGET" "TMUX"
 
 
     # ~/.tmux/
     DTM_TARGET="$HOME/.tmux"
-    update_link "$TM_SOURCE" "$DTM_TARGET"
+    update_link "$TM_SOURCE" "$DTM_TARGET" "TMUX"
 
     # ~/.config/tmux
     CTM_TARGET="$HOME/.config/tmux"
     # Ensure the .config folder exists
     mkdir -p "$HOME/.config"
     # Map the .config/tmux -> $DIVTOOLS/config/tmux
-    update_link "$TM_SOURCE" "$CTM_TARGET"
+    update_link "$TM_SOURCE" "$CTM_TARGET" "TMUX"
 }
 
 
@@ -687,7 +881,7 @@ tmux_config() {
 ### ENV VAR FUNCTIONS ###
 
 # Function to check InfluxDB environment variables and set defaults if missing
-# Last Updated: 10/22/2025 9:17:00 PM CDT
+# Last Updated: 11/5/2025 12:55:00 AM CDT
 confirm_influxdb_vars() {
     # Check if all required InfluxDB variables are set
     if [ -z "$INFLUXDB_IP" ] || [ -z "$INFLUXDB_PORT" ] || [ -z "$INFLUXDB_API_TOKEN" ] || [ -z "$INFLUXDB_ORG" ] || [ -z "$INFLUXDB_BUCKET" ]; then
@@ -700,6 +894,7 @@ confirm_influxdb_vars() {
     else
         [ "${DT_DEBUG,,}" == "1" -o "${DT_DEBUG,,}" == "true" ] && log_msg "DEBUG" "InfluxDB variables set: INFLUXDB_IP=${INFLUXDB_IP}, INFLUXDB_PORT=${INFLUXDB_PORT}, INFLUXDB_API_TOKEN=****, INFLUXDB_ORG=${INFLUXDB_ORG}, INFLUXDB_BUCKET=${INFLUXDB_BUCKET}" >&2
     fi
+    return 0
 } # confirm_influxdb_vars
 
 
@@ -737,56 +932,151 @@ find_file_case_insensitive() {
 } # find_file_case_insensitive
 
 
-# Function to load .env files with case-insensitive handling for V2 structure
-# Last Updated: 10/22/2025 9:17:00 PM CDT
+# Function to check for required environment variables
+# Last Updated: 11/5/2025 12:50:00 AM CDT
+check_required_env_vars() {
+    local missing_vars=()
+    
+    # Try to load ~/.env if it exists (for the actual user, not root)
+    # Check both current user's home and /home/divix
+    local env_file="$HOME/.env"
+    local divix_env="/home/divix/.env"
+    
+    if [ -f "$env_file" ] && [ "$env_file" != "/root/.env" ]; then
+        source "$env_file"
+    elif [ -f "$divix_env" ] && [ "$HOME" = "/root" ]; then
+        # If running as root, try divix's .env file
+        source "$divix_env"
+    fi
+    
+    # Check for SITE_NAME - this is CRITICAL and must exist
+    if [ -z "$SITE_NAME" ]; then
+        missing_vars+=("SITE_NAME")
+    fi
+    
+    # If any required vars are missing, alert user and guide them to dt_host_setup.sh
+    if [ ${#missing_vars[@]} -gt 0 ]; then
+        log_msg "ERROR" "Required environment variable(s) missing: ${missing_vars[*]}" >&2
+        log_msg "ERROR" "SITE_NAME is required for proper docker compose file location." >&2
+        log_msg "INFO" "Please run: \$DIVTOOLS/scripts/dt_host_setup.sh to configure your environment." >&2
+        log_msg "INFO" "Or manually add 'export SITE_NAME=<your-site-name>' to ~/.env" >&2
+        return 1
+    fi
+    
+    return 0
+} # check_required_env_vars
+
+# Function to load .env files with support for both V1 and V2 configuration modes
+# Last Updated: 11/5/2025 12:15:00 AM CDT
 load_env_files() {
     # Ensure HOSTNAME is set
     if [ -z "$HOSTNAME" ]; then
         export HOSTNAME=$(hostname)
         [ "${DT_DEBUG,,}" == "1" -o "${DT_DEBUG,,}" == "true" ] && log_msg "DEBUG" "Set HOSTNAME=${HOSTNAME}" >&2
     fi
-
-    # Define paths
+    
+    # Define base paths - use known locations
+    # Last Updated: 11/11/2025 9:15:00 PM CDT
     local docker_dir="${DOCKERDIR:-/opt/divtools/docker}"
-    local site_name="${SITE_NAME:-default}"
     local shared_dir="${docker_dir}/sites/s00-shared"
+    
+    # === ALWAYS LOAD SHARED .env FIRST ===
+    # The shared .env is at a KNOWN location and should always be loaded if it exists
+    # This provides DT_INCLUDE_* and other shared configuration variables
+    # Last Updated: 11/11/2025 9:15:00 PM CDT
+    local shared_env_file
+    shared_env_file=$(find_file_case_insensitive "${shared_dir}" ".env." "s00-shared" "")
+    if [ -n "$shared_env_file" ]; then
+        source "$shared_env_file" || {
+            log_msg "ERROR" "Failed to source shared settings from $shared_env_file" >&2
+            return 1
+        }
+        log_msg "INFO" "Sourced shared settings from $shared_env_file" >&2
+    else
+        [ "${DT_DEBUG,,}" == "1" -o "${DT_DEBUG,,}" == "true" ] && log_msg "WARNING" "Shared .env not found in $shared_dir" >&2
+    fi
+    
+    # Check for required environment variables in ~/.env
+    # This may fail if SITE_NAME isn't set, which is OK - shared vars are already loaded
+    # We'll continue to try loading site/host envs even if this check fails
+    if ! check_required_env_vars; then
+        [ "${DT_DEBUG,,}" == "1" -o "${DT_DEBUG,,}" == "true" ] && log_msg "DEBUG" "Required vars check failed, but continuing to attempt site/host loading" >&2
+        # Don't return - let it try to load site/host envs even if SITE_NAME missing
+        # They will gracefully handle missing variables
+    fi
+
+    # Now we can use SITE_NAME for site/host specific paths
+    local site_name="${SITE_NAME:-default}"
     local site_dir="${docker_dir}/sites/${site_name}"
     local host_dir="${site_dir}/${HOSTNAME}"
-    local shared_env_file
-    local site_env_file
-    local host_env_file
 
-    # Source shared .env file (V2 location)
-    shared_env_file=$(find_file_case_insensitive "${shared_dir}" ".env." "s00-shared" "")
-    if [ -n "${shared_env_file}" ]; then
-        source "${shared_env_file}"
-        log_msg "INFO" "Sourced shared settings from ${shared_env_file}" >&2
-        [ "${DT_DEBUG,,}" == "1" -o "${DT_DEBUG,,}" == "true" ] && log_msg "DEBUG" "Loaded shared env: HOSTNAME=${HOSTNAME}, SITE_NAME=${SITE_NAME}" >&2
+    # === DETECT CONFIG MODE (V1 or V2) ===
+    local selected_compose
+    selected_compose=$(get_docker_compose_file 2>/dev/null || echo "")
+    if [[ "$selected_compose" == *"/docker-compose-"* ]]; then
+        export CFG_MODE=1
+        [ "${DT_DEBUG,,}" == "1" -o "${DT_DEBUG,,}" == "true" ] && log_msg "DEBUG" "CFG_MODE=1 (V1) - Using compose file: $selected_compose" >&2
+    elif [[ "$selected_compose" == *"/dc-"* ]]; then
+        export CFG_MODE=2
+        [ "${DT_DEBUG,,}" == "1" -o "${DT_DEBUG,,}" == "true" ] && log_msg "DEBUG" "CFG_MODE=2 (V2) - Using compose file: $selected_compose" >&2
     else
-        [ "${DT_DEBUG,,}" == "1" -o "${DT_DEBUG,,}" == "true" ] && log_msg "WARNING" "Shared .env file not found in ${shared_dir} for s00-shared." >&2
+        export CFG_MODE=2  # Default to V2 if no compose file found
+        [ "${DT_DEBUG,,}" == "1" -o "${DT_DEBUG,,}" == "true" ] && log_msg "WARN" "No compose file found; defaulting to CFG_MODE=2 (V2)" >&2
     fi
 
-    # Source site-specific .env file (V2 location)
-    site_env_file=$(find_file_case_insensitive "${site_dir}" ".env." "${site_name}" "")
-    if [ -n "${site_env_file}" ]; then
-        source "${site_env_file}"
-        log_msg "INFO" "Sourced site-specific settings from ${site_env_file}" >&2
-        [ "${DT_DEBUG,,}" == "1" -o "${DT_DEBUG,,}" == "true" ] && log_msg "DEBUG" "Loaded site env: HOSTNAME=${HOSTNAME}, SITE_NAME=${SITE_NAME}" >&2
-    else
-        [ "${DT_DEBUG,,}" == "1" -o "${DT_DEBUG,,}" == "true" ] && log_msg "WARNING" "Site-specific .env file not found in ${site_dir} for ${site_name}." >&2
+    # === LOAD .env FILES BASED ON CFG_MODE ===
+
+    if [[ "$CFG_MODE" == "1" ]]; then
+        # --- V1: Load $DOCKERDIR/.env ---
+        if [ -f "${docker_dir}/.env" ]; then
+            source "${docker_dir}/.env"
+            log_msg "INFO" "Sourced V1 general settings from ${docker_dir}/.env" >&2
+            [ "${DT_DEBUG,,}" == "1" -o "${DT_DEBUG,,}" == "true" ] && log_msg "DEBUG" "Loaded V1 general env" >&2
+        else
+            [ "${DT_DEBUG,,}" == "1" -o "${DT_DEBUG,,}" == "true" ] && log_msg "WARNING" "V1 general .env not found at ${docker_dir}/.env" >&2
+        fi
+
+        # --- V1: Load $DOCKERDIR/secrets/env/.env.$HOSTNAME (case-insensitive) ---
+        local v1_host_env
+        v1_host_env=$(find_file_case_insensitive "${docker_dir}/secrets/env" ".env." "$HOSTNAME" "")
+        if [ -n "$v1_host_env" ]; then
+            source "$v1_host_env"
+            log_msg "INFO" "Sourced V1 host-specific settings from $v1_host_env" >&2
+            [ "${DT_DEBUG,,}" == "1" -o "${DT_DEBUG,,}" == "true" ] && log_msg "DEBUG" "Loaded V1 host env: $v1_host_env" >&2
+        else
+            [ "${DT_DEBUG,,}" == "1" -o "${DT_DEBUG,,}" == "true" ] && log_msg "WARNING" "V1 host-specific .env not found in ${docker_dir}/secrets/env for $HOSTNAME" >&2
+        fi
+
+    elif [[ "$CFG_MODE" == "2" ]]; then
+        # --- V2: Load site and host .env files ---
+        # Note: Shared .env was already loaded at the top of this function
+        # Last Updated: 11/11/2025 9:15:00 PM CDT
+        local site_env_file host_env_file
+
+        site_env_file=$(find_file_case_insensitive "${site_dir}" ".env." "$site_name" "")
+        if [ -n "$site_env_file" ]; then
+            source "$site_env_file" || {
+                log_msg "ERROR" "Failed to source V2 site-specific settings from $site_env_file" >&2
+                return 1
+            }
+            log_msg "INFO" "Sourced V2 site-specific settings from $site_env_file" >&2
+        else
+            [ "${DT_DEBUG,,}" == "1" -o "${DT_DEBUG,,}" == "true" ] && log_msg "WARNING" "V2 site-specific .env not found in $site_dir" >&2
+        fi
+
+        host_env_file=$(find_file_case_insensitive "${host_dir}" ".env." "$HOSTNAME" "")
+        if [ -n "$host_env_file" ]; then
+            source "$host_env_file" || {
+                log_msg "ERROR" "Failed to source V2 host-specific settings from $host_env_file" >&2
+                return 1
+            }
+            log_msg "INFO" "Sourced V2 host-specific settings from $host_env_file" >&2
+        else
+            [ "${DT_DEBUG,,}" == "1" -o "${DT_DEBUG,,}" == "true" ] && log_msg "WARNING" "V2 host-specific .env not found in $host_dir" >&2
+        fi
     fi
 
-    # Source host-specific .env file (V2 location)
-    host_env_file=$(find_file_case_insensitive "${host_dir}" ".env." "${HOSTNAME}" "")
-    if [ -n "${host_env_file}" ]; then
-        source "${host_env_file}"
-        log_msg "INFO" "Sourced host-specific settings from ${host_env_file}" >&2
-        [ "${DT_DEBUG,,}" == "1" -o "${DT_DEBUG,,}" == "true" ] && log_msg "DEBUG" "Loaded host env: HOSTNAME=${HOSTNAME}, SITE_NAME=${SITE_NAME}" >&2
-    else
-        [ "${DT_DEBUG,,}" == "1" -o "${DT_DEBUG,,}" == "true" ] && log_msg "WARNING" "Host-specific .env file not found in ${host_dir} for ${HOSTNAME}." >&2
-    fi
-
-    # Set default environment variables if not already set
+    # === DEFAULTS & PATH ===
     if [ -z "$DIVTOOLS" ]; then
         if is_truenas || is_readonly_usr_local_bin; then
             export DIVTOOLS="/mnt/tpool/NFS/opt/divtools"
@@ -797,18 +1087,27 @@ load_env_files() {
             export DOCKERDATADIR="/opt"
             export DT_LOCAL_BIN_DIR="/usr/local/bin"
         fi
-        log_msg "INFO" "Set default environment variables: DIVTOOLS=$DIVTOOLS, DOCKERDATADIR=$DOCKERDATADIR, DT_LOCAL_BIN_DIR=$DT_LOCAL_BIN_DIR" >&2
-        [ "${DT_DEBUG,,}" == "1" -o "${DT_DEBUG,,}" == "true" ] && log_msg "DEBUG" "Set defaults: DIVTOOLS=${DIVTOOLS}, DOCKERDATADIR=${DOCKERDATADIR}, DT_LOCAL_BIN_DIR=${DT_LOCAL_BIN_DIR}" >&2
+        log_msg "INFO" "Set default environment variables: DIVTOOLS=$DIVTOOLS" >&2
     fi
 
-    # Ensure PATH includes DT_LOCAL_BIN_DIR
     if [[ ! ":$PATH:" =~ ":$DT_LOCAL_BIN_DIR:" ]]; then
         export PATH="$DT_LOCAL_BIN_DIR:$PATH"
         log_msg "INFO" "Added $DT_LOCAL_BIN_DIR to PATH." >&2
     fi
 
-    # Check InfluxDB variables
+    # === DOCKER DIRECTORY VARIABLES ===
+    # Export Docker directory variables (used by dcrun and other docker scripts)
+    # Last Updated: 11/5/2025 3:15:00 PM CST
+    export DOCKER_SHAREDDIR="${DOCKERDIR}/sites/s00-shared"
+    export DOCKER_SITEDIR="${DOCKERDIR}/sites/${SITE_NAME:-default}"
+    export DOCKER_HOSTDIR="${DOCKER_SITEDIR}/${HOSTNAME}"
+    [ "${DT_DEBUG,,}" == "1" -o "${DT_DEBUG,,}" == "true" ] && log_msg "DEBUG" "Exported: DOCKER_SHAREDDIR=${DOCKER_SHAREDDIR}, DOCKER_SITEDIR=${DOCKER_SITEDIR}, DOCKER_HOSTDIR=${DOCKER_HOSTDIR}" >&2
+
+    # === INFLUXDB CHECK (always, after all .env loading) ===
     confirm_influxdb_vars
+    
+    # Explicit success return
+    return 0
 } # load_env_files
 
 
@@ -837,6 +1136,7 @@ container_exists() {
 get_docker_compose_file() {
     local selected_compose
     local hostname="${HOSTNAME:-$(hostname)}"
+    #local hostname=$(hostname)}
     local docker_dir="${DOCKERDIR:-/opt/divtools/docker}"
     local site_name="${SITE_NAME:-default}"
     local docker_sitedir="${docker_dir}/sites/${site_name}"
@@ -906,18 +1206,16 @@ dcrun_f() {
     [ ${DEBUG_MODE} -eq 1 ] && log_msg "DEBUG" "Initial args: $@, Filtered args: ${filtered_args[*]}, Profile args: ${profile_args}, TEST_MODE=${TEST_MODE}, DEBUG_MODE=${DEBUG_MODE}" >&2
 
     # Rely on load_env_files() for environment setup
+    # This now also sets DOCKER_SHAREDDIR, DOCKER_SITEDIR, and DOCKER_HOSTDIR
     if ! declare -f load_env_files >/dev/null; then
         log_msg "ERROR" "load_env_files function not found. Ensure it is defined in .bash_aliases." >&2
         return 1
     fi
-    load_env_files
-    [ ${DEBUG_MODE} -eq 1 ] && log_msg "DEBUG" "After load_env_files: HOSTNAME=${HOSTNAME}, SITE_NAME=${SITE_NAME}, DIVTOOLS=${DIVTOOLS}, DOCKERDIR=${DOCKERDIR}" >&2
-
-    # Compute directories based on loaded vars
-    export DOCKER_SHAREDDIR="${DOCKERDIR}/sites/s00-shared"
-    export DOCKER_SITEDIR="${DOCKERDIR}/sites/${SITE_NAME:-default}"
-    export DOCKER_HOSTDIR="${DOCKER_SITEDIR}/${HOSTNAME}"
-    [ ${DEBUG_MODE} -eq 1 ] && log_msg "DEBUG" "Exported: DOCKER_SHAREDDIR=${DOCKER_SHAREDDIR}, DOCKER_SITEDIR=${DOCKER_SITEDIR}, DOCKER_HOSTDIR=${DOCKER_HOSTDIR}" >&2
+    if ! load_env_files; then
+        log_msg "ERROR" "Environment setup failed. Cannot proceed with docker compose command." >&2
+        return 1
+    fi
+    [ ${DEBUG_MODE} -eq 1 ] && log_msg "DEBUG" "After load_env_files: HOSTNAME=${HOSTNAME}, SITE_NAME=${SITE_NAME}, DOCKER_HOSTDIR=${DOCKER_HOSTDIR}" >&2
 
     # Get docker compose file
     local selected_compose
@@ -947,16 +1245,236 @@ dcrun_f() {
     fi
 } # dcrun_f
 
+# Function to reset containers (stop, remove, recreate)
+# Useful for fixing containers that belong to wrong docker-compose projects
+# Last Updated: 11/4/2025 7:30:00 PM CDT
+dcreset_f() {
+    # Handles containers that might be orphaned from other projects
+    # Usage: dcreset container_name [container_name2 ...]
+    
+    if [ $# -eq 0 ]; then
+        log_msg "ERROR" "Usage: dcreset <container_name> [container_name2 ...]" >&2
+        return 1
+    fi
+    
+    local containers=("$@")
+    local failed_containers=()
+    
+    log_msg "INFO" "Resetting containers: ${containers[*]}" >&2
+    
+    # Stop and remove each container
+    for container in "${containers[@]}"; do
+        log_msg "INFO" "Stopping container: ${container}" >&2
+        if sudo docker stop "${container}" 2>/dev/null; then
+            log_msg "INFO" "Successfully stopped: ${container}" >&2
+        else
+            log_msg "WARN" "Could not stop ${container} (may not be running)" >&2
+        fi
+        
+        log_msg "INFO" "Removing container: ${container}" >&2
+        if sudo docker rm "${container}" 2>/dev/null; then
+            log_msg "INFO" "Successfully removed: ${container}" >&2
+        else
+            log_msg "WARN" "Could not remove ${container} (may not exist)" >&2
+        fi
+    done
+    
+    # Recreate containers using dcup
+    log_msg "INFO" "Recreating containers with dcup..." >&2
+    dcrun up -d --build --remove-orphans "${containers[@]}"
+    
+    if [ $? -eq 0 ]; then
+        log_msg "INFO" "Successfully recreated containers: ${containers[*]}" >&2
+    else
+        log_msg "ERROR" "Failed to recreate some containers" >&2
+        return 1
+    fi
+} # dcreset_f
+
+# Function to check which docker-compose project containers belong to
+# Useful for diagnosing orphaned containers from other projects
+# Last Updated: 11/4/2025 8:00:00 PM CDT
+dcproject() {
+    # Shows the docker-compose project name for running containers
+    # Highlights mismatched projects in RED and shows container health status
+    # Usage: dcproject [container_name ...]
+    #        dcproject (shows all running containers and their projects)
+    
+    # ANSI color codes
+    local RED='\033[0;31m'
+    local GREEN='\033[0;32m'
+    local YELLOW='\033[0;33m'
+    local BLUE='\033[0;36m'
+    local NC='\033[0m' # No Color
+    
+    local current_hostname="${HOSTNAME:-$(hostname)}"
+    local mismatched_containers=()
+    
+    if [ $# -eq 0 ]; then
+        # Show all containers
+        log_msg "INFO" "Showing all running containers and their projects (Current host: ${current_hostname}):" >&2
+        echo ""
+        printf "%-20s %-20s %-30s %-30s\n" "CONTAINER" "PROJECT" "COMPOSE_SERVICE" "STATUS"
+        printf "%-20s %-20s %-30s %-30s\n" "--------------------" "--------------------" "------------------------------" "------------------------------"
+        
+        sudo docker ps --format "{{.Names}}" | while read -r container; do
+            local project=$(sudo docker inspect "${container}" --format '{{index .Config.Labels "com.docker.compose.project"}}' 2>/dev/null || echo "N/A")
+            local service=$(sudo docker inspect "${container}" --format '{{index .Config.Labels "com.docker.compose.service"}}' 2>/dev/null || echo "N/A")
+            local health=$(sudo docker inspect "${container}" --format '{{.State.Health.Status}}' 2>/dev/null || echo "")
+            local status=$(sudo docker inspect "${container}" --format '{{.State.Status}}' 2>/dev/null || echo "unknown")
+            
+            # Track mismatched containers
+            if [ "${project}" != "${current_hostname}" ] && [ "${project}" != "N/A" ]; then
+                echo "${container}" >> /tmp/dcproject_mismatches_$$
+            fi
+            
+            # Determine status message
+            local status_msg=""
+            if [ "${project}" != "${current_hostname}" ] && [ "${project}" != "N/A" ]; then
+                status_msg="${RED}Project Mismatch${NC}"
+            elif [ -n "${health}" ]; then
+                case "${health}" in
+                    healthy)
+                        status_msg="${GREEN}${status} (${health})${NC}"
+                        ;;
+                    unhealthy)
+                        status_msg="${RED}${status} (${health})${NC}"
+                        ;;
+                    starting)
+                        status_msg="${YELLOW}${status} (${health})${NC}"
+                        ;;
+                    *)
+                        status_msg="${status} (${health})"
+                        ;;
+                esac
+            else
+                case "${status}" in
+                    running)
+                        status_msg="${GREEN}${status}${NC}"
+                        ;;
+                    exited|dead)
+                        status_msg="${RED}${status}${NC}"
+                        ;;
+                    *)
+                        status_msg="${status}"
+                        ;;
+                esac
+            fi
+            
+            # Color the entire line red if project doesn't match hostname
+            if [ "${project}" != "${current_hostname}" ] && [ "${project}" != "N/A" ]; then
+                printf "${RED}%-20s %-20s %-30s${NC} %-30b\n" "${container}" "${project}" "${service}" "${status_msg}"
+            else
+                printf "%-20s %-20s %-30s %-30b\n" "${container}" "${project}" "${service}" "${status_msg}"
+            fi
+        done
+        
+        # Check if there were any mismatches and print resolution message
+        if [ -f /tmp/dcproject_mismatches_$$ ]; then
+            local mismatched=$(cat /tmp/dcproject_mismatches_$$)
+            rm -f /tmp/dcproject_mismatches_$$
+            
+            if [ -n "${mismatched}" ]; then
+                echo ""
+                echo -e "${YELLOW}╔════════════════════════════════════════════════════════════════════════╗${NC}"
+                echo -e "${YELLOW}║${NC} ${RED}WARNING: Project Mismatches Detected${NC}                                   ${YELLOW}║${NC}"
+                echo -e "${YELLOW}╚════════════════════════════════════════════════════════════════════════╝${NC}"
+                echo ""
+                echo -e "${BLUE}The following containers belong to a different docker-compose project:${NC}"
+                echo -e "${RED}${mismatched}${NC}"
+                echo ""
+                echo -e "${BLUE}To fix these containers, run:${NC}"
+                echo -e "  ${GREEN}dcreset ${mismatched//$'\n'/ }${NC}"
+                echo ""
+                echo -e "${BLUE}This will:${NC}"
+                echo "  1. Stop the mismatched containers"
+                echo "  2. Remove them from the old project"
+                echo "  3. Recreate them using the current host's compose file"
+                echo ""
+            fi
+        fi
+    else
+        # Show specific containers
+        local has_mismatch=false
+        for container in "$@"; do
+            local project=$(sudo docker inspect "${container}" --format '{{index .Config.Labels "com.docker.compose.project"}}' 2>/dev/null)
+            local service=$(sudo docker inspect "${container}" --format '{{index .Config.Labels "com.docker.compose.service"}}' 2>/dev/null)
+            local health=$(sudo docker inspect "${container}" --format '{{.State.Health.Status}}' 2>/dev/null || echo "")
+            local status=$(sudo docker inspect "${container}" --format '{{.State.Status}}' 2>/dev/null || echo "unknown")
+            
+            if [ -n "${project}" ]; then
+                # Determine if there's a project mismatch
+                local mismatch=""
+                if [ "${project}" != "${current_hostname}" ]; then
+                    mismatch=" ${RED}(MISMATCH: expected ${current_hostname})${NC}"
+                    has_mismatch=true
+                    mismatched_containers+=("${container}")
+                fi
+                
+                echo -e "Container: ${container}"
+                echo -e "  Project: ${project}${mismatch}"
+                echo -e "  Service: ${service}"
+                
+                # Show health status
+                if [ -n "${health}" ]; then
+                    case "${health}" in
+                        healthy)
+                            echo -e "  Status: ${GREEN}${status} (${health})${NC}"
+                            ;;
+                        unhealthy)
+                            echo -e "  Status: ${RED}${status} (${health})${NC}"
+                            ;;
+                        starting)
+                            echo -e "  Status: ${YELLOW}${status} (${health})${NC}"
+                            ;;
+                        *)
+                            echo -e "  Status: ${status} (${health})"
+                            ;;
+                    esac
+                else
+                    case "${status}" in
+                        running)
+                            echo -e "  Status: ${GREEN}${status}${NC}"
+                            ;;
+                        exited|dead)
+                            echo -e "  Status: ${RED}${status}${NC}"
+                            ;;
+                        *)
+                            echo -e "  Status: ${status}"
+                            ;;
+                    esac
+                fi
+                echo ""
+            else
+                log_msg "ERROR" "Container '${container}' not found or not a compose container" >&2
+            fi
+        done
+        
+        # Print resolution message if there were mismatches
+        if [ "${has_mismatch}" = true ]; then
+            echo -e "${YELLOW}╔════════════════════════════════════════════════════════════════════════╗${NC}"
+            echo -e "${YELLOW}║${NC} ${RED}WARNING: Project Mismatch Detected${NC}                                     ${YELLOW}║${NC}"
+            echo -e "${YELLOW}╚════════════════════════════════════════════════════════════════════════╝${NC}"
+            echo ""
+            echo -e "${BLUE}To fix these containers, run:${NC}"
+            echo -e "  ${GREEN}dcreset ${mismatched_containers[*]}${NC}"
+            echo ""
+        fi
+    fi
+} # dcproject
+
 #### DCRUN_F FUNCTIONS: END
 
 
-# Last Updated: 9/21/2025 11:05:45 PM CDT
+# Last Updated: 11/4/2025 9:45:00 PM CST
 # Colorizes df output with configurable usage ranges and styled header
+# Enhanced with TrueNAS ZFS usage correction for remote mounts
 df_color() {
     # Display disk usage with color highlighting for configurable usage ranges
     # Header in bright black background with dark blue foreground
     # Supports -debug flag for detailed output
     # Excludes overlay and tmpfs filesystems
+    # Corrects usage for remote NFS/SMB mounts from TrueNAS using .zfs_usage_info file
     local YELLOW="\e[33m"          # Matches C_YELLOW in .bash_profile
     local RED="\e[31m"             # Matches C_RED
     local GREEN="\e[32m"           # Matches C_GREEN
@@ -974,6 +1492,14 @@ df_color() {
     if [[ "$1" == "-debug" ]]; then
         DEBUG=1
         shift
+    fi
+
+    # Source TrueNAS usage helper functions if available
+    if [[ -f "$DIVTOOLS/scripts/util/truenas_usage.sh" ]]; then
+        source "$DIVTOOLS/scripts/util/truenas_usage.sh"
+        if [[ $DEBUG -eq 1 ]]; then
+            echo "[DEBUG] Loaded TrueNAS usage helper functions"
+        fi
     fi
 
     # Debug: Log start of df execution
@@ -1029,12 +1555,65 @@ df_color() {
     # Process each line (skip header)
     for ((i=1; i<${#lines[@]}; i++)); do
         local line="${lines[i]}"
-        # Extract usage percentage (5th column, removing % sign)
-        local usage
+        local filesystem mountpoint usage_file corrected_usage usage
+        
+        # Extract components from the line
+        filesystem=$(echo "$line" | awk '{print $1}')
+        mountpoint=$(echo "$line" | awk '{print $6}')
+        
         if [[ $DEBUG -eq 1 ]]; then
-            echo "[DEBUG] Processing line $i: $line"
+            echo "[DEBUG] Processing line $i: filesystem=$filesystem, mountpoint=$mountpoint"
         fi
-        usage=$(echo "$line" | awk '{print $5}' | tr -d '%')
+        
+        # Check if this is a remote mount and has usage info file
+        local corrected_line="$line"
+        if type -t is_remote_mount &>/dev/null && type -t get_truenas_usage &>/dev/null; then
+            if is_remote_mount "$mountpoint" 2>/dev/null; then
+                usage_file=$(get_usage_file_for_mount "$mountpoint" 2>/dev/null)
+                if [[ -n "$usage_file" ]]; then
+                    if [[ $DEBUG -eq 1 ]]; then
+                        echo "[DEBUG] Remote mount detected with usage file: $usage_file"
+                    fi
+                    
+                    # Get corrected usage from TrueNAS
+                    if corrected_usage=$(get_truenas_usage "$mountpoint" "$usage_file" "$DEBUG" 2>&1); then
+                        IFS='|' read -r tns_used tns_avail tns_total <<< "$corrected_usage"
+                        
+                        if [[ $DEBUG -eq 1 ]]; then
+                            echo "[DEBUG] TrueNAS corrected values: used=$tns_used, avail=$tns_avail, total=$tns_total"
+                        fi
+                        
+                        # Calculate corrected usage percentage
+                        local used_bytes avail_bytes total_bytes usage_pct
+                        used_bytes=$(numfmt --from=iec "$tns_used" 2>/dev/null) || used_bytes=0
+                        avail_bytes=$(numfmt --from=iec "$tns_avail" 2>/dev/null) || avail_bytes=0
+                        total_bytes=$((used_bytes + avail_bytes))
+                        
+                        if [[ $total_bytes -gt 0 ]]; then
+                            usage_pct=$((used_bytes * 100 / total_bytes))
+                        else
+                            usage_pct=0
+                        fi
+                        
+                        # Reconstruct the line with corrected values
+                        corrected_line=$(printf "%-48s %5s %5s %5s %4s%% %s" \
+                            "$filesystem" "$tns_total" "$tns_used" "$tns_avail" "$usage_pct" "$mountpoint")
+                        
+                        if [[ $DEBUG -eq 1 ]]; then
+                            echo "[DEBUG] Corrected line: $corrected_line"
+                        fi
+                        
+                        # Update usage for coloring
+                        usage=$usage_pct
+                    fi
+                fi
+            fi
+        fi
+        
+        # Extract usage percentage (5th column, removing % sign)
+        if [[ -z "$usage" ]]; then
+            usage=$(echo "$corrected_line" | awk '{print $5}' | tr -d '%')
+        fi
         
         # Debug: Log parsed usage
         if [[ $DEBUG -eq 1 ]]; then
@@ -1046,7 +1625,7 @@ df_color() {
             if [[ $DEBUG -eq 1 ]]; then
                 echo "[DEBUG] Skipping invalid usage for line $i"
             fi
-            echo "$line"
+            echo "$corrected_line"
             continue
         fi
 
@@ -1065,9 +1644,9 @@ df_color() {
 
         # Apply color if found, otherwise print without color
         if [[ -n "$color" ]]; then
-            echo -e "${color}${line}${RESET}"
+            echo -e "${color}${corrected_line}${RESET}"
         else
-            echo "$line"
+            echo "$corrected_line"
         fi
     done
 } # df_color
@@ -1076,10 +1655,82 @@ df_color() {
 
 export VENV_DIR="$DIVTOOLS/scripts/venvs"
 
+# Helper function to check if python venv module is available
+function _check_python_venv_installed() {
+    local auto_install="$1"  # -y or -n for automation
+    
+    # Check if python3 -m venv works
+    if python3 -m venv --help &>/dev/null; then
+        return 0  # venv is available
+    fi
+    
+    # Determine Python version
+    local py_version=$(python3 --version 2>&1 | grep -oP 'Python \K[0-9]+\.[0-9]+' | head -1)
+    local py_major=$(echo "$py_version" | cut -d. -f1)
+    local py_minor=$(echo "$py_version" | cut -d. -f2)
+    local venv_package="python${py_major}.${py_minor}-venv"
+    
+    echo "⚠️ [WARNING] python${py_major}.${py_minor} venv module not installed"
+    echo "📦 Required package: $venv_package"
+    echo "💡 Install command: sudo apt install $venv_package"
+    echo ""
+    
+    # Handle automation flags
+    if [[ "$auto_install" == "-y" ]]; then
+        echo "🚀 Auto-install enabled, installing $venv_package..."
+        sudo apt install -y "$venv_package"
+        return $?
+    elif [[ "$auto_install" == "-n" ]]; then
+        echo "❌ Auto-install disabled, exiting..."
+        return 1
+    fi
+    
+    # Interactive mode
+    read -r -p "❓ Would you like to install $venv_package now? (y/N) " response
+    if [[ "$response" =~ ^[Yy]$ ]]; then
+        echo "🚀 Installing $venv_package..."
+        sudo apt install -y "$venv_package"
+        if [[ $? -eq 0 ]]; then
+            echo "✅ $venv_package installed successfully!"
+            return 0
+        else
+            echo "❌ Failed to install $venv_package"
+            return 1
+        fi
+    else
+        echo "❌ Installation canceled."
+        return 1
+    fi
+}
+
 # Function to create a virtual environment
+# Usage: python_venv_create <venv_name> [-y|-n]
 function python_venv_create() {
-    local venv_name="${1:-venv}"  # Default to 'venv' if no name is given
+    local venv_name=""
+    local auto_flag=""
+    
+    # Parse arguments
+    for arg in "$@"; do
+        case "$arg" in
+            -y|-n)
+                auto_flag="$arg"
+                ;;
+            *)
+                if [[ -z "$venv_name" ]]; then
+                    venv_name="$arg"
+                fi
+                ;;
+        esac
+    done
+    
+    # Default to 'venv' if no name is given
+    venv_name="${venv_name:-venv}"
     local venv_path="$VENV_DIR/$venv_name"
+    
+    # Check if python venv module is available
+    if ! _check_python_venv_installed "$auto_flag"; then
+        return 1
+    fi
 
     if [[ -d "$venv_path" ]]; then
         echo "❌ Virtual environment '$venv_name' already exists at $venv_path"
@@ -1097,11 +1748,28 @@ function python_venv_create() {
     fi
 }
 
+# Function to delete a virtual environment
+# Usage: python_venv_delete <venv_name> [-y|-n]
 function python_venv_delete() {
-    local venv_name="$1"
+    local venv_name=""
+    local auto_flag=""
+    
+    # Parse arguments
+    for arg in "$@"; do
+        case "$arg" in
+            -y|-n)
+                auto_flag="$arg"
+                ;;
+            *)
+                if [[ -z "$venv_name" ]]; then
+                    venv_name="$arg"
+                fi
+                ;;
+        esac
+    done
     
     if [[ -z "$venv_name" ]]; then
-        echo "❌ Usage: pvdel <venv_name>"
+        echo "❌ Usage: python_venv_delete <venv_name> [-y|-n]"
         return 1
     fi
 
@@ -1112,6 +1780,17 @@ function python_venv_delete() {
         return 1
     fi
 
+    # Handle automation flags
+    if [[ "$auto_flag" == "-y" ]]; then
+        rm -rf "$venv_path"
+        echo "✅ Virtual environment '$venv_name' deleted."
+        return 0
+    elif [[ "$auto_flag" == "-n" ]]; then
+        echo "❌ Deletion canceled (auto-flag: -n)"
+        return 1
+    fi
+    
+    # Interactive mode
     echo "⚠️ Are you sure you want to delete the virtual environment '$venv_name'? (y/N)"
     read -r confirm
     if [[ "$confirm" =~ ^[Yy]$ ]]; then
@@ -1123,8 +1802,27 @@ function python_venv_delete() {
 }
 
 # Function to activate a virtual environment
+# Usage: python_venv_activate <venv_name> [-y|-n]
 function python_venv_activate() {
-    local venv_name="${1:-venv}"  # Default to 'venv' if no name is given
+    local venv_name=""
+    local auto_flag=""
+    
+    # Parse arguments
+    for arg in "$@"; do
+        case "$arg" in
+            -y|-n)
+                auto_flag="$arg"
+                ;;
+            *)
+                if [[ -z "$venv_name" ]]; then
+                    venv_name="$arg"
+                fi
+                ;;
+        esac
+    done
+    
+    # Default to 'venv' if no name is given
+    venv_name="${venv_name:-venv}"
     local venv_path="$VENV_DIR/$venv_name"
 
     if [[ ! -d "$venv_path" ]]; then
@@ -1137,7 +1835,30 @@ function python_venv_activate() {
 }
 
 # Function to list available virtual environments
+# Usage: python_venv_ls [-y|-n]
 function python_venv_ls() {
+    local auto_flag=""
+    
+    # Parse arguments
+    for arg in "$@"; do
+        case "$arg" in
+            -y|-n)
+                auto_flag="$arg"
+                ;;
+        esac
+    done
+    
+    # Check venv availability (but don't block execution)
+    if ! python3 -m venv --help &>/dev/null; then
+        local py_version=$(python3 --version 2>&1 | grep -oP 'Python \K[0-9]+\.[0-9]+' | head -1)
+        local py_major=$(echo "$py_version" | cut -d. -f1)
+        local py_minor=$(echo "$py_version" | cut -d. -f2)
+        local venv_package="python${py_major}.${py_minor}-venv"
+        echo "⚠️ [WARNING] python${py_major}.${py_minor} venv module not installed"
+        echo "💡 Install with: sudo apt install $venv_package"
+        echo ""
+    fi
+    
     if [[ ! -d "$VENV_DIR" ]]; then
         echo "❌ Virtual environment directory '$VENV_DIR' not found!"
         return 1
@@ -1165,7 +1886,7 @@ function python_venv_ls() {
 
 if [[ $- == *i* ]]; then
   # interactive shell
-	echo "$(date): Running $DIVTOOLS/dotfiles/.bash_profile"
+	log_msg "INFO" "Running $DIVTOOLS/dotfiles/.bash_profile"
 
 	# Existing ANSI Color Variables
 	C_BLACK='\[\e[30m\]'
@@ -1257,7 +1978,10 @@ if [[ $- == *i* ]]; then
 	  PATH=/opt/sbin:$PATH
   fi
 
-  add_to_path "/usr/local/samba/bin"
+  # Check for Samba with custom output
+  if ! add_to_path "/usr/local/samba/bin" "SAMBA" 1; then
+      log_msg "SAMBA" "Samba not installed on this system."
+  fi
 
   # Load any Local Env
   if [ -f ~/.bash_local_env ] ; then
@@ -1310,7 +2034,7 @@ if [[ $- == *i* ]]; then
 
     # Attempt Starship initialization if available
     if has_starship; then
-        echo "STARSHIP EXISTS"
+        log_msg "STAR" "Starship detected and initializing"
         # Run starship init in a subshell and capture output
         starship_output=$(starship init bash 2>/dev/null)
         if [ $? -eq 0 ] && [ -n "$starship_output" ]; then
@@ -1331,6 +2055,29 @@ if [[ $- == *i* ]]; then
 
     # TMUX Config
     tmux_config
+
+    # Load environment files BEFORE host setup checks
+    # This ensures DT_INCLUDE_* variables are available for host_setup_checks
+    # Last Updated: 11/11/2025 9:30:00 PM CDT
+    if declare -f load_env_files >/dev/null 2>&1; then
+        load_env_files  # Don't suppress output - we want exported variables to be available
+    fi
+
+    # Host Setup Checks - MUST BE LAST in interactive shell initialization
+    # Check if host setup tasks need to be completed and prompt user if configured
+    # Last Updated: 11/18/2025 10:45:00 PM CST
+    #
+    # Note: This will only run if DT_INCLUDE_* variables are set
+    # Set in .env files at user/host/site/shared level
+    HOST_SETUP_CHECKS_SCRIPT="${DIVTOOLS:-/opt/divtools}/scripts/util/host_setup_checks.sh"
+    if [ -f "$HOST_SETUP_CHECKS_SCRIPT" ]; then
+        # Source the script (it will prevent double-sourcing)
+        source "$HOST_SETUP_CHECKS_SCRIPT"
+        # Call the function to perform checks (only if function is defined)
+        if declare -f host_setup_checks >/dev/null 2>&1; then
+            host_setup_checks
+        fi
+    fi
 fi
 
 # Now that we are done building things, update the Profile Timestamp.
