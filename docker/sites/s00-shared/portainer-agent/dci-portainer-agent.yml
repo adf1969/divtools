@@ -1,0 +1,33 @@
+# Portainer Agent - Lightweight agent for remote Docker host management
+# Last Updated: 11/7/2025 12:00:00 PM CST
+# Environment Vars in Use
+# $TZ : The timezone we run in. Format American/Chicago
+# $DOCKERDIR : Usually the divtools/docker dir
+# $DOCKERDATADIR: Usually the /opt dir
+
+services:
+  # Portainer Agent - Remote Docker host agent
+  portainer-agent:
+    container_name: portainer-agent
+    image: portainer/agent:latest
+    restart: unless-stopped
+    profiles: ["core", "all"]
+    networks:
+      - t3_proxy
+    ports:
+      - "9001:9001/tcp" # Agent communication port
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro # Docker socket (read-only)
+      - /var/lib/docker/volumes:/var/lib/docker/volumes # Docker volumes access
+      - /:/host:ro # Host root filesystem (read-only) for system metrics
+    environment:
+      - TZ=$TZ
+      - AGENT_SECRET=${PORTAINER_AGENT_SECRET:-} # Optional: Shared secret for agent authentication
+      - LOG_LEVEL=INFO # Options: DEBUG, INFO, WARN, ERROR
+    security_opt:
+      - no-new-privileges:true
+
+networks:
+  t3_proxy:
+    name: t3_proxy
+    external: true

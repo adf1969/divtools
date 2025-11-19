@@ -1,0 +1,39 @@
+####
+#### SHARED Node Exporter Service Definition
+####
+# Environment Vars in Use
+# $TZ : The timezone we run in. Format American/Chicago
+# $DOCKERDIR : Usually the /opt/divtools/docker dir
+# $DOCKERDATADIR: Usually the /opt dir
+# $DOCKER_SHAREDDIR: $DOCKERDIR/sites/s00-shared - set by dcrun_f() in .bash_aliases
+# $DOCKER_SITEDIR: $DOCKERDIR/sites/$SITE_NAME - set by dcrun_f() in .bash_aliases
+# $DOCKER_HOSTDIR: $DOCKER_SITEDIR/$HOSTNAME - set by dcrun_f() in .bash_aliases
+# $HOSTNAME: set by dcrun_f() in .bash_aliases
+# $NODE_EXPORTER_PORT: defined in .env.s00-shared, usually 9100
+# Section Order: CIRPNVUE
+
+services:
+  node-exporter:
+    container_name: node-exporter
+    image: prom/node-exporter:latest
+    restart: unless-stopped
+    labels:
+      - "divtools.group=monitoring"
+    profiles: [shared]
+    ports:
+      - $NODE_EXPORTER_PORT:9100
+    #networks:
+    # env_file should NOT be necessary since I use dcrun_f() to load Env Vars
+    # env_file:
+    #   - $DOCKERDIR/.env # default .env file for all systems,
+    #   #- $DOCKERDIR/.env.host   # Host-level ENV vars, overrides .env
+    #   - $DOCKERDIR/secrets/env/.env.$HOSTNAME # This is INSTEAD of the soft-link since those can't work on SHARED /opt/divtools folders across systems
+    volumes:
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /:/rootfs:ro
+    command:
+      - "--path.procfs=/host/proc"
+      - "--path.rootfs=/rootfs"
+      - "--path.sysfs=/host/sys"
+      - "--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)"
