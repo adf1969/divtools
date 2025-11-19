@@ -1,0 +1,65 @@
+# Docker Compose for dthostmon
+# Last Updated: 11/14/2025 12:00:00 PM CDT
+
+version: "3.8"
+
+services:
+  dthostmon:
+    build: .
+    image: dthostmon:latest
+    container_name: dthostmon
+    restart: unless-stopped
+
+    # Run in combined mode (cron + API)
+    command: combined
+
+    # Environment variables (override with .env file)
+    env_file:
+      - .env
+
+    # Volume mounts
+    volumes:
+      # Configuration (read-write for future Web UI config persistence)
+      - ./config:/opt/dthostmon/config:rw
+      # Logs
+      - ./logs:/opt/dthostmon/logs:rw
+      # SSH keys
+      - ~/.ssh:/opt/dthostmon/.ssh:ro
+      # OpenCode auth credentials (read-only from host)
+      - ~/.local/share/opencode/auth.json:/root/.local/share/opencode/auth.json:ro
+
+    # Expose API port and OpenCode server port
+    ports:
+      - "${API_PORT:-8080}:8080"
+      - "4096:4096"
+
+    # Health check
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+    # Network
+    networks:
+      - dthostmon_network
+
+    # Resource limits
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 512M
+        reservations:
+          cpus: "0.25"
+          memory: 128M
+
+    # Labels for divtools docker_ps.sh
+    labels:
+      - "divtools.group=monitoring"
+      - "divtools.description=dthostmon system monitoring application"
+
+networks:
+  dthostmon_network:
+    driver: bridge

@@ -1,0 +1,173 @@
+global:
+  log_level: INFO
+  monitor_interval: ${MONITOR_INTERVAL}
+  max_concurrent_hosts: ${MAX_CONCURRENT_HOSTS}
+  retry_attempts: 3
+  retry_backoff:
+  - 1
+  - 2
+  - 4
+  report_frequency: daily
+  resource_thresholds:
+    health: 0-30
+    info: 31-60
+    warning: 61-89
+    critical: 90-100
+database:
+  host: ${DB_HOST}
+  port: ${DB_PORT}
+  name: ${DB_NAME}
+  user: ${DB_USER}
+  password: ${DB_PASSWORD}
+email:
+  smtp_host: ${SMTP_HOST}
+  smtp_port: ${SMTP_PORT}
+  smtp_auth_user: ${SMTP_AUTH_USER}
+  smtp_auth_password: ${SMTP_AUTH_PASSWORD}
+  from_address: ${SMTP_FROM}
+  reply_to_address: ${SMTP_REPLY_TO}
+  smtp_auth_required: false
+  alert_recipients:
+  - admin@example.com
+  report_recipients:
+  - reports@example.com
+  use_tls: true
+pushover:
+  enabled: ${PUSHOVER_ENABLED}
+  api_token: ${PUSHOVER_API_TOKEN}
+  user_key: ${PUSHOVER_USER_KEY}
+ai:
+  opencode:
+    host: localhost
+    port: 4096
+    auto_start: true
+    preferred_models:
+    - grok/grok-beta
+    - anthropic/claude-3-5-sonnet
+    - openai/gpt-4
+    - ollama/llama3.1
+ssh:
+  key_path: ${SSH_KEY_PATH}
+  timeout: ${SSH_TIMEOUT}
+  connect_timeout: 10
+  max_retries: 3
+api:
+  port: ${API_PORT}
+  api_key: ${API_KEY}
+  enable_docs: true
+sites:
+  s01-chicago:
+    report_frequency: weekly
+    resource_thresholds:
+      health: 0-25
+      info: 26-55
+      warning: 56-84
+      critical: 85-100
+  s02-austin: pass
+  s01-prod:
+    enabled: true
+    tags:
+    - production
+    - critical
+    resource_thresholds:
+      health: 0-25
+      warning: 70-89
+      critical: 90-100
+    report_frequency: daily
+    alert_recipients:
+    - ops@example.com
+    - admin@example.com
+  s02-dev:
+    enabled: true
+    tags: development
+    report_frequency: weekly
+hosts:
+- name: prod-db-01
+  hostname: 192.168.1.100
+  port: 22
+  user: monitoring
+  enabled: true
+  site: s01-chicago
+  tags:
+  - production
+  - database
+  - critical
+  - postgres
+  report_frequency: daily
+  logs:
+  - /var/log/syslog
+  - /var/log/auth.log
+  - /var/log/postgresql/*.log
+  - /home/*/.bash_history
+- name: prod-web-01
+  hostname: 192.168.1.101
+  port: 22
+  user: monitoring
+  enabled: true
+  site: s01-chicago
+  tags:
+  - production
+  - webserver
+  - nginx
+  logs:
+  - /var/log/syslog
+  - /var/log/auth.log
+  - /var/log/nginx/*.log
+- name: dev-app-01
+  hostname: 192.168.2.50
+  port: 22
+  user: monitoring
+  enabled: true
+  site: s02-austin
+  tags:
+  - development
+  - application
+  - docker
+  logs:
+  - /var/log/syslog
+  - /var/log/docker/*.log
+- name: standalone-test-01
+  hostname: 192.168.3.10
+  port: 22
+  user: monitoring
+  enabled: false
+  tags:
+  - testing
+  - standalone
+  logs:
+  - /var/log/syslog
+- monitoring:
+    check_disk: true
+    check_services:
+    - postgresql
+    - docker
+  log_paths:
+  - /var/log/syslog
+  - /var/log/postgresql/postgresql-14-main.log
+  enabled: true
+  hostname: 10.1.1.10
+  port: 22
+  user: monitoring
+  tags:
+  - database
+  - postgresql
+  check_docker: true
+  check_apt: true
+  name: host01
+- enabled: true
+  hostname: 10.1.1.20
+  port: 2222
+  user: sshuser
+  tags:
+  - webserver
+  - nginx
+  name: host02
+- enabled: false
+  hostname: 10.1.2.10
+  user: developer
+  name: devbox
+thresholds:
+  cpu_percent: 80
+  memory_percent: 85
+  disk_percent: 90
+  failed_login_attempts: 5

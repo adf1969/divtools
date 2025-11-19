@@ -1,0 +1,37 @@
+#!/bin/bash
+# dthostmon Project Aliases
+# Last Updated: November 15, 2025
+#
+# Source this file in your .bashrc or .bash_profile:
+#   source /path/to/dthostmon/.dthostmon-aliases
+#
+# Or use directly in your shell for a single session:
+#   source .dthostmon-aliases
+
+# Docker Compose Testing Aliases
+alias dttest='docker compose exec dthostmon pytest'
+alias dttestv='docker compose exec dthostmon pytest -v'
+alias dttestcov='docker compose exec dthostmon pytest --cov=src/dthostmon --cov-report=term-missing'
+alias dttestunit='docker compose exec dthostmon pytest tests/unit/ -v'
+alias dttestcov='docker compose exec dthostmon pytest --cov=src/dthostmon --cov-report=html'
+
+# Docker Container Interaction
+alias dtshell='docker compose exec dthostmon /bin/bash'
+alias dtlogs='docker compose logs -f dthostmon'
+alias dtbuild='docker compose build'
+alias dtup='docker compose up -d'
+alias dtdown='docker compose down'
+alias dtrestart='docker compose restart'
+
+# Project Navigation
+alias dtcd='cd /home/divix/divtools/projects/dthostmon'
+
+# Development Helpers
+alias dtrequire='pip install -r requirements-dev.txt'
+alias dtformat='docker compose exec dthostmon black src/dthostmon tests/'
+alias dtlint='docker compose exec dthostmon flake8 src/dthostmon'
+
+# DIVTOOLS Python venv aliases (if available)
+# Create: pvcr dthostmon
+# List: pvls
+# Activate: pvact dthostmon

@@ -1,0 +1,20 @@
+# Development and Testing Dependencies
+# Last Updated: 11/14/2025 12:00:00 PM CDT
+
+-r requirements.txt
+
+# Testing Framework
+pytest>=7.4.3
+pytest-cov>=4.1.0
+pytest-mock>=3.12.0
+pytest-asyncio>=0.21.1
+
+# Code Quality
+pylint>=3.0.3
+flake8>=6.1.0
+black>=23.11.0
+mypy>=1.7.1
+
+# Test Utilities
+faker>=20.1.0
+freezegun>=1.4.0

@@ -1,0 +1,159 @@
+# MCP Host Monitoring Configuration
+# 
+# This file configures which hosts to monitor and how.
+# See: /home/divix/divtools/scripts/util/MCP_ARCHITECTURE_GUIDE.md
+#
+
+# MCP Server configurations
+# These define how to connect to Model Context Protocol servers
+mcp_servers:
+  ssh:
+    # SSH MCP server - executes commands on remote hosts
+    url: "http://localhost:3000/ssh"
+    transport: "stdio"  # or "sse" for remote
+    auth_type: "key"
+    
+  config:
+    # Configuration management MCP
+    url: "http://localhost:3001/config"
+    transport: "stdio"
+  
+  slack:
+    # Slack notification MCP
+    url: "http://localhost:3002/slack"
+    transport: "sse"
+    # Token stored in DIVTOOLS_SLACK_TOKEN environment variable
+
+# Hosts to monitor
+hosts:
+  # Example production database server
+  production-db:
+    ip: 192.168.1.10
+    ssh_user: admin
+    ssh_key: ~/.ssh/prod_db.key
+    services:
+      - postgresql
+      - backup-service
+    critical: true
+    check_interval: "6h"
+
+  # Example web server
+  web-server:
+    ip: 192.168.1.20
+    ssh_user: divix
+    ssh_key: ~/.ssh/web.key
+    services:
+      - docker
+      - nginx
+    critical: false
+    check_interval: "daily"
+
+  # Example application server
+  app-server:
+    ip: 192.168.1.30
+    ssh_user: divix
+    ssh_key: ~/.ssh/app.key
+    services:
+      - docker
+      - application
+    critical: true
+    check_interval: "12h"
+
+# Monitoring configuration
+monitoring:
+  # How often to check (if not specified per-host)
+  default_check_interval: "daily"
+  
+  # Concurrent checks to run
+  concurrent_checks: 3
+  
+  # Timeout per host analysis
+  analysis_timeout_seconds: 60
+
+# Audit log configuration
+audit_log_path: "/var/log/divtools/monitor/audit/mcp_monitor.log"
+audit_retention_days: 90
+
+# LLM Configuration
+llm:
+  provider: "anthropic"
+  model: "claude-3-5-sonnet-20241022"
+  temperature: 0.3  # Lower = more focused, 0.3 is good for analysis
+  max_tokens: 1024
+
+# Notification configuration
+notifications:
+  # Slack notifications
+  slack:
+    enabled: true
+    # Token in DIVTOOLS_SLACK_TOKEN environment variable
+    webhook_url: "${DIVTOOLS_SLACK_WEBHOOK_URL}"
+    # Only notify on these severity levels
+    on_severity:
+      - high
+      - critical
+    # Thread settings
+    thread: true
+  
+  # Email notifications
+  email:
+    enabled: false
+    # SMTP configuration in environment variables
+    smtp_server: "${DIVTOOLS_SMTP_SERVER}"
+    from_address: "${DIVTOOLS_EMAIL_FROM}"
+    to_addresses:
+      - admin@example.com
+    # Only notify on these severity levels
+    on_severity:
+      - critical
+
+# Analysis configuration
+analysis:
+  # What to check for each host
+  checks:
+    - bash_history      # Command history from users
+    - apt_packages      # Package installations/removals
+    - docker_configs    # Docker configuration integrity
+    - system_errors     # Critical system errors
+    - security_events   # Failed logins, sudo usage
+    - disk_space        # Disk usage warnings
+    - service_status    # Failed systemd services
+  
+  # Thresholds for alerts
+  thresholds:
+    disk_usage_percent: 85
+    memory_usage_percent: 80
+    cpu_load: 4.0
+    failed_login_attempts: 5
+
+# Security configuration
+security:
+  # Credential storage method
+  credential_method: "environment"  # or "encrypted" or "keychain"
+  
+  # Required credentials (will check at startup)
+  required_credentials:
+    - ANTHROPIC_API_KEY
+    - SSH_PRIVATE_KEY_PATH
+
+# Logging configuration
+logging:
+  level: "INFO"  # DEBUG, INFO, WARNING, ERROR
+  file: "/var/log/divtools/monitor/mcp_monitor.log"
+  format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+
+# Advanced configuration
+advanced:
+  # Enable debug mode (verbose output)
+  debug: false
+  
+  # Parallel processing of hosts
+  parallel: true
+  
+  # Store raw data for later analysis
+  store_raw_data: true
+  raw_data_path: "/var/log/divtools/monitor/raw_data"
+  
+  # Use cache to avoid repeated analyses
+  use_cache: true
+  cache_ttl_minutes: 60

@@ -1,0 +1,175 @@
+# dthostmon Configuration File - Example with Report Features
+# Last Updated: 11/15/2025 3:50:00 PM CST
+
+# Global Settings
+global:
+  log_level: INFO
+  monitor_interval: ${MONITOR_INTERVAL}
+  max_concurrent_hosts: ${MAX_CONCURRENT_HOSTS}
+  retry_attempts: 3
+  retry_backoff: [1, 2, 4] # seconds
+  
+  # Global report frequency (can be overridden by site or host)
+  # Options: hourly, daily, weekly
+  report_frequency: daily
+  
+  # Global resource thresholds for report status indicators
+  resource_thresholds:
+    health: "0-30"      # Green ✅ (0-30% usage)
+    info: "31-60"       # Blue ℹ️ (31-60% usage)
+    warning: "61-89"    # Yellow ⚠️ (61-89% usage)
+    critical: "90-100"  # Red 🚨 (90-100% usage)
+
+# Database Configuration
+database:
+  host: ${DB_HOST}
+  port: ${DB_PORT}
+  name: ${DB_NAME}
+  user: ${DB_USER}
+  password: ${DB_PASSWORD}
+
+# Email Configuration
+email:
+  smtp_host: ${SMTP_HOST}
+  smtp_port: ${SMTP_PORT}
+  smtp_auth_user: ${SMTP_AUTH_USER}
+  smtp_auth_password: ${SMTP_AUTH_PASSWORD}
+  from_address: ${SMTP_FROM}
+  reply_to_address: ${SMTP_REPLY_TO}
+  smtp_auth_required: false # Set to false for SMTP servers that don't require authentication (e.g., local mailserver)
+  alert_recipients:
+    - admin@example.com
+  report_recipients:  # Recipients for scheduled reports (defaults to alert_recipients if not specified)
+    - reports@example.com
+  use_tls: true
+
+# Pushover Configuration (Optional - for mobile push notifications)
+pushover:
+  enabled: ${PUSHOVER_ENABLED}
+  api_token: ${PUSHOVER_API_TOKEN}
+  user_key: ${PUSHOVER_USER_KEY}
+
+# AI Configuration
+ai:
+  opencode:
+    host: localhost
+    port: 4096
+    auto_start: true
+    preferred_models:
+      - grok/grok-beta
+      - anthropic/claude-3-5-sonnet
+      - openai/gpt-4
+      - ollama/llama3.1
+
+# SSH Configuration
+ssh:
+  key_path: ${SSH_KEY_PATH}
+  timeout: ${SSH_TIMEOUT}
+  connect_timeout: 10
+  max_retries: 3
+
+# API Configuration
+api:
+  port: ${API_PORT}
+  api_key: ${API_KEY}
+  enable_docs: true
+
+# Site-Specific Configuration (Optional)
+# Sites allow grouping hosts and overriding global settings
+sites:
+  s01-chicago:
+    # Override global report frequency for this site
+    report_frequency: weekly
+    
+    # Override global resource thresholds for this site
+    # (Stricter thresholds for production site)
+    resource_thresholds:
+      health: "0-25"
+      info: "26-55"
+      warning: "56-84"
+      critical: "85-100"
+  
+  s02-austin:
+    # This site uses global settings (no overrides)
+    pass
+
+# Monitored Hosts
+hosts:
+  # Production database server in Chicago
+  - name: prod-db-01
+    hostname: 192.168.1.100
+    port: 22
+    user: monitoring
+    enabled: true
+    
+    # Site identifier for grouping and site reports
+    site: s01-chicago
+    
+    # Tags for filtering and categorization
+    tags:
+      - production
+      - database
+      - critical
+      - postgres
+    
+    # Host-specific report frequency (overrides site and global)
+    report_frequency: daily
+    
+    logs:
+      - /var/log/syslog
+      - /var/log/auth.log
+      - /var/log/postgresql/*.log
+      - /home/*/.bash_history
+
+  # Production web server in Chicago
+  - name: prod-web-01
+    hostname: 192.168.1.101
+    port: 22
+    user: monitoring
+    enabled: true
+    site: s01-chicago
+    tags:
+      - production
+      - webserver
+      - nginx
+    # Uses site's weekly report frequency (no host override)
+    logs:
+      - /var/log/syslog
+      - /var/log/auth.log
+      - /var/log/nginx/*.log
+
+  # Development server in Austin
+  - name: dev-app-01
+    hostname: 192.168.2.50
+    port: 22
+    user: monitoring
+    enabled: true
+    site: s02-austin
+    tags:
+      - development
+      - application
+      - docker
+    # Uses global daily report frequency
+    logs:
+      - /var/log/syslog
+      - /var/log/docker/*.log
+
+  # Host without site (uses global settings)
+  - name: standalone-test-01
+    hostname: 192.168.3.10
+    port: 22
+    user: monitoring
+    enabled: false  # Disabled for testing
+    # No site specified - uses global settings
+    tags:
+      - testing
+      - standalone
+    logs:
+      - /var/log/syslog
+
+# Alert Thresholds (for immediate alerts, not reports)
+thresholds:
+  cpu_percent: 80
+  memory_percent: 85
+  disk_percent: 90
+  failed_login_attempts: 5

@@ -1,0 +1,35 @@
+[MASTER]
+# Last Updated: 11/14/2025
+
+# Files or directories to be skipped
+ignore=tests,venv,.venv,build,dist
+
+# Use multiple processes for speed
+jobs=4
+
+[MESSAGES CONTROL]
+# Disable specific warnings
+disable=
+    C0111,  # missing-docstring
+    C0103,  # invalid-name
+    R0903,  # too-few-public-methods
+    R0913,  # too-many-arguments
+    W0511,  # fixme
+
+[FORMAT]
+# Maximum line length
+max-line-length=127
+
+# String used for indentation
+indent-string='    '
+
+[BASIC]
+# Good variable names
+good-names=i,j,k,ex,Run,_,id,db,op
+
+[DESIGN]
+# Maximum number of arguments
+max-args=10
+
+# Maximum number of attributes
+max-attributes=15
