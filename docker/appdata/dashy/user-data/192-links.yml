@@ -1,27 +1,20 @@
+---
+# Page meta info, like heading, footer text and nav links
 pageInfo:
-  title: Private-10dot Links
-  navLinks: []
+  title: Private-192dot Links
+  description: Links use old 192.168.8.0 network IPs
+  navLinks:
+    - title: Private-10dot-Links
+      path: "/"
+
+# Optional app settings and configuration
+appConfig:
+  theme: nord
+
+# Main content - An array of sections, each containing an array of items
 sections:
   - name: Media & Entertainment
-    items:
-      - title: Plex
-        description: Plex Media Server TNFS1
-        icon: plex.png
-        url: http://10.1.1.75:32400
-        target: newtab
-        statusCheck: true
-        statusCheckUrl: http://10.1.1.75:32400/identity
-        statusCheckAllowInsecure: true
-        id: 0_1605_plex
-      - title: Immich
-        description: IMMICH Photo Server TNFS1
-        icon: immich.png
-        url: http://10.1.1.75:2283/
-        target: newtab
-        statusCheck: true
-        statusCheckAllowInsecure: true
-        id: 0_1605_immich
-
+    items: []
     displayData:
       sortBy: default
       rows: 1
@@ -35,36 +28,35 @@ sections:
       - title: opnSense Firewall
         description: opnSense Firewall/Router (Protectli Vault)
         icon: opnsense.png
-        url: https://10.1.0.1/
+        url: http://10.1.0.1/
         target: newtab
         statusCheck: true
-        statusCheckAllowInsecure: true
-        statusCheckUrl: https://10.1.0.1/
+        statusCheckUrl: http://192.168.8.2/
         id: 0_1064_opnsense
       - title: OMADA SDN (monitor)
         description: OMADA NW Management SW Controller
         icon: omada.png
-        url: https://10.1.1.104:8043/
+        url: https://192.168.9.104:8043/
         target: newtab
         statusCheck: true
         statusCheckAllowInsecure: true
-        statusCheckUrl: https://10.1.1.104:8043/
+        statusCheckUrl: https://192.168.9.104:8043/
         id: 0_1064_pihole
       - title: BonusRm TEG-284WS
         description: TrendNet TEG-284WS 28-Port Switch (Bonus Room)
         icon: freebox-revolution.png
-        url: http://10.1.0.40
+        url: http://192.168.8.5
         target: newtab
         statusCheck: true
-        statusCheckUrl: http://10.1.0.40
+        statusCheckUrl: http://192.168.8.5
         id: 0_1064_teg284ws_br
       - title: Shop TEG-284WS
         description: TrendNet TEG-284WS 28-Port Switch (Shop)
         icon: freebox-revolution.png
-        url: http://10.1.0.41
+        url: http://192.168.8.6
         target: newtab
         statusCheck: true
-        statusCheckUrl: http://10.1.0.41
+        statusCheckUrl: http://192.168.8.6
         id: 0_1064_teg284ws_shop
       - title: Pi-Hole
         description: DNS Ad-Blocking
@@ -72,12 +64,12 @@ sections:
         url: http://pihole/admin/login.php
         target: newtab
         statusCheck: true
-        statusCheckUrl: http://10.1.1.111/admin/login.php
+        statusCheckUrl: http://192.168.9.111/admin/login.php
         id: 0_1064_pihole
       - title: Traefik
         description: Traefik Reverse Proxy
         icon: traefik.png
-        url: http://10.1.1.103:8085
+        url: http://192.168.9.103:8085
         target: newtab
         statusCheck: true
         id: 1_1064_traefik
@@ -99,7 +91,7 @@ sections:
       - title: Uptime Kuma
         description: Uptime Kuma [monitor]
         icon: uptime-kuma.png
-        url: http://10.1.1.104:3001/
+        url: http://192.168.9.104:3001/
         target: newtab
         statusCheck: true
         statusCheckAllowInsecure: true
@@ -107,7 +99,7 @@ sections:
       - title: Grafana
         description: Grafana [monitor]
         icon: grafana.png
-        url: http://10.1.1.104:3000/
+        url: http://192.168.9.104:3000/
         target: newtab
         statusCheck: true
         statusCheckAllowInsecure: true
@@ -115,7 +107,7 @@ sections:
       - title: InfluxDB
         description: InfluxDB [monitor]
         icon: influxdb.png
-        url: http://10.1.1.104:8086/
+        url: http://192.168.9.104:8086/
         target: newtab
         statusCheck: true
         statusCheckAllowInsecure: true
@@ -123,7 +115,7 @@ sections:
       - title: Prometheus
         description: Prometheus [monitor]
         icon: prometheus.png
-        url: http://10.1.1.104:9091/
+        url: http://192.168.9.104:9091/
         target: newtab
         statusCheck: true
         statusCheckAllowInsecure: true
@@ -131,7 +123,7 @@ sections:
       - title: NetBox
         description: IPAM Network Config Mgmt [monitor]
         icon: netbox.png
-        url: http://10.1.1.104:8080/
+        url: http://192.168.9.104:8080/
         target: newtab
         statusCheck: true
         id: 3_1840_netbox
@@ -147,7 +139,7 @@ sections:
       - title: TNHL01
         description: Proxmox Server TNHL01
         icon: proxmox.png
-        url: https://10.1.1.100:8006/
+        url: https://192.168.9.100:8006/
         target: newtab
         statusCheck: true
         statusCheckAllowInsecure: true
@@ -155,7 +147,7 @@ sections:
       - title: TNHL02
         description: Proxmox Server TNHL01
         icon: proxmox.png
-        url: https://10.1.1.150:8006/
+        url: https://192.168.9.150:8006/
         target: newtab
         statusCheck: true
         statusCheckAllowInsecure: true
@@ -163,7 +155,7 @@ sections:
       - title: TNHL03
         description: Proxmox Server TNHL03
         icon: proxmox.png
-        url: https://10.1.1.160:8006/
+        url: https://192.168.9.160:8006/
         target: newtab
         statusCheck: true
         statusCheckAllowInsecure: true
@@ -171,46 +163,29 @@ sections:
       - title: TNHL04
         description: Proxmox Server TNHL04
         icon: proxmox.png
-        url: https://10.1.1.170:8006/
+        url: https://192.168.9.170:8006/
         target: newtab
         statusCheck: true
         statusCheckAllowInsecure: true
         id: 0_1605_tnhl04
-      - title: TNFS1
-        description: Proxmox Server TNFS1 / TrueNAS Scale
-        icon: proxmox.png
-        url: https://10.1.1.70:8006/
-        target: newtab
-        statusCheck: true
-        statusCheckAllowInsecure: true
-        id: 0_1605_tnfs1
-      - title: TNFS2
-        description: Proxmox Server TNFS2 / TrueNAS Scale
-        icon: proxmox.png
-        url: https://10.1.1.90:8006/
-        target: newtab
-        statusCheck: true
-        statusCheckAllowInsecure: true
-        id: 0_1605_tnfs2
       - title: QNAP:FHMTN1
         description: QNAP WebUI FHMTN1
         icon: qnap-alt.png
-        url: http://10.1.1.85:8080/
+        url: http://192.168.9.85:8080/
         target: newtab
         statusCheck: true
         id: 2_1605_qnapfhmtn
-      - title: NAS1-1
-        description: NAS1-1, TrueNAS Scale in VM on TNFS1 (U:truenas_admin)
-        icon: truenas-scale.png
-        url: https://10.1.1.71/
+      - title: QNAP:FHM4x8
+        description: QNAP WebUI FHM4x8
+        icon: qnap-alt.png
+        url: http://192.168.9.87:8080/
         target: newtab
         statusCheck: true
-        statusCheckAllowInsecure: true
-        id: 0_1605_truenasscale
+        id: 3_1605_qnapfhmx
       - title: ZDC1
         description: Zentyal NW Domain Controller [TNHL01]
         icon: windows-admin-center.jpg
-        url: https://10.1.1.201:8443/
+        url: https://192.168.9.201:8443/
         target: newtab
         statusCheck: true
         statusCheckAllowInsecure: true
@@ -218,7 +193,7 @@ sections:
       - title: PBS (tnhl01)
         description: Proxmox Backup Server [TNHL01]
         icon: proxmox-light.png
-        url: https://10.1.1.101:8007/
+        url: https://192.168.9.101:8007/
         target: newtab
         statusCheck: true
         statusCheckAllowInsecure: true
@@ -235,53 +210,39 @@ sections:
       - title: HomeAssistant
         description: Home Assistant (tnhl02|haos)
         icon: home-assistant.png
-        url: http://10.1.1.215:8123/
+        url: http://192.168.9.215:8123/
         target: newtab
         statusCheck: true
         id: 0_1605_haos
-      # - title: Frigate (217)
-      #   description: Frigate VM (tnhl02)
-      #   icon: frigate.png
-      #   url: http://10.1.1.217:5000/
-      #   target: newtab
-      #   statusCheck: true
-      #   id: 0_1605_frigate
-      # - title: Frigate:go2rtc (217)
-      #   description: Frigate:go2rtc VM (tnhl02)
-      #   icon: go2rtc.png
-      #   url: http://10.1.1.217:1984/
-      #   target: newtab
-      #   statusCheck: true
-      #   id: 0_1605_frigate_go2rtc
-      - title: Frigate (75)
-        description: Frigate VM (TNFS1)
+      - title: Frigate (217)
+        description: Frigate VM (tnhl02)
         icon: frigate.png
-        url: http://10.1.1.75:5000/
+        url: http://192.168.9.217:5000/
         target: newtab
         statusCheck: true
         id: 0_1605_frigate
-      - title: Frigate:go2rtc (75)
-        description: Frigate:go2rtc VM (TNFS1)
+      - title: Frigate:go2rtc (217)
+        description: Frigate:go2rtc VM (tnhl02)
         icon: go2rtc.png
-        url: http://10.1.1.75:1984/
+        url: http://192.168.9.217:1984/
         target: newtab
         statusCheck: true
         id: 0_1605_frigate_go2rtc
       - title: LR SLZB-06-01
         description: SLZB-06 Zigbee Coord (Living Room)
         icon: zigbee2mqtt.png
-        url: http://10.1.0.90
+        url: http://192.168.8.21
         target: newtab
         statusCheck: true
-        statusCheckUrl: http://10.1.0.90
+        statusCheckUrl: http://192.168.8.21
         id: 0_1064_slzb06_lr
       - title: Shop SLZB-06-02
         description: SLZB-06 Zigbee Coord (Shop)
         icon: zigbee2mqtt.png
-        url: http://10.1.0.91
+        url: http://192.168.8.22
         target: newtab
         statusCheck: true
-        statusCheckUrl: http://10.1.0.91
+        statusCheckUrl: http://192.168.8.22
         id: 0_1064_slzb06_shop
 
   - name: Productivity
@@ -292,32 +253,7 @@ sections:
       cols: 1
       collapsed: false
       hideForGuests: false
-    items:
-      - title: n8n
-        description: n8n Workflow Automation
-        icon: n8n.png
-        url: https://n8n.l1.divix.biz
-        target: newtab
-        statusCheck: true
-        statusCheckUrl: https://n8n.l1.divix.biz/healthz
-        id: 0_930_n8n
-      - title: OpenWebUI
-        description: OpenWebUI AI Chatbot
-        icon: open-webui-light.png
-        url: http://openwebui.l1.divix.biz
-        target: newtab
-        statusCheck: true
-        statusCheckUrl: "http://10.1.1.75:3000"
-        id: 0_930_openwebui
-      - title: PGAdmin
-        description: PGAdmin PostgreSQL Management
-        icon: pgadmin.png
-        url: http://10.1.1.74:5050/browser/
-        target: newtab
-        statusCheck: true
-        statusCheckUrl: "http://10.1.1.74:5050/misc/ping"
-        id: 0_930_pgadmin
-
+    items: []
   - name: Dashy Docs
     icon: far fa-rocket
     displayData:
@@ -387,96 +323,134 @@ sections:
       hideForGuests: false
     items:
       - title: FHMTN1
-        description: FHMTN1 Syncthing Instance
         icon: syncthing.png
-        url: https://10.1.1.85:8384/
+        url: https://192.168.9.85:8384/
         target: newtab
         statusCheck: true
         statusCheckAllowInsecure: true
         id: 0_951_fhmtn
-      - title: TNHL01
-        description: TNHL01 Syncthing Instance
+      - title: FHM4x8
         icon: syncthing.png
-        url: https://10.1.1.100:8384/
+        url: https://192.168.9.87:8384/
+        target: newtab
+        statusCheck: true
+        statusCheckAllowInsecure: true
+        id: 1_951_fhmx
+      - title: TNHL01
+        icon: syncthing.png
+        url: https://192.168.9.100:8384/
         target: newtab
         statusCheck: true
         statusCheckAllowInsecure: true
         id: 2_951_tnhl01
       - title: TNHL02
-        description: TNHL02 Syncthing Instance
         icon: syncthing.png
-        url: https://10.1.1.150:8384/
+        url: https://192.168.9.150:8384/
         target: newtab
         statusCheck: true
         statusCheckAllowInsecure: true
         id: 2_951_tnhl02
       - title: TNHL03
-        description: TNHL03 Syncthing Instance
         icon: syncthing.png
-        url: https://10.1.1.160:8384/
+        url: https://192.168.9.160:8384/
         target: newtab
         statusCheck: true
         statusCheckAllowInsecure: true
         id: 2_951_tnhl03
-      - title: TNFS1
-        description: TNFS1 Syncthing Instance
+      - title: traefik
         icon: syncthing.png
-        url: https://10.1.1.70:8384/
+        url: https://192.168.9.103:8384/
         target: newtab
         statusCheck: true
         statusCheckAllowInsecure: true
-        id: 2_951_tnfs1
-      - title: TNFS2
-        description: TNFS2 Syncthing Instance
+        id: 3_951_traefik
+      - title: monitor
         icon: syncthing.png
-        url: https://10.1.1.90:8384/
+        url: https://192.168.9.104:8384/
         target: newtab
         statusCheck: true
         statusCheckAllowInsecure: true
-        id: 2_951_tnfs2
+        id: 4_951_monitor
       - title: zdc1
-        description: zdc1 Syncthing Instance
         icon: syncthing.png
-        url: https://10.1.1.201:8384/
+        url: https://192.168.9.201:8384/
         target: newtab
         statusCheck: true
         statusCheckAllowInsecure: true
         id: 5_951_zdc
       - title: frigate
-        description: frigate Syncthing Instance
         icon: syncthing.png
-        url: https://10.1.1.217:8384/
+        url: https://192.168.9.217:8384/
         target: newtab
         statusCheck: true
         statusCheckAllowInsecure: true
         id: 7_951_frigate
       - title: pihole
-
         icon: syncthing.png
-        url: https://10.1.1.111:8384/
+        url: https://192.168.9.111:8384/
         target: newtab
         statusCheck: true
         statusCheckAllowInsecure: true
         id: 6_951_pihole
-      - title: FIELDS10
-        description: FIELDS10 Syncthing Instance
+      - title: Ubuntu-22v2
         icon: syncthing.png
-        url: https://10.1.3.10:8384/
+        url: https://192.168.9.141:8384/
         target: newtab
         statusCheck: true
         statusCheckAllowInsecure: true
-        id: 7_951_fields10
-appConfig:
-  cssThemes: ["nord-frost-tl"]
-  theme: nord-frost
-  layout: auto
-  iconSize: medium
-pages:
-  - name: Traefik Links
+        id: 7_951_ubuntuv
+
+  - name: CVG/Test
+    icon: grocy.png
     displayData:
+      sortBy: default
+      rows: 1
+      cols: 1
+      collapsed: false
       hideForGuests: false
-    path: traefik-links.yml
-  - name: Private-192-Links
-    displayData:
-      hideForGuests: false
-    path: 192-links.yml
+    items:
+      - title: CVGPMX1
+        description: Proxmox Server CVGPMX1
+        icon: proxmox.png
+        url: https://192.168.9.231:8006/
+        target: newtab
+        statusCheck: true
+        statusCheckAllowInsecure: true
+        id: 0_1605_cvgpmx1
+      - title: CVGPMX1 (Sec)
+        description: Proxmox Server CVGPMX1 (PubDomain/Sec)
+        icon: proxmox.png
+        url: https://cvgpmx1.tnlocal.divix.biz:8006/
+        target: newtab
+        statusCheck: true
+        statusCheckAllowInsecure: true
+        id: 0_1605_cvgpmx1sec
+      - title: HAOS-CVGPMX1 (233)
+        description: CVGPMX1-Home Assistant (cvgpmx1|haos)
+        icon: home-assistant.png
+        url: http://192.168.9.233:8123/
+        target: newtab
+        statusCheck: true
+        id: 0_1605_cvghaos
+      - title: Frigate-CVGPMX1 (234)
+        description: CVGPMX1-Frigate VM (cvgpmx1)
+        icon: frigate.png
+        url: http://192.168.9.234:5000/
+        target: newtab
+        statusCheck: true
+        id: 0_1605_cvgfrigate
+      - title: CVGPMX1-go2rtc-Frigate (233)
+        description: CVGPMX1-Frigate:go2rtc VM (cvgpmx1)
+        icon: go2rtc.png
+        url: http://192.168.9.234:1984/
+        target: newtab
+        statusCheck: true
+        id: 0_1605_cvgfrigate_go2rtc
+      - title: SyncThing-CVGPMX1
+        description: CVGPMX1-SyncThing (cvgpmx1)
+        icon: syncthing.png
+        url: https://192.168.9.231:8384/
+        target: newtab
+        statusCheck: true
+        statusCheckAllowInsecure: true
+        id: 7_951_cvgpmx1st
