@@ -1,0 +1,41 @@
+http:
+  routers:
+    moodle-service-rtr:
+      rule: 'Host(`moodle.{{env "DOMAINNAME_2"}}`) || Host(`moodle.w{{env "SITE_NUM"}}.{{env "DOMAINNAME_1"}}`)'
+      entryPoints:
+        - "websecure"
+      middlewares:
+        - moodle-https-headers
+        - moodle-security-headers
+      service: "moodle-service"
+      tls:
+        certResolver: "dns-cloudflare"
+        options: tls-opts@file
+  services:
+    moodle-service:
+      loadBalancer:
+        passHostHeader: true
+        serversTransport: "moodle"
+        servers:
+          - url: "http://10.1.1.74:9090"
+  serversTransports:
+    moodle:
+      insecureSkipVerify: true
+
+  middlewares:
+    moodle-security-headers:
+      headers:
+        browserXssFilter: true
+        contentTypeNosniff: true
+        forceSTSHeader: true
+        stsIncludeSubdomains: true
+        stsPreload: true
+        stsSeconds: 315360000
+        customRequestHeaders:
+          X-Forwarded-Proto: "https"
+          X-Forwarded-Ssl: "on"
+    moodle-https-headers:
+      headers:
+        customRequestHeaders:
+          X-Forwarded-Proto: "https"
+          X-Forwarded-Ssl: "on"

@@ -1,0 +1,23 @@
+http:
+  routers:
+    plane-service-rtr:
+      rule: 'Host(`plane.{{env "DOMAINNAME_2"}}`) || Host(`plane.w{{env "SITE_NUM"}}.{{env "DOMAINNAME_1"}}`)'
+      entryPoints:
+        - "websecure"
+      middlewares:
+        - chain-no-auth
+      service: "plane-service"
+      tls:
+        certResolver: "dns-cloudflare"
+        options: tls-opts@file
+  services:
+    plane-service:
+      loadBalancer:
+        passHostHeader: true
+        serversTransport: "plane"
+        servers:
+          # Use the plane HTTP port since I'm securing it with Traefik
+          - url: "http://10.1.1.74:8085"
+  serversTransports:
+    plane:
+      insecureSkipVerify: true

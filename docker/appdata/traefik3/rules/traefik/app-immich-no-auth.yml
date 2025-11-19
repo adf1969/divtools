@@ -1,0 +1,24 @@
+http:
+  routers:
+    immich-service-rtr:
+      rule: 'Host(`immich.{{env "DOMAINNAME_2"}}`) || Host(`immich.w{{env "SITE_NUM"}}.{{env "DOMAINNAME_1"}}`)'
+      entryPoints:
+        - "websecure"
+      # MiddleWare breaks immich, fix later.
+      #middlewares:
+      #  - chain-no-auth
+      service: "immich-service"
+      tls:
+        certResolver: "dns-cloudflare"
+        options: tls-opts@file
+  services:
+    immich-service:
+      loadBalancer:
+        passHostHeader: true
+        serversTransport: "immich"
+        servers:
+          # Immich URL
+          - url: "http://10.1.1.75:2283"
+  serversTransports:
+    immich:
+      insecureSkipVerify: true

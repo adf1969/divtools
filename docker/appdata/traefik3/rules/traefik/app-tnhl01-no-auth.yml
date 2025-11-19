@@ -18,7 +18,7 @@ http:
         serversTransport: "tnhl01"
         servers:
           # Use the Proxmox SECURE port since that is what Proxmox REQUIRES
-          - url: "https://192.168.9.100:8006"
+          - url: "https://10.1.1.100:8006"
   serversTransports:
     tnhl01:
       insecureSkipVerify: true

@@ -1,0 +1,23 @@
+http:
+  routers:
+    openwebui-service-rtr:
+      rule: 'Host(`openwebui.{{env "DOMAINNAME_2"}}`) || Host(`openwebui.w{{env "SITE_NUM"}}.{{env "DOMAINNAME_1"}}`)'
+      entryPoints:
+        - "web"
+        - "websecure"
+      #middlewares:
+      #  - chain-no-auth
+      service: "openwebui-service"
+      tls:
+        certResolver: "dns-cloudflare"
+        options: tls-opts@file
+  services:
+    openwebui-service:
+      loadBalancer:
+        passHostHeader: true
+        serversTransport: "openwebui"
+        servers:
+          - url: "http://10.1.1.75:3000"
+  serversTransports:
+    openwebui:
+      insecureSkipVerify: true

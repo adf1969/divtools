@@ -1,0 +1,50 @@
+http:
+  routers:
+    n8n-service-rtr:
+      rule: 'Host(`n8n.{{env "DOMAINNAME_2"}}`) || Host(`n8n.w{{env "SITE_NUM"}}.{{env "DOMAINNAME_1"}}`)'
+      entryPoints:
+        - "web"
+        - "websecure"
+      #middlewares:
+      #  - chain-no-auth
+      middlewares:
+        - n8n-security-headers
+        - n8n-redirect
+      service: "n8n-service"
+      tls:
+        certResolver: "dns-cloudflare"
+        options: tls-opts@file
+  services:
+    n8n-service:
+      loadBalancer:
+        passHostHeader: true
+        serversTransport: "n8n"
+        servers:
+          - url: "http://10.1.1.74:5678"
+  serversTransports:
+    n8n:
+      insecureSkipVerify: true
+
+  middlewares:
+    n8n-security-headers:
+      headers:
+        browserXssFilter: true
+        contentTypeNosniff: true
+        forceSTSHeader: true
+        stsIncludeSubdomains: true
+        stsPreload: true
+        stsSeconds: 315360000
+    n8n-redirect:
+      chain:
+        middlewares:
+          - n8n-redirect-scheme
+          #- n8n-redirect-host
+    n8n-redirect-scheme:
+      redirectScheme:
+        scheme: https
+        permanent: true # Mirrors the long STS duration; use false for 302 temporary redirect if preferred
+    n8n-redirect-host: # Only needed if forcing to a specific host (mirrors SSLHost); omit if not intended
+      redirectRegex:
+        regex: "^https?://[^/]+/(.*)$"
+        replacement: "https://${DOMAIN_NAME}/${1}"
+        permanent: true

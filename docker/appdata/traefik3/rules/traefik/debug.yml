@@ -1,0 +1,13 @@
+http:
+  routers:
+    debug-http:
+      rule: "HostRegexp(`{any:.+}`)"
+      entryPoints:
+        - web
+      service: debug-svc
+
+  services:
+    debug-svc:
+      loadBalancer:
+        servers:
+          - url: http://httpbin.org

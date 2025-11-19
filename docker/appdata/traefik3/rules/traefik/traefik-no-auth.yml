@@ -1,0 +1,13 @@
+http:
+  routers:
+    traefik-rtr:
+      #rule: 'Host(`traefik.{{env "DOMAINNAME_2"}}`)'
+      rule: 'Host(`traefik.{{env "DOMAINNAME_1"}}`) || Host(`traefik.{{env "DOMAINNAME_2"}}`)'
+      entryPoints:
+        - "websecure"
+      middlewares:
+        - chain-no-auth
+      service: api@internal
+      tls:
+        certResolver: "dns-cloudflare"
+        options: tls-opts@file

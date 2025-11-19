@@ -1,7 +1,7 @@
 http:
   routers:
     netbox-service-rtr:
-      rule: 'Host(`netbox.{{env "DOMAINNAME_2"}}`)'
+      rule: 'Host(`netbox.{{env "DOMAINNAME_2"}}`) || Host(`netbox.w{{env "SITE_NUM"}}.{{env "DOMAINNAME_1"}}`)'
       entryPoints:
         - "websecure"
       middlewares:
@@ -17,7 +17,7 @@ http:
         serversTransport: "netbox"
         servers:
           # Use the Netbox HTTP port since I'm securing it with Traefik
-          - url: "http://192.168.9.104:8080"
+          - url: "http://10.1.1.104:8080"
   serversTransports:
     netbox:
       insecureSkipVerify: true

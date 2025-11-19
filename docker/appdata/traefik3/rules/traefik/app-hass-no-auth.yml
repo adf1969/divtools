@@ -1,0 +1,24 @@
+http:
+  routers:
+    hass-service-rtr:
+      rule: 'Host(`hass.{{env "DOMAINNAME_2"}}`) || Host(`hass.w{{env "SITE_NUM"}}.{{env "DOMAINNAME_1"}}`)'
+      entryPoints:
+        - "websecure"
+      # MiddleWare breaks hass, fix later.
+      #middlewares:
+      #  - chain-no-auth
+      service: "hass-service"
+      tls:
+        certResolver: "dns-cloudflare"
+        options: tls-opts@file
+  services:
+    hass-service:
+      loadBalancer:
+        passHostHeader: true
+        serversTransport: "hass"
+        servers:
+          # hass URL
+          - url: "http://10.1.1.215:8123"
+  serversTransports:
+    hass:
+      insecureSkipVerify: true
