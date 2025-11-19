@@ -1,0 +1,31 @@
+# Ollama Models of Interest
+# Last Updated: 11/7/2025 5:00:00 PM CST
+#
+# One model per line
+# Lines starting with # are ignored
+# Model names should be the base name (e.g., 'qwen2.5-vl' not 'qwen2.5-vl:7b')
+
+# Vision Models - OCR and Image Analysis
+qwen2.5-vl
+llama3.2-vision
+llava
+
+# Reasoning Models - Log Analysis and Problem Solving
+deepseek-r1
+gpt-oss
+
+# General Purpose Models
+llama3.1
+llama3.2
+mistral
+phi3
+
+# Code-Focused Models
+codellama
+deepseek-coder
+qwen2.5-coder
+
+# Specialized Models
+gemma2
+command-r
+aya

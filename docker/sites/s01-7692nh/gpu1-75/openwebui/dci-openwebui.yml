@@ -1,0 +1,87 @@
+# OpenWebUI - Web Interface for Ollama with PostgreSQL Database
+# Last Updated: 11/7/2025 8:45:00 PM CST
+#
+# Environment Vars in Use
+# $TZ : The timezone we run in. Format American/Chicago
+# $DOCKERDIR : Usually the divtools/docker dir
+# $DOCKERDATADIR: Usually the /opt dir
+# $HOSTNAME: defined in .env
+# $LXC_UID_DIVIX: defined in .env.s00-shared
+# $LXC_GID_DIVIX: defined in .env.s00-shared
+# $OPENWEBUI_PORT: defined in .env.gpu1-75 (default 3000)
+# $OLLAMA_API_BASE_URL: defined in .env.gpu1-75 (connection to Ollama)
+# $OPENWEBUI_PG_USER: defined in .env.gpu1-75 (PostgreSQL user)
+# $OPENWEBUI_PG_PASSWORD: defined in .env.gpu1-75 (PostgreSQL password)
+# $OPENWEBUI_PG_DB: defined in .env.gpu1-75 (PostgreSQL database name)
+# Section Order: CIRPNVEUE
+#
+# To Start OpenWebUI and Ollama together, run:
+#  dcup --profile ollama
+
+services:
+  openwebui:
+    profiles: [ollama]
+    container_name: openwebui
+    image: ghcr.io/open-webui/open-webui:main
+    restart: unless-stopped
+    networks:
+      - default
+    ports:
+      - ${OPENWEBUI_PORT:-3000}:8080
+    environment:
+      - TZ=$TZ
+      - PUID=$LXC_UID_DIVIX
+      - PGID=$LXC_GID_DIVIX
+      # Ollama API connection
+      - OLLAMA_BASE_URL=${OLLAMA_API_BASE_URL}
+      # OpenWebUI specific settings
+      - WEBUI_SECRET_KEY=${OPENWEBUI_SECRET_KEY}
+      - ENABLE_RAG_WEB_SEARCH=true
+      - ENABLE_IMAGE_GENERATION=false
+      - ENABLE_COMMUNITY_SHARING=true
+      - WEBUI_AUTH=true
+      # Security settings
+      - CORS_ALLOW_ORIGIN=${CORS_ALLOW_ORIGIN}
+      - USER_AGENT=${USER_AGENT}
+      # Database settings - PostgreSQL
+      - DATABASE_URL=postgresql://${OPENWEBUI_PG_USER}:${OPENWEBUI_PG_PASSWORD}@openwebui-postgres:5432/${OPENWEBUI_PG_DB}
+      # Data and model directories
+      - DATA_DIR=/app/backend/data
+    volumes:
+      - ${DOCKERDATADIR}/openwebui/data:/app/backend/data
+    depends_on:
+      - ollama
+      - openwebui-postgres
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    labels:
+      - "divtools.group=ollama"
+      - "com.centurylinklabs.watchtower.enable=true"
+
+  openwebui-postgres:
+    profiles: [ollama]
+    container_name: openwebui-postgres
+    image: postgres:16-alpine
+    restart: unless-stopped
+    networks:
+      - default
+    environment:
+      - POSTGRES_USER=${OPENWEBUI_PG_USER:-openwebui}
+      - POSTGRES_PASSWORD=${OPENWEBUI_PG_PASSWORD}
+      - POSTGRES_DB=${OPENWEBUI_PG_DB:-openwebui}
+      - PGDATA=/var/lib/postgresql/data/pgdata
+    volumes:
+      - ${DOCKERDATADIR}/openwebui/pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${OPENWEBUI_PG_USER:-openwebui}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    labels:
+      - "divtools.group=ollama"
+      - "com.centurylinklabs.watchtower.enable=true"

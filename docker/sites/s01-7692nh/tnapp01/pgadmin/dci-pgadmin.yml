@@ -1,0 +1,51 @@
+# Docker Compose configuration for pgAdmin 4
+# Last Updated: 11/8/2025 9:55:00 PM CST
+#
+# pgAdmin is a web-based administration tool for PostgreSQL databases
+# Provides graphical interface for database management, query execution, and monitoring
+#
+# Environment Vars in Use:
+# $TZ : The timezone we run in. Format America/Chicago
+# $DOCKERDIR : Usually the divtools/docker dir
+# $DOCKERDATADIR: Usually the /opt dir
+# $HOSTNAME: defined in .env (tnapp01)
+# $SITE_NAME: defined in .env (s01-7692nh)
+# Section Order: CIRPNVEUE
+#
+
+# To Start pgAdmin, run:
+#  dcup pgadmin
+#  dcup --profile dbs
+
+name: pgadmin
+
+services:
+  pgadmin:
+    container_name: pgadmin
+    image: dpage/pgadmin4:latest
+    restart: unless-stopped
+    labels:
+      - "divtools.group=dbs"
+    profiles: [dbs]
+    ports:
+      - "${PGADMIN_PORT:-8080}:80" # Web interface - defaults to 8080 if not set
+    volumes:
+      # All pgAdmin data (database, sessions, storage) goes to /opt/pgadmin
+      - $DOCKERDATADIR/pgadmin:/var/lib/pgadmin
+      # Optional: Pre-configured server definitions (if servers.json exists)
+      # This is USELESS. It ONLY adds them the FIRST TIME the DB is created.
+      # Use the pg_update_servers.sh script instead, it modifies the database directly.
+      #- $DOCKERDIR/sites/$SITE_NAME/$HOSTNAME/pgadmin/config/servers.json:/pgadmin4/servers.json:ro
+    environment:
+      - TZ=$TZ
+      # Login credentials - set in .env.tnapp01
+      - PGADMIN_DEFAULT_EMAIL=${PGADMIN_DEFAULT_EMAIL}
+      - PGADMIN_DEFAULT_PASSWORD=${PGADMIN_DEFAULT_PASSWORD}
+      # Disable master password prompt for saved passwords
+      - PGADMIN_CONFIG_MASTER_PASSWORD_REQUIRED=False
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:80/misc/ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s

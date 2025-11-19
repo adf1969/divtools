@@ -1,0 +1,72 @@
+## HOSTNAME: FRIGATE2 ##
+
+# Environment Vars in Use
+# $TZ : The timezone we run in. Format American/Chicago
+# $DOCKERDIR : Usually the divtools/docker dir
+# $DOCKERDATADIR: Usually the /opt dir
+# $SITE_NUM: defined in .env
+# $SITE_NAME: defined in .env
+# $HOSTNAME: defined in .env.$HOSTNAME
+# $FRIGATE_CAMUSER: defined in .env.$HOSTNAME (default is "admin")
+# $FRIGATE_AC_CAMUSER_PW: defined in .env.$HOSTNAME
+# Section Order: CIRPNVEUE
+
+services:
+  frigate:
+    container_name: frigate
+    privileged: true
+    restart: unless-stopped
+    image: ghcr.io/blakeblackshear/frigate:stable
+    #image: ghcr.io/blakeblackshear/frigate:stable-tensorrt
+    shm_size: "2048mb" # update for your cameras based on calculation
+    # Launch custom Divix Startup script. This does any special camera setups that might be needed
+    # This doesn't work, it causes frigate to start/stop/start/stop
+    #command: ["/bin/bash", "-c", "/config/div_startup.sh"]
+    # This also does NOT work, it just never launches frigate.
+    #entrypoint: ["/bin/sh", "-c", "/init & /bin/bash /config/div_startup.sh"]
+
+    runtime: nvidia
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+    devices:
+      - /dev/bus/usb:/dev/bus/usb #     Passes USB Coral TPU
+      - /dev/dri:/dev/dri #             Passes RTX 4000 (may not be needed)
+      #- /dev/apex_0:/dev/apex_0 # passes a PCIe Coral
+      # NVidia Device Mappings
+      - /dev/nvidia0:/dev/nvidia0
+      - /dev/nvidiactl:/dev/nvidiactl
+    group_add:
+      - plugdev #                       USB Access
+    volumes:
+      # bind-mount vi so I can edit files in docker container
+      - /etc/localtime:/etc/localtime:ro
+      - $DOCKERDIR/sites/${SITE_NAME}/$HOSTNAME/frigate:/config
+      - $DOCKERDATADIR/frigate/media:/media/frigate
+      - type: tmpfs # Optional: 1GB of memory, reduces SSD/SD Card wear
+        target: /tmp/cache
+        tmpfs:
+          size: 1000000000
+    ports:
+      - "5000:5000" # Default Frigate Port for HTTP Client
+      - "8554:8554" # RTSP feeds
+      - "8555:8555/tcp" # WebRTC over tcp
+      - "8555:8555/udp" # WebRTC over udp
+      - "1984:1984" # go2rtc api
+    environment:
+      - TZ=$TZ # Retrieve TZ from .env
+      - NVIDIA_VISIBLE_DEVICES=all
+      - NVIDIA_DRIVER_CAPABILITIES=compute,utility,video
+      - FRIGATE_CAM_ADMIN_U=${FRIGATE_CAM_ADMIN_U}
+      - FRIGATE_CAM_ADMIN_P=${FRIGATE_CAM_ADMIN_P}
+      - FRIGATE_CAM_U=${FRIGATE_CAM_U}
+      - FRIGATE_CAM_P=${FRIGATE_CAM_P}
+      # Test Env
+      - USE_FP16=False
+      - YOLO_MODELS=yolov7-320
+      - TRT_MODEL_PREP_DEVICE=0
+      - CUDA_MODULE_LOADING=LAZY

@@ -1,0 +1,32 @@
+# List of PostgreSQL servers for this site
+# Last Updated: 11/8/2025 7:45:00 PM CST
+
+servers:
+  - name: S01 Postgres Server
+    group: Servers
+    host: 10.1.1.74
+    port: 5432
+    maintenance_db: postgres
+    username: postgres
+    comment: Standalone PostgreSQL server for general-purpose databases not tied to specific apps
+  - name: Moodle Database
+    group: Servers
+    host: 10.1.1.74
+    port: 5434
+    maintenance_db: moodle
+    username: moodle
+    comment: Moodle Learning Management System Database
+  - name: OpenWebUI Database
+    group: Servers
+    host: 10.1.1.75
+    port: 5436
+    maintenance_db: openwebui
+    username: openwebui
+    comment: OpenWebUI (Ollama Web Interface) Database on gpu1-75
+  - name: n8n Workflow Database
+    group: Servers
+    host: 10.1.1.74
+    port: 5438
+    maintenance_db: n8n
+    username: n8n
+    comment: n8n Workflow Automation Database

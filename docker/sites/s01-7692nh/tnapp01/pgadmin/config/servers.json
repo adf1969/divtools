@@ -1,0 +1,44 @@
+{
+  "Servers": {
+    "1": {
+      "Name": "S01 Postgres Server",
+      "Group": "tnapp01 Databases",
+      "Host": "10.1.1.74",
+      "Port": 5432,
+      "MaintenanceDB": "postgres",
+      "Username": "postgres",
+      "SSLMode": "prefer",
+      "Comment": "Standalone PostgreSQL server for general-purpose databases not tied to specific apps"
+    },
+    "2": {
+      "Name": "Moodle Database",
+      "Group": "tnapp01 Databases",
+      "Host": "10.1.1.74",
+      "Port": 5434,
+      "MaintenanceDB": "moodle",
+      "Username": "moodle",
+      "SSLMode": "prefer",
+      "Comment": "Moodle Learning Management System Database"
+    },
+    "3": {
+      "Name": "OpenWebUI Database",
+      "Group": "gpu1-75 Databases",
+      "Host": "10.1.1.75",
+      "Port": 5436,
+      "MaintenanceDB": "openwebui",
+      "Username": "openwebui",
+      "SSLMode": "prefer",
+      "Comment": "OpenWebUI (Ollama Web Interface) Database on gpu1-75"
+    },
+    "4": {
+      "Name": "n8n Workflow Database",
+      "Group": "tnapp01 Databases",
+      "Host": "10.1.1.74",
+      "Port": 5438,
+      "MaintenanceDB": "n8n",
+      "Username": "n8n",
+      "SSLMode": "prefer",
+      "Comment": "n8n Workflow Automation Database"
+    }
+  }
+}

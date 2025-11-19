@@ -1,0 +1,68 @@
+/* ADF MODS - For Site: S10-CVG */
+/* Add to end of:
+    /usr/local/opnsense/www/themes/<theme-site-name>/build/css/main.css */
+
+.toggle-sidebar {
+    position: relative !important;
+    /* Allows vertical offset without disrupting layout */
+    top: -3px !important;
+    /* Move up 3px; increase to -5px for more lift, or -2px for subtle */
+    vertical-align: middle;
+    /* Maintains alignment with surrounding elements like icons/search */
+}
+
+/* Override navbar collapse background color */
+.navbar-default {
+    background-color: #156900 !important;
+}
+
+/* Insert text after toggle-sidebar button - append this at end of main.css */
+.toggle-sidebar::after {
+    content: "S10-CVG";
+    position: relative;
+    /* Move up 3px; increase to -5px for more lift, or -2px for subtle */
+    top: -3px !important;
+    /* Flows inline after button; use 'block' for full-width line */
+    display: inline-block;
+    /* Space from button */
+    margin-left: 10px;
+
+    /* Optional: Button-like padding */
+    padding: 6px 10px;
+
+    /* Subtle bg; match your color scheme */
+    background-color: rgba(0, 0, 0, 0.2);
+
+    /* Text color; adjust for visibility */
+    color: #fff;
+
+    font-size: 16px;
+    font-weight: bold;
+    /* Optional: Rounded edges */
+    border-radius: 4px;
+
+    line-height: 1.0;
+    /* Prevent wrapping; use 'normal' if multi-word OK */
+    white-space: nowrap;
+    vertical-align: middle;
+}
+
+/* Lock navbar height to prevent any pseudo-element spillover */
+.navbar-default {
+    /* Matches Bootstrap default; adjust if your theme overrides */
+    min-height: 50px !important;
+}
+
+.navbar-default .container-fluid {
+    /* Ensures container doesn't expand */
+    min-height: 50px !important;
+}
+
+/* Ensure it shows on desktop (hidden in some responsive views if needed) */
+@media (min-width: 768px) {
+
+    /* Force visibility on wide screens */
+    .toggle-sidebar::after {
+        display: inline-block !important;
+    }
+}

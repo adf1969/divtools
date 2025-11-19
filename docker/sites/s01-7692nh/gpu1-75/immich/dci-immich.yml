@@ -1,0 +1,137 @@
+# Environment Vars in Use
+# $TZ : The timezone we run in. Format American/Chicago
+# $DOCKERDIR : Usually the divtools/docker dir
+# $DOCKERDATADIR: Usually the /opt dir
+# $HOSTNAME: defined in .env
+# $GF_SECURITY_ADMIN_USER: defined in .env (default is "admin")
+# $GF_SECURITY_ADMIN_PASSWORD: defined in .env
+# Section Order: CIRPNVEUE
+#
+# $MEDIA_DIR=/mnt/FieldsHm/MEDIA
+
+# To Start immich, run:
+#  dcup --profile immich
+
+services:
+  immich-server:
+    profiles: [immich]
+    container_name: immich-server
+    image: ghcr.io/immich-app/immich-server:${IMMICH_VERSION:-release}
+    restart: unless-stopped
+    labels:
+      - "divtools.group=immich"
+    #network_mode: host
+    networks:
+      - default
+    runtime: nvidia
+    ports:
+      - 2283:2283
+    environment:
+      - IMMICH_LOG_LEVEL=verbose
+      - LOG_LEVEL=verbose
+      - TZ=$TZ # Retrieve TZ from .env
+      - PUID=$LXC_UID_DIVIX
+      - PGID=$LXC_GID_DIVIX
+      - NVIDIA_VISIBLE_DEVICES=all
+      - NVIDIA_DRIVER_CAPABILITIES=compute,utility,video
+      # Immich
+      - LXC_IMMICH_DATA_DIR=${LXC_IMMICH_DATA_DIR}
+      ##- UPLOAD_LOCATION=${LXC_IMMICH_DATA_DIR}/upload
+      - THUMB_LOCATION=${LXC_IMMICH_DATA_DIR}/thumbs # THIS IS JUST A STUB. I CANNOT CHANGE THIS!
+      - PROFILE_LOCATION=${LXC_IMMICH_DATA_DIR}/profile
+      - ENCODED_VIDEO_LOCATION=${LXC_IMMICH_DATA_DIR}/encoded-video
+      - MAP_CACHE_LOCATION=${LXC_IMMICH_DATA_DIR}/map-cache
+      - BACKUP_LOCATION=${LXC_IMMICH_DATA_DIR}/backups
+      # Postgress
+      - DB_USERNAME=$PG_DB_USERNAME
+      - DB_PASSWORD=$PG_DB_PASSWORD
+      - DB_DATABASE_NAME=$PG_DB_DATABASE_NAME
+      - DB_HOSTNAME=$PG_DB_HOSTNAME
+      # REDIS
+      - REDIS_HOSTNAME=$REDIS_HOSTNAME
+
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      # Files stored in MEDIA folder
+      - $MEDIA_DIR:/mnt/media:ro # Entire MEDIA, read-only, this is for Scanning
+      - ${UPLOAD_LOCATION}:/data
+      - $MEDIA_DIR/immich/upload:${LXC_IMMICH_DATA_DIR}/upload # For originals
+      # NOTE Library also goes here: /data/library -> $MEDIA_DIR/immich/upload/library
+      - $MEDIA_DIR/immich/upload/thumbs:${LXC_IMMICH_DATA_DIR}/thumbs
+      - $MEDIA_DIR/immich/backups:${LXC_IMMICH_DATA_DIR}/backups # For originals
+      - $MEDIA_DIR/immich/encoded-video:${LXC_IMMICH_DATA_DIR}/encoded-video
+
+      # Files stored in /opt
+      - $DOCKERDATADIR/immich/profile:${LXC_IMMICH_DATA_DIR}/profile
+      #- $DOCKERDATADIR/immich/encoded-video:${LXC_IMMICH_DATA_DIR}/encoded-video
+      - $DOCKERDATADIR/immich/map-cache:${LXC_IMMICH_DATA_DIR}/map-cache
+
+    depends_on:
+      - immich-redis
+      - immich-postgres
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              capabilities: [gpu]
+
+  immich-machine-learning:
+    profiles: [immich]
+    container_name: immich-machine-learning
+    image: ghcr.io/immich-app/immich-machine-learning:${IMMICH_VERSION:-release}
+    restart: always
+    labels:
+      - "divtools.group=immich"
+    #network_mode: host
+    networks:
+      - default
+    runtime: nvidia
+    environment:
+      - TZ=$TZ # Retrieve TZ from .env
+      - PUID=$LXC_UID_DIVIX
+      - PGID=$LXC_GID_DIVIX
+    volumes:
+      # Files stored in /opt
+      - $DOCKERDATADIR/immich/model-cache:/cache
+    depends_on:
+      - immich-redis
+      - immich-postgres
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              capabilities: [gpu]
+
+  immich-redis:
+    profiles: [immich]
+    container_name: immich-redis
+    image: docker.io/valkey/valkey:8-bookworm@sha256:fea8b3e67b15729d4bb70589eb03367bab9ad1ee89c876f54327fc7c6e618571
+    restart: always
+    labels:
+      - "divtools.group=immich"
+    #network_mode: host
+    networks:
+      - default
+
+  immich-postgres:
+    profiles: [immich]
+    container_name: immich-postgres
+    #image: registry.hub.docker.com/tensorchord/pgvecto-rs:pg14-v0.2.0
+    image: ghcr.io/immich-app/postgres:14-vectorchord0.4.3-pgvectors0.2.0@sha256:8d292bdb796aa58bbbaa47fe971c8516f6f57d6a47e7172e62754feb6ed4e7b0
+    restart: always
+    labels:
+      - "divtools.group=immich"
+    #network_mode: host
+    networks:
+      - default
+    environment:
+      - POSTGRES_USER=${PG_DB_USERNAME}
+      - POSTGRES_PASSWORD=${PG_DB_PASSWORD}
+      - POSTGRES_DB=${PG_DB_DATABASE_NAME}
+      - POSTGRES_INITDB_ARGS="--data-checksums"
+    volumes:
+      #- $MEDIA_DIR/immich/pgdata:/var/lib/postgresql/data
+      - ${DB_DATA_LOCATION}:/var/lib/postgresql/data
+    shm_size: 128mb

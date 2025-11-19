@@ -1,0 +1,20 @@
+name: host01
+enabled: true
+hostname: 10.1.1.10
+port: 22
+user: monitoring
+tags:
+  - database
+  - postgresql
+monitoring:
+  check_docker: true
+  check_apt: true
+  check_disk: true
+  check_services:
+    - postgresql
+    - docker
+log_paths:
+  - /var/log/syslog
+  - /var/log/postgresql/postgresql-14-main.log
+  - ${LOG_PATH}/app.log
+  - ${{RUNTIME_LOG_DIR}}/error.log

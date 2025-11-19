@@ -1,0 +1,59 @@
+# Ollama - Local Large Language Model Server
+# Last Updated: 11/7/2025 2:45:00 PM CST
+#
+# Environment Vars in Use
+# $TZ : The timezone we run in. Format American/Chicago
+# $DOCKERDIR : Usually the divtools/docker dir
+# $DOCKERDATADIR: Usually the /opt dir
+# $HOSTNAME: defined in .env
+# $LXC_UID_DIVIX: defined in .env.s00-shared
+# $LXC_GID_DIVIX: defined in .env.s00-shared
+# $OLLAMA_PORT: defined in .env.gpu1-75 (default 11434)
+# $OLLAMA_MODELS_DIR: defined in .env.gpu1-75
+# Section Order: CIRPNVEUE
+#
+# To Start Ollama, run:
+#  dcup --profile ollama
+
+services:
+  ollama:
+    profiles: [ollama]
+    container_name: ollama
+    image: ollama/ollama:latest
+    restart: unless-stopped
+    networks:
+      - default
+    runtime: nvidia
+    ports:
+      - ${OLLAMA_PORT:-11434}:11434
+    environment:
+      - TZ=$TZ
+      - PUID=$LXC_UID_DIVIX
+      - PGID=$LXC_GID_DIVIX
+      - NVIDIA_VISIBLE_DEVICES=all
+      - NVIDIA_DRIVER_CAPABILITIES=compute,utility
+      # Ollama specific settings
+      - OLLAMA_HOST=0.0.0.0:11434
+      # OLLAMA_MODELS not set - uses default /root/.ollama (mounted below)
+      - OLLAMA_KEEP_ALIVE=24h
+      - OLLAMA_NUM_PARALLEL=2
+      - OLLAMA_MAX_LOADED_MODELS=2
+    volumes:
+      - ${DOCKERDATADIR}/ollama:/root/.ollama
+      - ${DOCKERDATADIR}/ollama/config:/root/.config
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:11434/api/tags"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    labels:
+      - "divtools.group=ollama"
+      - "com.centurylinklabs.watchtower.enable=true"

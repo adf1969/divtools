@@ -1,0 +1,208 @@
+# Docker Compose configuration for Plane project management application
+# Last Updated: 11/7/2025 4:15:00 PM CST
+#
+# Environment Vars in Use
+# $TZ : The timezone we run in. Format American/Chicago
+# $DOCKERDIR : Usually the divtools/docker dir
+# $DOCKERDATADIR: Usually the /opt dir
+# $HOSTNAME: defined in .env
+# $DOMAINNAME_2: defined in .env.s00-shared
+# $PLANE_SECRET_KEY: defined in .env.tnapp01
+# $PLANE_POSTGRES_PASSWORD: defined in .env.tnapp01
+# Section Order: CIRPNVEUE
+#
+
+# To Start Plane, run:
+#  dcup plane
+#  dcup --profile plane
+
+name: plane
+
+services:
+  plane-db:
+    container_name: plane-db
+    image: postgres:15-alpine
+    restart: unless-stopped
+    networks:
+      - plane-network
+    profiles: [plane]
+    environment:
+      - POSTGRES_USER=plane
+      - POSTGRES_PASSWORD=${PLANE_POSTGRES_PASSWORD}
+      - POSTGRES_DB=plane
+      - PGDATA=/var/lib/postgresql/data/pgdata
+    volumes:
+      - $DOCKERDATADIR/plane/pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U plane"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  plane-redis:
+    container_name: plane-redis
+    image: redis:7.2-alpine
+    restart: unless-stopped
+    networks:
+      - plane-network
+    profiles: [plane]
+    volumes:
+      - $DOCKERDATADIR/plane/redis:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  plane-minio:
+    container_name: plane-minio
+    image: minio/minio:latest
+    restart: unless-stopped
+    networks:
+      - plane-network
+    profiles: [plane]
+    command: server /data --console-address ":9090"
+    environment:
+      - MINIO_ROOT_USER=${PLANE_MINIO_ROOT_USER:-admin}
+      - MINIO_ROOT_PASSWORD=${PLANE_MINIO_ROOT_PASSWORD}
+    volumes:
+      - $DOCKERDATADIR/plane/minio:/data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 30s
+      timeout: 20s
+      retries: 3
+
+  web:
+    container_name: plane-web
+    image: makeplane/plane-frontend:latest
+    restart: unless-stopped
+    networks:
+      - plane-network
+    profiles: [plane]
+    environment:
+      - NEXT_PUBLIC_API_BASE_URL=http://api:8000
+    depends_on:
+      - api
+
+  space:
+    container_name: plane-space
+    image: makeplane/plane-space:latest
+    restart: unless-stopped
+    networks:
+      - plane-network
+    profiles: [plane]
+    environment:
+      - NEXT_PUBLIC_API_BASE_URL=http://api:8000
+    depends_on:
+      - api
+
+  api:
+    container_name: plane-api
+    image: makeplane/plane-backend:latest
+    restart: unless-stopped
+    networks:
+      - plane-network
+    profiles: [plane]
+    environment:
+      - TZ=$TZ
+      - DEBUG=0
+      - DJANGO_SETTINGS_MODULE=plane.settings.production
+      - SECRET_KEY=${PLANE_SECRET_KEY}
+      - DATABASE_URL=postgresql://plane:${PLANE_POSTGRES_PASSWORD}@plane-db:5432/plane
+      - REDIS_URL=redis://plane-redis:6379/
+      - WEB_URL=http://web:3000
+      - USE_MINIO=1
+      - AWS_REGION=us-east-1
+      - AWS_ACCESS_KEY_ID=${PLANE_MINIO_ROOT_USER:-admin}
+      - AWS_SECRET_ACCESS_KEY=${PLANE_MINIO_ROOT_PASSWORD}
+      - AWS_S3_ENDPOINT_URL=http://plane-minio:9000
+      - AWS_S3_BUCKET_NAME=plane
+      - CORS_ALLOWED_ORIGINS=http://localhost,http://web:3000
+    volumes:
+      - $DOCKERDATADIR/plane/logs:/code/plane/logs
+    depends_on:
+      plane-db:
+        condition: service_healthy
+      plane-redis:
+        condition: service_healthy
+      plane-minio:
+        condition: service_healthy
+    command: >
+      sh -c "
+        python manage.py wait_for_db &&
+        python manage.py migrate &&
+        python manage.py runserver 0.0.0.0:8000
+      "
+
+  worker:
+    container_name: plane-worker
+    image: makeplane/plane-backend:latest
+    restart: unless-stopped
+    networks:
+      - plane-network
+    profiles: [plane]
+    environment:
+      - TZ=$TZ
+      - DEBUG=0
+      - DJANGO_SETTINGS_MODULE=plane.settings.production
+      - SECRET_KEY=${PLANE_SECRET_KEY}
+      - DATABASE_URL=postgresql://plane:${PLANE_POSTGRES_PASSWORD}@plane-db:5432/plane
+      - REDIS_URL=redis://plane-redis:6379/
+      - WEB_URL=http://web:3000
+      - USE_MINIO=1
+      - AWS_REGION=us-east-1
+      - AWS_ACCESS_KEY_ID=${PLANE_MINIO_ROOT_USER:-admin}
+      - AWS_SECRET_ACCESS_KEY=${PLANE_MINIO_ROOT_PASSWORD}
+      - AWS_S3_ENDPOINT_URL=http://plane-minio:9000
+      - AWS_S3_BUCKET_NAME=plane
+    volumes:
+      - $DOCKERDATADIR/plane/logs:/code/plane/logs
+    depends_on:
+      - api
+      - plane-redis
+    command: celery -A plane worker -l info
+
+  beat-worker:
+    container_name: plane-beat-worker
+    image: makeplane/plane-backend:latest
+    restart: unless-stopped
+    networks:
+      - plane-network
+    profiles: [plane]
+    environment:
+      - TZ=$TZ
+      - DEBUG=0
+      - DJANGO_SETTINGS_MODULE=plane.settings.production
+      - SECRET_KEY=${PLANE_SECRET_KEY}
+      - DATABASE_URL=postgresql://plane:${PLANE_POSTGRES_PASSWORD}@plane-db:5432/plane
+      - REDIS_URL=redis://plane-redis:6379/
+      - WEB_URL=http://web:3000
+    volumes:
+      - $DOCKERDATADIR/plane/logs:/code/plane/logs
+    depends_on:
+      - api
+      - plane-redis
+    command: celery -A plane beat -l info
+
+  proxy:
+    container_name: plane-proxy
+    image: makeplane/plane-proxy:latest
+    restart: unless-stopped
+    networks:
+      - plane-network
+    profiles: [plane]
+    ports:
+      - "8085:80"
+    environment:
+      - FILE_SIZE_LIMIT=5242880
+      - BUCKET_NAME=plane
+    depends_on:
+      - web
+      - api
+      - space
+
+networks:
+  plane-network:
+    name: plane-network
+    driver: bridge

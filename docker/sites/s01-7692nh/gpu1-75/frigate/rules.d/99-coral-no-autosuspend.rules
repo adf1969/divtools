@@ -1,0 +1,15 @@
+# Disable USB autosuspend for Google Coral Edge TPU
+# Last Updated: 11/5/2025 12:15:00 PM CST
+#
+# This prevents USB transfer errors and device resets that cause Frigate crashes
+#
+# Install to: /etc/udev/rules.d/99-coral-no-autosuspend.rules
+# Then run:
+#   sudo udevadm control --reload-rules
+#   sudo udevadm trigger
+
+# Coral USB Accelerator (idVendor=18d1, idProduct=9302)
+SUBSYSTEM=="usb", ATTRS{idVendor}=="18d1", ATTRS{idProduct}=="9302", ATTR{power/control}="on"
+
+# Older Coral models (if you have them)
+SUBSYSTEM=="usb", ATTRS{idVendor}=="1a6e", ATTRS{idProduct}=="089a", ATTR{power/control}="on"

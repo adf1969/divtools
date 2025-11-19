@@ -1,0 +1,143 @@
+# Docker Compose configuration for Moodle Learning Management System
+# Last Updated: 11/7/2025 4:15:00 PM CST
+#
+# Environment Vars in Use
+# $TZ : The timezone we run in. Format American/Chicago
+# $DOCKERDIR : Usually the divtools/docker dir
+# $DOCKERDATADIR: Usually the /opt dir
+# $HOSTNAME: defined in .env
+# $DOMAINNAME_2: defined in .env.s00-shared
+# $MOODLE_DB_PASSWORD: defined in .env.tnapp01
+# $MOODLE_ADMIN_PASSWORD: defined in .env.tnapp01
+# Section Order: CIRPNVEUE
+#
+
+# To Start Moodle, run:
+#  dcup moodle
+#  dcup --profile moodle
+
+name: moodle
+
+services:
+  moodle-db:
+    container_name: moodle-db
+    image: postgres:16
+    restart: unless-stopped
+    labels:
+      - "divtools.group=moodle"
+    networks:
+      - moodle-network
+    profiles: [moodle]
+    ports:
+      - "${MOODLE_PGDB_PORT:-5434}:5432" # External:Internal - defaults to 5434 if not set
+    environment:
+      - POSTGRES_USER=moodle
+      - POSTGRES_PASSWORD=${MOODLE_DB_PASSWORD}
+      - POSTGRES_DB=moodle
+      - PGDATA=/var/lib/postgresql/data/pgdata
+    volumes:
+      - $DOCKERDATADIR/moodle/pgdata:/var/lib/postgresql/data
+    command: >
+      postgres
+      -c shared_buffers=256MB
+      -c max_connections=200
+      -c work_mem=16MB
+      -c maintenance_work_mem=128MB
+      -c effective_cache_size=1GB
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U moodle"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  moodle-redis:
+    container_name: moodle-redis
+    image: redis:7.2-alpine
+    restart: unless-stopped
+    labels:
+      - "divtools.group=moodle"
+    networks:
+      - moodle-network
+    profiles: [moodle]
+    volumes:
+      - $DOCKERDATADIR/moodle/redis:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  moodle:
+    container_name: moodle
+    build:
+      context: .
+      dockerfile: moodle.Dockerfile
+    image: moodle-pgsql:latest
+    restart: unless-stopped
+    labels:
+      - "divtools.group=moodle"
+    networks:
+      - moodle-network
+    profiles: [moodle]
+    ports:
+      - "${MOODLE_HTTP_PORT:-8090}:80"
+      - "${MOODLE_HTTPS_PORT:-8093}:443"
+    environment:
+      - TZ=$TZ
+      - MOODLE_DB_TYPE=pgsql
+      - MOODLE_DB_HOST=moodle-db
+      - MOODLE_DB_PORT=5432
+      - MOODLE_DB_NAME=moodle
+      - MOODLE_DB_USER=moodle
+      - MOODLE_DB_PASSWORD=${MOODLE_DB_PASSWORD}
+      - MOODLE_ADMIN_USER=admin
+      - MOODLE_ADMIN_PASS=${MOODLE_ADMIN_PASSWORD}
+      - MOODLE_ADMIN_EMAIL=${MOODLE_ADMIN_EMAIL:-admin@${DOMAINNAME_2}}
+      - MOODLE_SITE_FULLNAME=${MOODLE_SITE_NAME:-Moodle LMS}
+      - MOODLE_SITE_SHORTNAME=${MOODLE_SITE_NAME:-Moodle}
+      - MOODLE_SITE_LANG=${MOODLE_LANG:-en}
+      #- MOODLE_URL=https://moodle.w${SITE_NUM}.${DOMAINNAME_1}
+      #- MOODLE_URL=https://moodle.l${SITE_NUM}.${DOMAINNAME_1}
+      - MOODLE_URL=http://10.1.1.74:9000
+      - MOODLE_SSLPROXY=true
+    volumes:
+      - $DOCKERDATADIR/moodle/moodledata:/var/moodledata
+      - $DOCKERDATADIR/moodle/html:/var/www/html
+    depends_on:
+      moodle-db:
+        condition: service_healthy
+
+  moodle-cron:
+    container_name: moodle-cron
+    image: moodle-pgsql:latest
+    restart: unless-stopped
+    labels:
+      - "divtools.group=moodle"
+    networks:
+      - moodle-network
+    profiles: [moodle]
+    environment:
+      - TZ=$TZ
+      - MOODLE_DB_TYPE=pgsql
+      - MOODLE_DB_HOST=moodle-db
+      - MOODLE_DB_PORT=5432
+      - MOODLE_DB_NAME=moodle
+      - MOODLE_DB_USER=moodle
+      - MOODLE_DB_PASSWORD=${MOODLE_DB_PASSWORD}
+    volumes:
+      - $DOCKERDATADIR/moodle/moodledata:/var/moodledata
+      - $DOCKERDATADIR/moodle/html:/var/www/html
+    depends_on:
+      - moodle
+    command: >
+      sh -c "
+        while true; do
+          php /var/www/html/admin/cli/cron.php
+          sleep 60
+        done
+      "
+
+networks:
+  moodle-network:
+    name: moodle-network
+    driver: bridge

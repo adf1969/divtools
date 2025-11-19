@@ -1,0 +1,38 @@
+# Environment Vars in Use
+# $TZ : The timezone we run in. Format American/Chicago
+# $DOCKERDIR : Usually the divtools/docker dir
+# $DOCKERDATADIR: Usually the /opt dir
+# $HOSTNAME: defined in .env
+# $GF_SECURITY_ADMIN_USER: defined in .env (default is "admin")
+# $GF_SECURITY_ADMIN_PASSWORD: defined in .env
+# Section Order: CIRPNVEUE
+#
+
+# To Start n8n, run:
+#  dcup postgres
+#  dcup --profile dbs
+
+services:
+  postgres:
+    container_name: postgres
+    image: postgres:16
+    restart: unless-stopped
+    labels:
+      - "divtools.group=dbs"
+    ports:
+      - "5432:5432" # Adjust if behind Traefik or proxy
+    #networks:
+    volumes:
+      - $DOCKERDATADIR/postgres:/var/lib/postgresql/data
+    environment:
+      - PGDATA=/var/lib/postgresql/data/pgdata
+      - POSTGRES_PASSWORD=/run/secrets/postgres-db-password
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    profiles:
+      - dbs # Align with your profile-based aliases (e.g., createdbs)
+    secrets:
+      - postgres-password
