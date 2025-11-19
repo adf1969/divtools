@@ -1,0 +1,6 @@
+
+[custom.sys_symbol]
+symbol = "F2 frigate2 "
+style = "bg:hostc_user"
+format = '[$symbol]($style)'
+when = "true"

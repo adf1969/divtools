@@ -1,0 +1,6 @@
+# Monitor Overrides for divtools palette
+
+[palettes.divtools]
+hostc_user = "#0a15b3"
+dir_bg = "#150980"
+term_bg = "#2A1602"

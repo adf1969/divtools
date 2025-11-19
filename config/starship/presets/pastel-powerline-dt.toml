@@ -6,6 +6,7 @@ format = """
 ${custom.segment_symbol}\
 $os\
 ${custom.sys_symbol}\
+${custom.profile_check}\
 ${custom.root_arrow1}\
 ${custom.user_arrow1}\
 $username\
@@ -215,3 +216,19 @@ symbol = " "
 style = "bg:hostc_user fg:hostfg_user"
 format = '[$symbol]($style)'
 when = "true"
+
+# This displays a bright yellow lightning bolt if the profile files are STALE and I need to reload local profile
+[custom.profile_check]
+## Command TOTALLY unneeded, unless you need the output from it, we do NOT
+#command = "/opt/divtools/config/starship/bin/check_profile_fresh"
+# If check_profile_fresh returns 1, it is Stale, if it returns 0, it is Fresh
+when = '[ $(/opt/divtools/config/starship/bin/check_profile_fresh >/dev/null 2>&1; echo $?) -ne 0 ]'
+symbol = " ⚡"
+#symbol = " ⚠️ "
+#style = "bg:hostc_user fg:red"
+style = "bg:hostc_root fg:hostfg_root"
+#format = '[$symbol]($style)'
+#format = '[]($style)[$symbol]($style)[]($style)'
+#format = '[](bg:hostc_user fg:hostc_root)[$symbol](bg:hostc_root fg:hostfg_root)[](bg:hostc_user fg:hostc_root)'
+#format = '[](fg:hostc_user bg:hostc_root)[$symbol](bg:hostc_root fg:hostfg_root)[](bg:hostc_user fg:hostc_root)'
+format = '[](fg:hostc_user bg:hostc_root)[$symbol](bold fg:bright-yellow bg:hostc_root )[](fg:hostc_root bg:hostc_user )'

@@ -1,0 +1,91 @@
+#!/bin/bash
+
+# Exports
+export DIVTOOLS="${DIVTOOLS:-/opt/divtools}"
+export HOSTNAME_U=$(hostname -s | tr '[:lower:]' '[:upper:]')
+
+# Global Env Vars
+export DOCKERDIR=/opt/divtools/docker
+export DOCKERFILE=$DOCKERDIR/docker-compose-$HOSTNAME.yml
+export DOCKERDATADIR=/opt
+
+# Location of the timestamp file
+TIMESTAMP_FILE="$HOME/.config/profile_sourced_timestamp"
+
+# Verbose mode if -v passed
+VERBOSE=0
+if [[ "$1" == "-v" ]]; then
+  VERBOSE=1
+fi
+
+# Files to check for freshness
+FILES_TO_CHECK=(
+  "$HOME/.bashrc"
+  "$HOME/.bash_local_env"
+  "$DIVTOOLS/dotfiles/.bash_aliases"
+  "$DIVTOOLS/dotfiles/.bash_profile"
+  "$DIVTOOLS/config/starship/overrides/$HOSTNAME.toml"
+  "$DIVTOOLS/config/starship/presets/${DT_STARSHIP_PRESET:-pastel-powerline-dt}.toml"
+  "$DIVTOOLS/config/starship/palettes/${DT_STARSHIP_PALETTE:-divtools}.toml"
+  "$DIVTOOLS/config/starship/palettes/${DT_STARSHIP_PALETTE}-${HOSTNAME}.toml"
+  #"$HOME/.config/starship.toml"
+  "$DIVTOOLS/config/tmux/.tmux.conf"
+)
+
+# If timestamp file missing, assume profile is stale
+if [[ ! -f "$TIMESTAMP_FILE" ]]; then
+  [[ $VERBOSE -eq 1 ]] && echo "Timestamp file missing: $TIMESTAMP_FILE"
+  [[ $VERBOSE -eq 1 ]] && echo "STALE"
+  [[ $VERBOSE -eq 1 ]] && echo "Debug: Exiting with 1 (0=fresh, 1=stale)"
+  exit 1
+fi
+
+PROFILE_TS=$(<"$TIMESTAMP_FILE")
+
+# Show the timestamp when in verbose mode
+if [[ $VERBOSE -eq 1 ]]; then
+  echo "Profile last sourced timestamp:"
+  echo "  Raw Epoch: $PROFILE_TS"
+  echo "  DateTime : $(date -d @$PROFILE_TS)"
+  echo ""
+fi
+
+STALE=0  # Start assuming fresh!
+
+for file in "${FILES_TO_CHECK[@]}"; do
+  [[ -f "$file" ]] || continue
+
+  FILE_TS=$(stat -c %Y "$file")
+
+  if [[ $VERBOSE -eq 1 ]]; then
+    echo "Checking: $file"
+    echo "  File mtime Raw: $FILE_TS"
+    echo "  File mtime Date: $(date -d @$FILE_TS)"
+    if (( FILE_TS > PROFILE_TS )); then
+      echo "  -> File is NEWER than profile timestamp! (STALE)"
+    else
+      echo "  -> File is older or same as profile timestamp."
+    fi
+    echo ""
+  fi
+
+  if (( FILE_TS > PROFILE_TS )); then
+    STALE=1  # Mark stale if any file is newer
+  fi
+done
+
+# At the end, if verbose, announce overall state
+if [[ $VERBOSE -eq 1 ]]; then
+  if [[ $STALE -eq 1 ]]; then
+    echo "STALE"
+    echo "Debug: Exiting with 1 (0=fresh, 1=stale)"
+    exit 1
+  else
+    echo "FRESH"
+    echo "Debug: Exiting with 0 (0=fresh, 1=stale)"
+    exit 0
+  fi
+else
+  # Non-verbose exit
+  exit $STALE
+fi

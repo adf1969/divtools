@@ -1,0 +1,6 @@
+
+[custom.sys_symbol]
+symbol = " DEFAULT "
+style = "bg:hostc_user"
+format = '[$symbol]($style)'
+when = "true"

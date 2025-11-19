@@ -1,0 +1,4 @@
+#!/bin/bash
+
+# Simple test/debug script for testing when values
+echo "false"

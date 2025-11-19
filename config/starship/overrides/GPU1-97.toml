@@ -1,0 +1,6 @@
+
+[custom.sys_symbol]
+symbol = "G gpu1-97 "
+style = "bg:hostc_user fg:hostfg_user"
+format = '[$symbol]($style)'
+when = "true"
