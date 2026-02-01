@@ -1,7 +1,12 @@
+# Always include .gitignore files, unless specifically excluded
+!.gitignore
 # Ignore .env and .env.host files in the docker folder and subfolders
+# IMPORTANT: NO .env.* files in docker/sites/ should ever be tracked
 docker/**/*.env
 docker/**/*.env.host
 docker/.env.host
+docker/**/*.env.*
+docker/sites/**/.env.*
 docker/secrets
 docker/appdata/traefik3/acme
 docker/appdata/dashy/dashboard-icons
@@ -25,3 +30,10 @@ scripts/office365/o365_rules.archive/
 scripts/office365/o365_users/
 scripts/venvs/
 stversions.out
+scripts/dhcp_dyn_update/backups/*
+scripts/dhcp_dyn_update/data/*
+mcp-servers/*/node_modules/*
+**/package-lock.json
+scripts/office365/todoist_db/*
+docker/appdata/t3ubu1/traefik3/acme/*
+docker/sites/s00-shared/glances/glances.conf
