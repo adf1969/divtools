@@ -1,0 +1,6 @@
+# Ignore all files and directories in this frigate/ folder
+*
+# Include *.yaml files
+!*.yaml
+# Include the .gitignore file itself
+!.gitignore

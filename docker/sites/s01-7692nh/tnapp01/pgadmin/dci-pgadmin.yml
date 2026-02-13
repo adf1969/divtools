@@ -43,6 +43,10 @@ services:
       - PGADMIN_DEFAULT_PASSWORD=${PGADMIN_DEFAULT_PASSWORD}
       # Disable master password prompt for saved passwords
       - PGADMIN_CONFIG_MASTER_PASSWORD_REQUIRED=False
+      - PGADMIN_CONFIG_ALLOW_SAVE_PASSWORD=True
+      - PGADMIN_CONFIG_MAX_LOGIN_ATTEMPTS=20 # or higher, 0 = disable lockouts entirely
+      - PGADMIN_CONFIG_LOGIN_ATTEMPTS_TIMEOUT=3600 # seconds before reset (default is low)
+
     healthcheck:
       test: ["CMD", "wget", "-q", "--spider", "http://localhost:80/misc/ping"]
       interval: 30s

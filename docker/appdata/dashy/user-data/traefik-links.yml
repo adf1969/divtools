@@ -3,9 +3,6 @@
 pageInfo:
   title: Traefik Links
   description: Links use tnlocal.divix.biz. Entries with "!!" are PrivateIPs and need to have Traefik Routers created for them.
-  navLinks:
-    - title: Private-10dot-Links
-      path: "/"
 
 # Optional app settings and configuration
 appConfig:

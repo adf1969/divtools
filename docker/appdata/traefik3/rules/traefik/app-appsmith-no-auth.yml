@@ -1,0 +1,24 @@
+http:
+  routers:
+    appsmith-service-rtr:
+      rule: 'Host(`appsmith.{{env "DOMAINNAME_2"}}`) || Host(`appsmith.w{{env "SITE_NUM"}}.{{env "DOMAINNAME_1"}}`)'
+      entryPoints:
+        - "websecure"
+      # MiddleWare breaks appsmith, fix later.
+      #middlewares:
+      #  - chain-no-auth
+      service: "appsmith-service"
+      tls:
+        certResolver: "dns-cloudflare"
+        options: tls-opts@file
+  services:
+    appsmith-service:
+      loadBalancer:
+        passHostHeader: true
+        serversTransport: "appsmith"
+        servers:
+          # appsmith URL
+          - url: "http://10.1.1.74:8080"
+  serversTransports:
+    appsmith:
+      insecureSkipVerify: true

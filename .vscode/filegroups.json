@@ -1,0 +1,128 @@
+{
+  "groups": [
+    {
+      "id": "1768081107481",
+      "name": "dotFiles",
+      "description": "",
+      "icon": "folder",
+      "files": [
+        "dotfiles/.bash_profile",
+        "dotfiles/.bash_aliases"
+      ]
+    },
+    {
+      "id": "1767982355612",
+      "name": "ADSI",
+      "description": "",
+      "icon": "folder",
+      "files": [
+        "projects/ads/docs/PROJECT-HISTORY.md",
+        "projects/ads/native/N-PROJECT-HISTORY.md",
+        "projects/ads/native/N-USER-COMMENTS.md",
+        "projects/ads/native/N-README.md",
+        "projects/ads/native/N-QUICK-REFERENCE.md",
+        "projects/ads/native/N-IMPLEMENTATION-STEPS.md",
+        "projects/ads/native/N-ADS-CONFIG-FILES.md",
+        "projects/ads/native/INSTALL-STEPS-FHM.LAN.md",
+        "scripts/ads/dt_ads_docker.sh",
+        "scripts/ads/dt_ads_native.py",
+        "scripts/ads/dt_ads_native.sh",
+        "scripts/ads/test/test_ads.py",
+        "scripts/dns_diag.sh",
+        "scripts/ssh_util.sh",
+        "docker/sites/s01-7692nh/ads1-98/dc-ads1-98.yml",
+        "projects/ads/phase1-configs/docker-compose/dci-samba.yml",
+        "docker/sites/s01-7692nh/ads1-98/samba/dci-samba.yml",
+        "docker/sites/s01-7692nh/ads1-98/samba/.env.samba",
+        "docker/sites/s01-7692nh/ads1-98/.env.ads1-98",
+        "projects/ads/phase1-configs/scripts/entrypoint.sh",
+        "projects/ads/native/QUICK-REFERENCE.md",
+        "projects/ads/native/IMPLEMENTATION-STEPS.md",
+        "projects/ads/native/samba-aliases-native.sh",
+        "projects/ads/phase1-configs/README.md",
+        "projects/ads/docs/PRD.md",
+        "projects/ads/docs/SAMBA-CONFIGURATION.md",
+        "projects/ads/phase1-configs/IMPLEMENTATION-STEPS.md",
+        "projects/ads/docs/DEPLOYMENT-GUIDE.md",
+        "scripts/ads/ENV-VAR-UPDATE.md",
+        "projects/ads/docs/ENVIRONMENT-VARIABLE-VALIDATION-IMPLEMENTATION.md",
+        "scripts/ads/LOGGING-ENHANCEMENTS.md",
+        "scripts/ads/AUDIT-TRAIL-REFERENCE.md",
+        "scripts/ads/UPDATE-COMPLETE.md",
+        "scripts/ads/IMPLEMENTATION-SUMMARY.md",
+        "scripts/ads/test/README.md",
+        "projects/dtpmenu/demo_menu.sh"
+      ]
+    },
+    {
+      "id": "1768428606683",
+      "name": "dtpyutil",
+      "description": "",
+      "icon": "folder",
+      "files": [
+        "projects/dtpyutil/README.md",
+        "projects/dtpyutil/docs/PROJECT-HISTORY.md",
+        "projects/dtpyutil/docs/BASH-INTEGRATION.md",
+        "projects/dtpyutil/test_bash_integration.sh"
+      ]
+    },
+    {
+      "id": "1768775704086",
+      "name": "TRAEFIK",
+      "description": "",
+      "icon": "folder",
+      "files": [
+        "docker/appdata/dashy/user-data/conf.yml",
+        "docker/appdata/dashy/user-data/traefik-links.yml",
+        "docker/appdata/dashy/user-data/l1.divix.biz-links.yml",
+        "docker/sites/s01-7692nh/traefik/.env.traefik",
+        "docker/include/traefik/traefik3_cli.yml",
+        "docker/appdata/traefik3/config/traefik/traefik.yml",
+        "docker/appdata/dashy/styles/user-defined-themes.scss",
+        "docker/include/traefik/dashy.yml"
+      ]
+    },
+    {
+      "id": "1768876117636",
+      "name": "AppSmith",
+      "description": "AppSmith",
+      "icon": "package",
+      "files": [
+        "docker/sites/s00-shared/.env.s00-shared",
+        "docker/sites/s01-7692nh/.env.s01-7692nh",
+        "docker/sites/s01-7692nh/tnapp01/.env.tnapp01",
+        "docker/sites/s01-7692nh/tnapp01/dc-tnapp01.yml",
+        "docker/sites/s01-7692nh/tnapp01/appsmith/dci-appsmith.yml"
+      ]
+    },
+    {
+      "id": "1769319278202",
+      "name": "GPU1-97",
+      "description": "GPU1-97",
+      "icon": "folder",
+      "files": [
+        "docker/sites/s01-7692nh/gpu1-97/.env.gpu1-97",
+        "scripts/comfy/comfy_run.sh",
+        "scripts/comfy/install_service.sh",
+        "scripts/comfy/comfy.service.example"
+      ]
+    },
+    {
+      "id": "1770950689745",
+      "name": "TNAPP01",
+      "description": "TNAPP01",
+      "icon": "package",
+      "files": [
+        "docker/sites/s01-7692nh/tnapp01/dc-tnapp01.yml",
+        "docker/sites/s01-7692nh/tnapp01/appsmith/dci-appsmith.yml",
+        "docker/sites/s01-7692nh/tnapp01/gotenberg/dci-gotenberg.yml",
+        "docker/sites/s01-7692nh/tnapp01/moodle/dci-moodle.yml",
+        "docker/sites/s01-7692nh/tnapp01/n8n/dci-n8n.yml",
+        "docker/sites/s01-7692nh/tnapp01/pgadmin/dci-pgadmin.yml",
+        "docker/sites/s01-7692nh/tnapp01/postgres/dci-postgres.yml",
+        "docker/sites/s01-7692nh/tnapp01/plane/dci-plane.yml",
+        "docker/sites/s01-7692nh/tnapp01/pgbackrest/pgbackrest.conf"
+      ]
+    }
+  ]
+}

@@ -18,6 +18,21 @@
 # Section Order: CIRPNVUE
 
 ########################### NETWORKS
+# SYSTEM-WIDE network subnets currently in use (avoid conflicts when adding new networks):
+# - bridge:               172.17.0.0/16   (Docker default bridge)
+# - docker_default:       172.18.0.0/16   (docker project default)
+# - docker_n8n-network:   172.19.0.0/16   (docker project n8n-network)
+# - tnapp01_default:      172.20.0.0/16   (auto-assigned by Docker Compose)
+# - socket_proxy:         172.20.201.0/24 (SOCKET_PROXY_NETWORK_BASE=172.20.201)
+# - t3_proxy:             172.20.200.0/24 (T3_PROXY_NETWORK_BASE=172.20.200)
+# - tnapp01_n8n-network:  172.21.0.0/16   (auto-assigned by Docker Compose)
+# - plane-app_default:    172.22.0.0/16   (plane-app project default) - CONFLICT ZONE
+# - moodle-network:       172.23.0.0/16   (moodle services)
+# - appsmith-network:     172.24.200.0/24 (defined in dci-appsmith.yml)
+#
+# Available ranges for new networks: 172.25.0.0/16, 172.26.0.0/16, 172.27.0.0/16+
+# WARNING: Avoid 172.22.0.0/16 range due to plane-app_default conflict!
+#
 # You may customize the network subnets (192.168.x.0/24) below as you please.
 # SOCKET_PROXY_NETWORK_BASE=192.168.201 - defined in .env
 # SOCKET_PROXY_NETWORK_CIDR=24 - defined in .env
@@ -87,6 +102,8 @@ include:
   - $DOCKER_HOSTDIR/pgadmin/dci-pgadmin.yml
   - $DOCKER_HOSTDIR/postgres/dci-postgres.yml
   - $DOCKER_HOSTDIR/moodle/dci-moodle.yml
+  - $DOCKER_HOSTDIR/gotenberg/dci-gotenberg.yml
+  - $DOCKER_HOSTDIR/appsmith/dci-appsmith.yml
 
   #- include/$HOSTNAME/traefik3_cli.yml  # Use CLI in docker-compose version of Traefik config
   #- include/$HOSTNAME/traefik3_config.yml  # Use Config File ./traefik.yml version of Traefik config

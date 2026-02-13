@@ -3,9 +3,6 @@
 pageInfo:
   title: Private-192dot Links
   description: Links use old 192.168.8.0 network IPs
-  navLinks:
-    - title: Private-10dot-Links
-      path: "/"
 
 # Optional app settings and configuration
 appConfig:

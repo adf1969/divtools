@@ -1,0 +1,14 @@
+{
+    "workbench.colorCustomizations": {
+        "activityBar.background": "#1e3a8a",
+        "activityBar.foreground": "#93c5fd",
+        "statusBar.background": "#1e3a8a",
+        "statusBar.foreground": "#93c5fd",
+        "titleBar.activeBackground": "#8a491eff",
+        "titleBar.activeForeground": "#fdd393ff",
+        "statusBarItem.remoteBackground": "#1e3a8a",
+        "statusBarItem.remoteForeground": "#93c5fd"
+    }
+    // ,"window.title": "${remoteName}${separator}${folder}${separator}${activeEditorShort}${separator}${appName}"
+    // ,"workbench.colorTheme": "Default Dark+"
+}

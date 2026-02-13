@@ -1,0 +1,24 @@
+http:
+  routers:
+    go2rtc-service-rtr:
+      rule: 'Host(`go2rtc.{{env "DOMAINNAME_2"}}`) || Host(`go2rtc.w{{env "SITE_NUM"}}.{{env "DOMAINNAME_1"}}`)'
+      entryPoints:
+        - "websecure"
+      # MiddleWare breaks go2rtc, fix later.
+      #middlewares:
+      #  - chain-no-auth
+      service: "go2rtc-service"
+      tls:
+        certResolver: "dns-cloudflare"
+        options: tls-opts@file
+  services:
+    go2rtc-service:
+      loadBalancer:
+        passHostHeader: true
+        serversTransport: "go2rtc"
+        servers:
+          # go2rtc URL
+          - url: "http://10.1.1.75:1984/"
+  serversTransports:
+    go2rtc:
+      insecureSkipVerify: true

@@ -1,0 +1,30 @@
+http:
+  routers:
+    l1-dashy-service-rtr:
+      #rule: 'Host(`{{env "DOMAINNAME_2"}}`) || Host(`w{{env "SITE_NUM"}}.{{env "DOMAINNAME_1"}}`)'
+      rule: |
+        Host(`{{env "DOMAINNAME_2"}}`) ||
+        Host(`w{{env "SITE_NUM"}}.{{env "DOMAINNAME_1"}}`) ||
+        Host(`dashy.{{env "DOMAINNAME_2"}}`) ||
+        Host(`dashy.w{{env "SITE_NUM"}}.{{env "DOMAINNAME_1"}}`)
+      entryPoints:
+        - "websecure"
+      # MiddleWare breaks l1-dashy, fix later.
+      #middlewares:
+      #  - chain-no-auth
+      service: "l1-dashy-service"
+      priority: 10
+      tls:
+        certResolver: "dns-cloudflare"
+        options: tls-opts@file
+  services:
+    l1-dashy-service:
+      loadBalancer:
+        passHostHeader: true
+        serversTransport: "l1-dashy"
+        servers:
+          # l1-dashy URL
+          - url: "http://10.1.1.103:8080"
+  serversTransports:
+    l1-dashy:
+      insecureSkipVerify: true

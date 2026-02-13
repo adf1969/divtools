@@ -1,0 +1,1 @@
+../projects/ads/samba-aliases.sh

@@ -16,7 +16,48 @@
 				"postgresql://divix:3mpms3@10.1.1.74/dthostmon"
 			],
 			"type": "stdio"
+		},
+		// ╭───────────────────────────────────────────────────────────╮
+		// │   Home Assistant MCP Server (Official Integration)        │
+		// │   https://www.home-assistant.io/integrations/mcp_server/  │
+		// │   Local wrapper: /scripts/mcp-proxy                       │
+		// │   Installed via: pip install mcp-proxy                    │
+		// ╰───────────────────────────────────────────────────────────╯
+		"homeassistant-proxy": {
+			"command": "/home/divix/divtools/scripts/mcp-proxy",
+			"args": [
+				"--transport=streamablehttp",
+				"--stateless",
+				"http://10.1.1.215:8123/api/mcp"
+			],
+			"env": {
+				"API_ACCESS_TOKEN": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiIxY2Y2NjRhZTcyZGI0MjkyYmM5ZDNiYmQ5MDdkYjNjZSIsImlhdCI6MTc2MzU3NDQ2MSwiZXhwIjoyMDc4OTM0NDYxfQ.IjL0NbE9rOsNvdlz8W5LCQ31Fn4HtWVto-P4vnIDETY"
+			},
+			"type": "stdio"
 		}
+		// ╭───────────────────────────────────────────────────────────╮
+		// │                  Node-RED MCP (R/W)                       │
+		// │  Using local server: /mcp-servers/nodered/server.js      │
+		// ╰───────────────────────────────────────────────────────────╯
+		,
+		"nodered-dt": {
+			"command": "node",
+			"args": [
+				"/home/divix/divtools/mcp-servers/nodered/server.js",
+				"http://10.1.1.215:1880",
+				"divix:3mpms3"
+			],
+			"type": "stdio"
+		}
+		// ,"nodered": {
+		// 	"command": "npx",
+		// 	"args": [
+		// 		"-y",
+		// 		"node-red-mcp-server@latest", // this exact package has the schema bug fixed in v1.2.8+
+		// 		"http://divix:3mpms3@10.1.1.215:1880"
+		// 	],
+		// 	"type": "stdio"
+		// }
 	},
 	"inputs": []
 }

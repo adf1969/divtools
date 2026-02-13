@@ -12,6 +12,9 @@ mqtt:
   password: 0218-ha-mqtt # Change to match the password set in your MQTT Broker
   stats_interval: 60
 
+auth:
+  enabled: true
+
 ffmpeg:
   hwaccel_args:
     - -hwaccel
@@ -60,11 +63,13 @@ snapshots:
   retain:
     default: 30
 
+#### DEBUG ####
 logger:
-  default: info # info | debug | warning | error | critical
+  default: warning # info | debug | warning | error | critical
   logs:
-    frigate.ffmpeg: debug # info | debug | warning | error | critical
-    frigate.mqtt: debug
+    frigate.ffmpeg: warning # info | debug | warning | error | critical
+    frigate.mqtt: warning
+#### DEBUG ####
 
 # Global settings (apply to all cameras unless overridden)
 birdseye:
@@ -72,6 +77,9 @@ birdseye:
   mode: objects # Only show detected objects in Birdseye view
 
 audio:
+  enabled: true
+
+detect:
   enabled: true
 
 objects:
@@ -111,168 +119,6 @@ go2rtc:
       session: tcp
 
   streams:
-    ##  OLD Streams ###
-    # # P1_RD2_Deck_West | Reolink Duo 2 PoE 4K 180 Deg, Reolink Duo 2
-    # p1_deck_west_main:
-    #   - rtsp://{FRIGATE_CAM_U}:{FRIGATE_CAM_P}@192.168.13.61:554/h264Preview_01_main
-    # p1_deck_west_detect:
-    #   - rtsp://{FRIGATE_CAM_U}:{FRIGATE_CAM_P}@192.168.13.61:554/h264Preview_01_sub
-    # p1_deck_west_view:
-    #   - rtsp://{FRIGATE_CAM_U}:{FRIGATE_CAM_P}@192.168.13.61:554/h264Preview_01_main
-
-    # # P2_RD2_Office | Reolink Duo 2 PoE 4K 180 Deg, Reolink Duo 2
-    # p2_office_main:
-    #   - rtsp://{FRIGATE_CAM_U}:{FRIGATE_CAM_P}@192.168.13.62:554/h264Preview_01_main
-    # p2_office_detect:
-    #   - rtsp://{FRIGATE_CAM_U}:{FRIGATE_CAM_P}@192.168.13.62:554/h264Preview_01_sub
-    # p2_office_view:
-    #   - rtsp://{FRIGATE_CAM_U}:{FRIGATE_CAM_P}@192.168.13.62:554/h264Preview_01_main
-
-    # # P3_RD2W_test | Reolink Duo 2 WiFi 4K 180 Deg, Reolink Duo 2 WiFi
-    # p3_rd2w_test_main:
-    #   - rtsp://{FRIGATE_CAM_U}:{FRIGATE_CAM_P}@192.168.13.63:554/h264Preview_01_main
-    # p3_rd2w_test_detect:
-    #   - rtsp://{FRIGATE_CAM_U}:{FRIGATE_CAM_P}@192.168.13.63:554/h264Preview_01_sub
-    # p3_rd2w_test_view:
-    #   - rtsp://{FRIGATE_CAM_U}:{FRIGATE_CAM_P}@192.168.13.63:554/h264Preview_01_main
-
-    # # P4_AC_Driveway | Amcrest 4Kx2 8MP Bullet-180, IP8M-DLB2998EW-AI
-    # p4_ac_driveway_main:
-    #   - rtsp://{FRIGATE_CAM_U}:{FRIGATE_CAM_P}@192.168.13.64:554/cam/realmonitor?channel=1&subtype=0&unicast=true&proto=Onvif
-    # p4_ac_driveway_detect:
-    #   - rtsp://{FRIGATE_CAM_U}:{FRIGATE_CAM_P}@192.168.13.64:554/cam/realmonitor?channel=1&subtype=2&unicast=true&proto=Onvif
-    # p4_ac_driveway_view:
-    #   - rtsp://{FRIGATE_CAM_U}:{FRIGATE_CAM_P}@192.168.13.64:554/cam/realmonitor?channel=1&subtype=1&unicast=true&proto=Onvif
-
-    # # P5_AC_Office | Amcrest 4Kx2 8MP Bullet-180, IP8M-DLB2998EW-AI
-    # p5_ac_office_main:
-    #   - rtsp://{FRIGATE_CAM_U}:{FRIGATE_CAM_P}@192.168.13.65:554/cam/realmonitor?channel=1&subtype=0&unicast=true&proto=Onvif
-    # p5_ac_office_detect:
-    #   - rtsp://{FRIGATE_CAM_U}:{FRIGATE_CAM_P}@192.168.13.65:554/cam/realmonitor?channel=1&subtype=2&unicast=true&proto=Onvif
-    # p5_ac_office_view:
-    #   - rtsp://{FRIGATE_CAM_U}:{FRIGATE_CAM_P}@192.168.13.65:554/cam/realmonitor?channel=1&subtype=1&unicast=true&proto=Onvif
-
-    # # P6_AC_Test | Amcrest 4Kx2 8MP Bullet-180, IP8M-DLB2998EW-AI
-    # p6_ac_test_main:
-    #   - rtsp://{FRIGATE_CAM_U}:{FRIGATE_CAM_P}@192.168.13.66:554/cam/realmonitor?channel=1&subtype=0&unicast=true&proto=Onvif
-    # p6_ac_test_detect:
-    #   - rtsp://{FRIGATE_CAM_U}:{FRIGATE_CAM_P}@192.168.13.66:554/cam/realmonitor?channel=1&subtype=2&unicast=true&proto=Onvif
-    # p6_ac_test_view:
-    #   - rtsp://{FRIGATE_CAM_U}:{FRIGATE_CAM_P}@192.168.13.66:554/cam/realmonitor?channel=1&subtype=1&unicast=true&proto=Onvif
-
-    # # P7_AC_Test | Amcrest 5MP Dome V3, IP5M-T1179EW-AI-V3
-    # p7_ac_test_main:
-    #   - rtsp://{FRIGATE_CAM_U}:{FRIGATE_CAM_P}@192.168.13.67:554/cam/realmonitor?channel=1&subtype=0&unicast=true&proto=Onvif
-    # p7_ac_test_detect:
-    #   - rtsp://{FRIGATE_CAM_U}:{FRIGATE_CAM_P}@192.168.13.67:554/cam/realmonitor?channel=1&subtype=1&unicast=true&proto=Onvif
-    # p7_ac_test_view:
-    #   - rtsp://{FRIGATE_CAM_U}:{FRIGATE_CAM_P}@192.168.13.67:554/cam/realmonitor?channel=1&subtype=0&unicast=true&proto=Onvif
-
-    # # P8_RLC811_test | Reolink RLC-811WA, Reolink RLC-811WA
-    # p8_rlc811w_test_main:
-    #   - rtsp://{FRIGATE_CAM_U}:{FRIGATE_CAM_P}@192.168.13.68:554/h264Preview_01_main
-    # p8_rlc811w_test_detect:
-    #   - rtsp://{FRIGATE_CAM_U}:{FRIGATE_CAM_P}@192.168.13.68:554/h264Preview_01_sub
-    # p8_rlc811w_test_view:
-    #   - rtsp://{FRIGATE_CAM_U}:{FRIGATE_CAM_P}@192.168.13.68:554/h264Preview_01_main
-
-    # # P9_RD2_test | Reolink Duo 2 WiFi 4K 180 Deg, Reolink Duo 2 WiFi
-    # p9_rd2w_test_main:
-    #   - rtsp://{FRIGATE_CAM_U}:{FRIGATE_CAM_P}@192.168.13.69:554/h264Preview_01_main
-    # p9_rd2w_test_detect:
-    #   - rtsp://{FRIGATE_CAM_U}:{FRIGATE_CAM_P}@192.168.13.69:554/h264Preview_01_sub
-    # p9_rd2w_test_view:
-    #   - rtsp://{FRIGATE_CAM_U}:{FRIGATE_CAM_P}@192.168.13.69:554/h264Preview_01_main
-
-    # # P10_Ank_Test | Annke C1200 4K 12MP | 191DD, C1200 | 191DD
-    # p10_ank_test_main:
-    #   - rtsp://{FRIGATE_CAM_U}:{FRIGATE_CAM_P}@192.168.13.70:554/H264/ch1/main/av_stream
-    # p10_ank_test_detect:
-    #   - rtsp://{FRIGATE_CAM_U}:{FRIGATE_CAM_P}@192.168.13.70:554/H264/ch1/sub/av_stream
-    # p10_ank_test_view:
-    #   - rtsp://{FRIGATE_CAM_U}:{FRIGATE_CAM_P}@192.168.13.70:554/H264/ch1/sub/av_stream
-
-    # # P11_Ank_Test | Annke C1200 4K 12MP, C1200 | 191DD
-    # p11_ank_test_main:
-    #   - rtsp://{FRIGATE_CAM_ADMIN_U}:{FRIGATE_CAM_ADMIN_P}@192.168.13.71:554/H264/ch1/main/av_stream
-    # p11_ank_test_detect:
-    #   - rtsp://{FRIGATE_CAM_ADMIN_U}:{FRIGATE_CAM_ADMIN_P}@192.168.13.71:554/H264/ch1/sub/av_stream
-    # p11_ank_test_view:
-    #   - rtsp://{FRIGATE_CAM_ADMIN_U}:{FRIGATE_CAM_ADMIN_P}@192.168.13.71:554/H264/ch1/sub/av_stream
-
-    # # P12_Ank_Test | Annke FCD600 6MP 180, FCD600 | 151DW
-    # p12_ank_test_main:
-    #   - rtsp://{FRIGATE_CAM_U}:{FRIGATE_CAM_P}@192.168.13.72:554/H264/ch1/main/av_stream#video=copy&rtsp_transport=tcp&audio=copy
-    # p12_ank_test_detect:
-    #   - rtsp://{FRIGATE_CAM_U}:{FRIGATE_CAM_P}@192.168.13.72:554/H264/ch1/sub/av_stream#video=copy&rtsp_transport=tcp&audio=copy
-    # p12_ank_test_view:
-    #   - rtsp://{FRIGATE_CAM_U}:{FRIGATE_CAM_P}@192.168.13.72:554/H264/ch1/sub/av_stream
-
-    # # P13_Ank_Test | Annke C500 3K 5MP | 151DS, C500 | 151DS
-    # p13_ank_test_main:
-    #   - rtsp://{FRIGATE_CAM_U}:{FRIGATE_CAM_P}@192.168.13.73:554/H264/ch1/main/av_stream
-    # p13_ank_test_detect:
-    #   - rtsp://{FRIGATE_CAM_U}:{FRIGATE_CAM_P}@192.168.13.73:554/H264/ch1/sub/av_stream
-    # p13_ank_test_view:
-    #   - rtsp://{FRIGATE_CAM_U}:{FRIGATE_CAM_P}@192.168.13.73:554/H264/ch1/sub/av_stream
-
-    # # P14_RLC811_test | Reolink RLC-811WA, Reolink RLC-811WA
-    # p14_rlc811w_test_main:
-    #   - rtsp://{FRIGATE_CAM_U}:{FRIGATE_CAM_P}@192.168.13.74:554/h264Preview_01_main
-    # p14_rlc811w_test_detect:
-    #   - rtsp://{FRIGATE_CAM_U}:{FRIGATE_CAM_P}@192.168.13.74:554/h264Preview_01_sub
-    # p14_rlc811w_test_view:
-    #   - rtsp://{FRIGATE_CAM_U}:{FRIGATE_CAM_P}@192.168.13.74:554/h264Preview_01_main
-
-    # # P15_AC_Test | Amcrest 5MP Dome V3, IP5M-T1179EW-AI-V3
-    # p15_ac_test_main:
-    #   - rtsp://{FRIGATE_CAM_U}:{FRIGATE_CAM_P}@192.168.13.75:554/cam/realmonitor?channel=1&subtype=0&unicast=true&proto=Onvif
-    # p15_ac_test_detect:
-    #   - rtsp://{FRIGATE_CAM_U}:{FRIGATE_CAM_P}@192.168.13.75:554/cam/realmonitor?channel=1&subtype=1&unicast=true&proto=Onvif
-    # p15_ac_test_view:
-    #   - rtsp://{FRIGATE_CAM_U}:{FRIGATE_CAM_P}@192.168.13.75:554/cam/realmonitor?channel=1&subtype=0&unicast=true&proto=Onvif
-
-    # # P16_Ank_test | Annke C500 3K 5MP | 151DS, C500 | 151DS
-    # p16_ank_test_main:
-    #   - rtsp://{FRIGATE_CAM_U}:{FRIGATE_CAM_P}@192.168.13.76:554/H264/ch1/main/av_stream
-    # p16_ank_test_detect:
-    #   - rtsp://{FRIGATE_CAM_U}:{FRIGATE_CAM_P}@192.168.13.76:554/H264/ch1/sub/av_stream
-    # p16_ank_test_view:
-    #   - rtsp://{FRIGATE_CAM_U}:{FRIGATE_CAM_P}@192.168.13.76:554/H264/ch1/sub/av_stream
-
-    # # THIS FAILS
-    # # P19_VIkV_Test | VikVision 4K 8MP PTZ 18x OptZoom, PTZ-4818X-IS2
-    # # p19_vikv_test_main:
-    # #   - rtsp://{FRIGATE_CAM_U}:{FRIGATE_CAM_P}@192.168.13.79:554/stream0?analyzeduration=10000000&probesize=10000000
-    # # p19_vikv_test_detect:
-    # #   - rtsp://{FRIGATE_CAM_U}:{FRIGATE_CAM_P}@192.168.13.79:554/stream1?analyzeduration=10000000&probesize=10000000
-    # # p19_vikv_test_view:
-    # #   - rtsp://{FRIGATE_CAM_U}:{FRIGATE_CAM_P}@192.168.13.79:554/stream2?analyzeduration=10000000&probesize=10000000
-
-    # # Attempt using ffmpeg
-    # p19_vikv_test_main:
-    #   - ffmpeg:rtsp://{FRIGATE_CAM_U}:{FRIGATE_CAM_P}@192.168.13.79:554/stream0?analyzeduration=10000000&probesize=10000000
-    # p19_vikv_test_detect:
-    #   - ffmpeg:rtsp://{FRIGATE_CAM_U}:{FRIGATE_CAM_P}@192.168.13.79:554/stream1?analyzeduration=10000000&probesize=10000000
-    # p19_vikv_test_view:
-    #   - ffmpeg:rtsp://{FRIGATE_CAM_U}:{FRIGATE_CAM_P}@192.168.13.79:554/stream2?analyzeduration=10000000&probesize=10000000
-
-    # # P20_ET_Test | EmpireTech 8MP 4K Low Light Turret, IPC-Color4K-T 3.6mm
-    # p20_et_test_main:
-    #   - rtsp://{FRIGATE_CAM_U}:{FRIGATE_CAM_P}@192.168.13.80:554/cam/realmonitor?channel=1&subtype=0&unicast=true&proto=Onvif
-    # p20_et_test_detect:
-    #   - rtsp://{FRIGATE_CAM_U}:{FRIGATE_CAM_P}@192.168.13.80:554/cam/realmonitor?channel=1&subtype=1&unicast=true&proto=Onvif
-    # p20_et_test_view:
-    #   - rtsp://{FRIGATE_CAM_U}:{FRIGATE_CAM_P}@192.168.13.80:554/cam/realmonitor?channel=1&subtype=2&unicast=true&proto=Onvif
-
-    # # P21_ET_Test | EmpireTech 8MP 4K Low Light Turret, IPC-Color4K-T 3.6mm
-    # p21_et_test_main:
-    #   - rtsp://{FRIGATE_CAM_U}:{FRIGATE_CAM_P}@192.168.13.81:554/cam/realmonitor?channel=1&subtype=0&unicast=true&proto=Onvif
-    # p21_et_test_detect:
-    #   - rtsp://{FRIGATE_CAM_U}:{FRIGATE_CAM_P}@192.168.13.81:554/cam/realmonitor?channel=1&subtype=1&unicast=true&proto=Onvif
-    # p21_et_test_view:
-    #   - rtsp://{FRIGATE_CAM_U}:{FRIGATE_CAM_P}@192.168.13.81:554/cam/realmonitor?channel=1&subtype=2&unicast=true&proto=Onvif
-
     ### NEW STREAMS ###
     # C01_RD2_Deck_West | Reolink Duo 2 PoE 4K 180 Deg, Reolink Duo 2
     c01_rd2_deck_west_main:
@@ -282,12 +128,12 @@ go2rtc:
     c01_rd2_deck_west_view:
       - rtsp://{FRIGATE_CAM_U}:{FRIGATE_CAM_P}@10.1.10.61:554/h264Preview_01_main
 
-    # P02_RD2_Test | Reolink Duo 2 PoE 4K 180 Deg, Reolink Duo 2
-    p02_rd2_office_main:
+    # C02_RD2_Shop_Back | Reolink Duo 2 PoE 4K 180 Deg, Reolink Duo 2
+    c02_rd2_shop_back_main:
       - rtsp://{FRIGATE_CAM_U}:{FRIGATE_CAM_P}@10.1.10.62:554/h264Preview_01_main
-    p02_rd2_office_detect:
+    c02_rd2_shop_back_detect:
       - rtsp://{FRIGATE_CAM_U}:{FRIGATE_CAM_P}@10.1.10.62:554/h264Preview_01_sub
-    p02_rd2_office_view:
+    c02_rd2_shop_back_view:
       - rtsp://{FRIGATE_CAM_U}:{FRIGATE_CAM_P}@10.1.10.62:554/h264Preview_01_main
 
     # C03_RD2W_Deck_East | Reolink Duo 2 WiFi 4K 180 Deg, Reolink Duo 2 WiFi
@@ -306,36 +152,36 @@ go2rtc:
     c04_ac_shop_view:
       - rtsp://{FRIGATE_CAM_U}:{FRIGATE_CAM_P}@10.1.10.64:554/cam/realmonitor?channel=1&subtype=1&unicast=true&proto=Onvif
 
-    # P05_AC_Test | Amcrest 4Kx2 8MP Bullet-180, IP8M-DLB2998EW-AI
-    p05_ac_test_main:
+    # C05_AC_Shop_East | Amcrest 4Kx2 8MP Bullet-180, IP8M-DLB2998EW-AI
+    c05_ac_shop_east_main:
       - rtsp://{FRIGATE_CAM_U}:{FRIGATE_CAM_P}@10.1.10.65:554/cam/realmonitor?channel=1&subtype=0&unicast=true&proto=Onvif
-    p05_ac_test_detect:
+    c05_ac_shop_east_detect:
       - rtsp://{FRIGATE_CAM_U}:{FRIGATE_CAM_P}@10.1.10.65:554/cam/realmonitor?channel=1&subtype=2&unicast=true&proto=Onvif
-    p05_ac_test_view:
+    c05_ac_shop_east_view:
       - rtsp://{FRIGATE_CAM_U}:{FRIGATE_CAM_P}@10.1.10.65:554/cam/realmonitor?channel=1&subtype=1&unicast=true&proto=Onvif
 
-    # P06_AC_Test | Amcrest 4Kx2 8MP Bullet-180, IP8M-DLB2998EW-AI
-    p06_ac_test_main:
+    # C06_AC_House_West | Amcrest 4Kx2 8MP Bullet-180, IP8M-DLB2998EW-AI
+    c06_ac_house_west_main:
       - rtsp://{FRIGATE_CAM_U}:{FRIGATE_CAM_P}@10.1.10.66:554/cam/realmonitor?channel=1&subtype=0&unicast=true&proto=Onvif
-    p06_ac_test_detect:
+    c06_ac_house_west_detect:
       - rtsp://{FRIGATE_CAM_U}:{FRIGATE_CAM_P}@10.1.10.66:554/cam/realmonitor?channel=1&subtype=2&unicast=true&proto=Onvif
-    p06_ac_test_view:
+    c06_ac_house_west_view:
       - rtsp://{FRIGATE_CAM_U}:{FRIGATE_CAM_P}@10.1.10.66:554/cam/realmonitor?channel=1&subtype=1&unicast=true&proto=Onvif
 
-    # P07_AC_Test | Amcrest 5MP Dome V3, IP5M-T1179EW-AI-V3
-    p07_ac_test_main:
+    # C07_AC_Office_FrontDoor | Amcrest 5MP Dome V3, IP5M-T1179EW-AI-V3
+    c07_ac_office_frontdoor_main:
       - rtsp://{FRIGATE_CAM_U}:{FRIGATE_CAM_P}@10.1.10.67:554/cam/realmonitor?channel=1&subtype=0&unicast=true&proto=Onvif
-    p07_ac_test_detect:
+    c07_ac_office_frontdoor_detect:
       - rtsp://{FRIGATE_CAM_U}:{FRIGATE_CAM_P}@10.1.10.67:554/cam/realmonitor?channel=1&subtype=1&unicast=true&proto=Onvif
-    p07_ac_test_view:
+    c07_ac_office_frontdoor_view:
       - rtsp://{FRIGATE_CAM_U}:{FRIGATE_CAM_P}@10.1.10.67:554/cam/realmonitor?channel=1&subtype=0&unicast=true&proto=Onvif
 
     # C08_RLC811_Garage | Reolink RLC-811WA, Reolink RLC-811WA
-    c08_rlc811w_garage_main:
+    c08_rlc811_garage_main:
       - rtsp://{FRIGATE_CAM_U}:{FRIGATE_CAM_P}@10.1.10.68:554/h264Preview_01_main
-    c08_rlc811w_garage_detect:
+    c08_rlc811_garage_detect:
       - rtsp://{FRIGATE_CAM_U}:{FRIGATE_CAM_P}@10.1.10.68:554/h264Preview_01_sub
-    c08_rlc811w_garage_view:
+    c08_rlc811_garage_view:
       - rtsp://{FRIGATE_CAM_U}:{FRIGATE_CAM_P}@10.1.10.68:554/h264Preview_01_main
 
     # C09_RD2W_Driveway | Reolink Duo 2 WiFi 4K 180 Deg, Reolink Duo 2 WiFi
@@ -346,525 +192,81 @@ go2rtc:
     c09_rd2w_driveway_view:
       - rtsp://{FRIGATE_CAM_U}:{FRIGATE_CAM_P}@10.1.10.69:554/h264Preview_01_main
 
-    # P10_Ank_Test | Annke C1200 4K 12MP | 191DD, C1200 | 191DD
-    p10_ank_test_main:
-      - rtsp://{FRIGATE_CAM_ADMIN_U}:{FRIGATE_CAM_ADMIN_P}@10.1.10.70:554/H264/ch1/main/av_stream
-    p10_ank_test_detect:
-      - rtsp://{FRIGATE_CAM_ADMIN_U}:{FRIGATE_CAM_ADMIN_P}@10.1.10.70:554/H264/ch1/sub/av_stream
-    p10_ank_test_view:
-      - rtsp://{FRIGATE_CAM_ADMIN_U}:{FRIGATE_CAM_ADMIN_P}@10.1.10.70:554/H264/ch1/sub/av_stream
-
-    # P11_Ank_Test | Annke C1200 4K 12MP | 191DD, C1200 | 191DD
-    p11_ank_test_main:
+    # C11_Ank_House_NW | Annke C1200 4K 12MP | 191DD, C1200 | 191DD
+    c11_ank_house_nw_main:
       - rtsp://{FRIGATE_CAM_ADMIN_U}:{FRIGATE_CAM_ADMIN_P}@10.1.10.71:554/H264/ch1/main/av_stream
-    p11_ank_test_detect:
+    c11_ank_house_nw_detect:
       - rtsp://{FRIGATE_CAM_ADMIN_U}:{FRIGATE_CAM_ADMIN_P}@10.1.10.71:554/H264/ch1/sub/av_stream
-    p11_ank_test_view:
+    c11_ank_house_nw_view:
       - rtsp://{FRIGATE_CAM_ADMIN_U}:{FRIGATE_CAM_ADMIN_P}@10.1.10.71:554/H264/ch1/sub/av_stream
 
-    # P12_Ank_Test | Annke FCD600 6MP 180 | 151DW, FCD600 | 151DW
-    p12_ank_test_main:
+    # C12_Ank_House_SW | Annke FCD600 6MP 180 | 151DW, FCD600 | 151DW
+    c12_ank_house_sw_main:
       - rtsp://{FRIGATE_CAM_U}:{FRIGATE_CAM_P}@10.1.10.72:554/H264/ch1/main/av_stream
-    p12_ank_test_detect:
+    c12_ank_house_sw_detect:
       - rtsp://{FRIGATE_CAM_U}:{FRIGATE_CAM_P}@10.1.10.72:554/H264/ch1/sub/av_stream
-    p12_ank_test_view:
+    c12_ank_house_sw_view:
       - rtsp://{FRIGATE_CAM_U}:{FRIGATE_CAM_P}@10.1.10.72:554/H264/ch1/sub/av_stream
 
-    # P13_Ank_Test | Annke C500 3K 5MP | 151DS, C500 | 151DS
-    p13_ank_test_main:
-      - rtsp://{FRIGATE_CAM_U}:{FRIGATE_CAM_P}@10.1.10.73:554/H264/ch1/main/av_stream
-    p13_ank_test_detect:
-      - rtsp://{FRIGATE_CAM_U}:{FRIGATE_CAM_P}@10.1.10.73:554/H264/ch1/sub/av_stream
-    p13_ank_test_view:
-      - rtsp://{FRIGATE_CAM_U}:{FRIGATE_CAM_P}@10.1.10.73:554/H264/ch1/sub/av_stream
-
-    # P14_RLC811_Test | Reolink RLC-811WA, Reolink RLC-811WA
-    p14_rlc811w_test_main:
+    # C14_RLC811_BonusRoom | Reolink RLC-811WA, Reolink RLC-811WA
+    c14_rlc811_bonusroom_main:
       - rtsp://{FRIGATE_CAM_U}:{FRIGATE_CAM_P}@10.1.10.74:554/h264Preview_01_main
-    p14_rlc811w_test_detect:
+    c14_rlc811_bonusroom_detect:
       - rtsp://{FRIGATE_CAM_U}:{FRIGATE_CAM_P}@10.1.10.74:554/h264Preview_01_sub
-    p14_rlc811w_test_view:
+    c14_rlc811_bonusroom_view:
       - rtsp://{FRIGATE_CAM_U}:{FRIGATE_CAM_P}@10.1.10.74:554/h264Preview_01_main
 
-    # P15_AC_Test | Amcrest 5MP Dome V3, IP5M-T1179EW-AI-V3
-    p15_ac_test_main:
-      - rtsp://{FRIGATE_CAM_U}:{FRIGATE_CAM_P}@10.1.10.75:554/cam/realmonitor?channel=1&subtype=0&unicast=true&proto=Onvif
-    p15_ac_test_detect:
-      - rtsp://{FRIGATE_CAM_U}:{FRIGATE_CAM_P}@10.1.10.75:554/cam/realmonitor?channel=1&subtype=1&unicast=true&proto=Onvif
-    p15_ac_test_view:
-      - rtsp://{FRIGATE_CAM_U}:{FRIGATE_CAM_P}@10.1.10.75:554/cam/realmonitor?channel=1&subtype=0&unicast=true&proto=Onvif
-
-    # P16_Ank_Test | Annke C500 3K 5MP | 151DS, C500 | 151DS
-    p16_ank_test_main:
-      - rtsp://{FRIGATE_CAM_U}:{FRIGATE_CAM_P}@10.1.10.76:554/H264/ch1/main/av_stream
-    p16_ank_test_detect:
-      - rtsp://{FRIGATE_CAM_U}:{FRIGATE_CAM_P}@10.1.10.76:554/H264/ch1/sub/av_stream
-    p16_ank_test_view:
-      - rtsp://{FRIGATE_CAM_U}:{FRIGATE_CAM_P}@10.1.10.76:554/H264/ch1/sub/av_stream
-
-    # P17_Ank_Test | Annke C500 3K 5MP | 151DL, C500 | 151DL
-    p17_ank_test_main:
-      - rtsp://{FRIGATE_CAM_U}:{FRIGATE_CAM_P}@10.1.10.77:554/H264/ch1/main/av_stream
-    p17_ank_test_detect:
-      - rtsp://{FRIGATE_CAM_U}:{FRIGATE_CAM_P}@10.1.10.77:554/H264/ch1/sub/av_stream
-    p17_ank_test_view:
-      - rtsp://{FRIGATE_CAM_U}:{FRIGATE_CAM_P}@10.1.10.77:554/H264/ch1/sub/av_stream
-
-    # P18_Ank_Test | Annke C500 3K 5MP | 151DL, C500 | 151DL
-    p18_ank_test_main:
-      - rtsp://{FRIGATE_CAM_U}:{FRIGATE_CAM_P}@10.1.10.78:554/H264/ch1/main/av_stream
-    p18_ank_test_detect:
-      - rtsp://{FRIGATE_CAM_U}:{FRIGATE_CAM_P}@10.1.10.78:554/H264/ch1/sub/av_stream
-    p18_ank_test_view:
-      - rtsp://{FRIGATE_CAM_U}:{FRIGATE_CAM_P}@10.1.10.78:554/H264/ch1/sub/av_stream
-
-    # P19_VIkV_Test | VikVision 4K 8MP PTZ 18x OptZoom, PTZ-4818X-IS2
-    p19_vikv_test_main:
+    # C19_VV_Office_FrontDoor | VikVision 4K 8MP PTZ 18x OptZoom, PTZ-4818X-IS2
+    c19_vv_office_frontdoor_main:
       - ffmpeg:rtsp://{FRIGATE_CAM_U}:{FRIGATE_CAM_P}@10.1.10.79:554/stream0?analyzeduration=10000000&probesize=10000000
-    p19_vikv_test_detect:
+    c19_vv_office_frontdoor_detect:
       - ffmpeg:rtsp://{FRIGATE_CAM_U}:{FRIGATE_CAM_P}@10.1.10.79:554/stream1?analyzeduration=10000000&probesize=10000000
-    p19_vikv_test_view:
+    c19_vv_office_frontdoor_view:
       - ffmpeg:rtsp://{FRIGATE_CAM_U}:{FRIGATE_CAM_P}@10.1.10.79:554/stream2?analyzeduration=10000000&probesize=10000000
 
-    # P20_ET_Test | EmpireTech 8MP 4K Low Light Turret, IPC-Color4K-T 3.6mm
-    p20_et_test_main:
+    # C20_ET_HouseFrontDriveway | EmpireTech 8MP 4K Low Light Turret, IPC-Color4K-T 3.6mm
+    c20_et_housefrontdriveway_main:
       - rtsp://{FRIGATE_CAM_U}:{FRIGATE_CAM_P}@10.1.10.80:554/cam/realmonitor?channel=1&subtype=0&unicast=true&proto=Onvif
-    p20_et_test_detect:
+    c20_et_housefrontdriveway_detect:
       - rtsp://{FRIGATE_CAM_U}:{FRIGATE_CAM_P}@10.1.10.80:554/cam/realmonitor?channel=1&subtype=1&unicast=true&proto=Onvif
-    p20_et_test_view:
+    c20_et_housefrontdriveway_view:
       - rtsp://{FRIGATE_CAM_U}:{FRIGATE_CAM_P}@10.1.10.80:554/cam/realmonitor?channel=1&subtype=2&unicast=true&proto=Onvif
 
-    # P21_ET_Test | EmpireTech 8MP 4K Low Light Turret, IPC-Color4K-T 3.6mm
-    p21_et_test_main:
+    # C21_ET_Shop_Driveway | EmpireTech 8MP 4K Low Light Turret, IPC-Color4K-T 3.6mm
+    c21_et_shop_driveway_main:
       - rtsp://{FRIGATE_CAM_U}:{FRIGATE_CAM_P}@10.1.10.81:554/cam/realmonitor?channel=1&subtype=0&unicast=true&proto=Onvif
-    p21_et_test_detect:
+    c21_et_shop_driveway_detect:
       - rtsp://{FRIGATE_CAM_U}:{FRIGATE_CAM_P}@10.1.10.81:554/cam/realmonitor?channel=1&subtype=1&unicast=true&proto=Onvif
-    p21_et_test_view:
+    c21_et_shop_driveway_view:
       - rtsp://{FRIGATE_CAM_U}:{FRIGATE_CAM_P}@10.1.10.81:554/cam/realmonitor?channel=1&subtype=2&unicast=true&proto=Onvif
+
+    # C22_RL_Doorbell_Front | REOLINK WiFi 2K Doorbell Cam 2K, 4:3, RL Doorbell Cam Wide Angle
+    c22_rl_doorbell_front_main:
+      - rtsp://{FRIGATE_CAM_U}:{FRIGATE_CAM_P}@10.1.10.82:554/h264Preview_01_main
+    c22_rl_doorbell_front_detect:
+      - rtsp://{FRIGATE_CAM_U}:{FRIGATE_CAM_P}@10.1.10.82:554/h264Preview_01_sub
+    c22_rl_doorbell_front_view:
+      - rtsp://{FRIGATE_CAM_U}:{FRIGATE_CAM_P}@10.1.10.82:554/h264Preview_01_main
+
+    # C23_RL_Doorbell_Garage | REOLINK WiFi 2K Doorbell Cam 2K, 4:3, RL Doorbell Cam Wide Angle
+    c23_rl_doorbell_garage_main:
+      - rtsp://{FRIGATE_CAM_U}:{FRIGATE_CAM_P}@10.1.10.83:554/h264Preview_01_main
+    c23_rl_doorbell_garage_detect:
+      - rtsp://{FRIGATE_CAM_U}:{FRIGATE_CAM_P}@10.1.10.83:554/h264Preview_01_sub
+    c23_rl_doorbell_garage_view:
+      - rtsp://{FRIGATE_CAM_U}:{FRIGATE_CAM_P}@10.1.10.83:554/h264Preview_01_main
+
+    # C24_AC_Shop_Front_Flood | Amcrest Floodlight Cam 1080P, ASH26-W
+    c24_ac_shop_front_flood_main:
+      - rtsp://{FRIGATE_CAM_ADMIN_U}:{FRIGATE_CAM_ADMIN_P}@10.1.10.84:554/cam/realmonitor?channel=1&subtype=0
+    c24_ac_shop_front_flood_detect:
+      - rtsp://{FRIGATE_CAM_ADMIN_U}:{FRIGATE_CAM_ADMIN_P}@10.1.10.84:554/cam/realmonitor?channel=1&subtype=1
+    c24_ac_shop_front_flood_view:
+      - rtsp://{FRIGATE_CAM_ADMIN_U}:{FRIGATE_CAM_ADMIN_P}@10.1.10.84:554/cam/realmonitor?channel=1&subtype=0
 
 ### END NEW STREAMS
 
 cameras:
-  p1_rd2_deck_west:
-    enabled: false # DISABLE THIS CAMERA
-    ffmpeg:
-      output_args:
-        record: preset-record-generic-audio-aac #Insert this if your camera supports audio output
-      inputs:
-        - path: rtsp://camuser:0907-Avcadf@192.168.13.61:554/h264Preview_01_main
-          roles:
-            - record
-            - audio
-        - path: rtsp://camuser:0907-Avcadf@192.168.13.61:554/h264Preview_01_sub
-          roles:
-            - detect
-  p5_ac_hobby_room_test:
-    enabled: false
-    ffmpeg:
-      output_args:
-        record: preset-record-generic-audio-aac #Insert this if your camera supports audio output
-      inputs:
-        #- path: "rtsp://{FRIGATE_CAMUSER}:{FRIGATE_AC_CAMUSER_PW}@192.168.13.65:554/cam/realmonitor?channel=1&subtype=0"
-        #- path: rtsp://{FRIGATE_RTSP_USER}:{FRIGATE_RTSP_PASSWORD}@192.168.13.65:554/cam/realmonitor?channel=1&subtype=0
-        - path: rtsp://camuser:0907-Avcadf@192.168.13.65:554/cam/realmonitor?channel=1&subtype=0
-          roles:
-            - record
-            - audio
-        #- path: "rtsp://{FRIGATE_CAMUSER}:{FRIGATE_AC_CAMUSER_PW}@192.168.13.65:554/cam/realmonitor?channel=1&subtype=2"
-        - path: rtsp://camuser:0907-Avcadf@192.168.13.65:554/cam/realmonitor?channel=1&subtype=2
-          roles:
-            - detect
-    detect:
-      width: 704 #Change this to match the resolution of your detection channel (in this case channel 1)
-      height: 480 #Change this to match the resolution of your detection channel (in this case channel 1)
-      fps: 5 #This is the frame rate for detection, between 5-10 fps is sufficient.
-    record:
-      enabled: true
-      retain:
-        days: 0 #The number of days a recording will be kept for after a motion is detected.
-        mode: motion
-      alerts:
-        retain:
-          days: 30
-      detections:
-        retain:
-          days: 30
-    objects:
-      track:
-        - person
-        - car
-
-  ### OLD CAMERAS ###
-  # P1_RD2_Deck_West: # Reolink Duo 2 PoE 4K 180 Deg, Reolink Duo 2
-  #   enabled: true
-  #   ffmpeg:
-  #     inputs:
-  #       # Detect Stream
-  #       - path: rtsp://localhost:8554/p1_deck_west_detect
-  #         roles:
-  #           - detect
-  #       # Record Stream
-  #       - path: rtsp://localhost:8554/p1_deck_west_main
-  #         roles:
-  #           - record
-  #           - audio
-  #     output_args:
-  #       record: preset-record-generic
-  #   detect:
-  #     width: 1536
-  #     height: 576
-  #     fps: 5
-
-  #   motion:
-  #     mask: 0,0,1,0,1,0.077,0,0.075
-
-  # P2_RD2_Office: # Reolink Duo 2 PoE 4K 180 Deg, Reolink Duo 2
-  #   enabled: true
-  #   ffmpeg:
-  #     inputs:
-  #       # Detect Stream
-  #       - path: rtsp://localhost:8554/p2_office_detect
-  #         roles:
-  #           - detect
-  #       # Record Stream
-  #       - path: rtsp://localhost:8554/p2_office_main
-  #         roles:
-  #           - record
-  #           - audio
-  #   detect:
-  #     width: 1536
-  #     height: 576
-  #     fps: 10
-  #   motion:
-  #     mask: 0,0,1,0,1,0.077,0,0.077
-
-  # P3_RD2W_test: # Reolink Duo 2 WiFi 4K 180 Deg, Reolink Duo 2 WiFi
-  #   enabled: true
-  #   ffmpeg:
-  #     inputs:
-  #       # Detect Stream
-  #       - path: rtsp://localhost:8554/p3_rd2w_test_detect
-  #         roles:
-  #           - detect
-  #       # Record Stream
-  #       - path: rtsp://localhost:8554/p3_rd2w_test_main
-  #         roles:
-  #           - record
-  #           - audio
-  #   detect:
-  #     width: 1536
-  #     height: 576
-  #     fps: 5
-  #   motion:
-  #     mask: 0,0,1,0,1,0.087,0,0.089
-
-  # P4_AC_Driveway: # Amcrest 4Kx2 8MP Bullet-180, IP8M-DLB2998EW-AI
-  #   enabled: false
-  #   ffmpeg:
-  #     inputs:
-  #       # Detect Stream
-  #       - path: rtsp://localhost:8554/p4_ac_driveway_detect
-  #         roles:
-  #           - detect
-  #       # Record Stream
-  #       - path: rtsp://localhost:8554/p4_ac_driveway_main
-  #         roles:
-  #           - record
-  #           - audio
-  #   detect:
-  #     width: 704
-  #     height: 480
-  #     fps: 5
-
-  # P5_AC_Office: # Amcrest 4Kx2 8MP Bullet-180, IP8M-DLB2998EW-AI
-  #   enabled: true
-  #   ffmpeg:
-  #     inputs:
-  #       # Detect Stream
-  #       - path: rtsp://localhost:8554/p5_ac_office_detect
-  #         roles:
-  #           - detect
-  #       # Record Stream
-  #       - path: rtsp://localhost:8554/p5_ac_office_main
-  #         roles:
-  #           - record
-  #           - audio
-  #   detect:
-  #     width: 704
-  #     height: 480
-  #     fps: 5
-  #   motion:
-  #     mask: 0,0,1,0,1,0.068,0,0.071
-
-  # P6_AC_Test: # Amcrest 4Kx2 8MP Bullet-180, IP8M-DLB2998EW-AI
-  #   enabled: true
-  #   ffmpeg:
-  #     inputs:
-  #       # Detect Stream
-  #       - path: rtsp://localhost:8554/p6_ac_test_detect
-  #         roles:
-  #           - detect
-  #       # Record Stream
-  #       - path: rtsp://localhost:8554/p6_ac_test_main
-  #         roles:
-  #           - record
-  #           - audio
-  #   detect:
-  #     width: 704
-  #     height: 480
-  #     fps: 5
-  #   motion:
-  #     mask: 0,0,1,0,1,0.07,0,0.064
-
-  # P7_AC_Test: # Amcrest 5MP Dome V3, IP5M-T1179EW-AI-V3
-  #   enabled: true
-  #   ffmpeg:
-  #     inputs:
-  #       # Detect Stream
-  #       - path: rtsp://localhost:8554/p7_ac_test_detect
-  #         roles:
-  #           - detect
-  #       # Record Stream
-  #       - path: rtsp://localhost:8554/p7_ac_test_main
-  #         roles:
-  #           - record
-  #           - audio
-  #   detect:
-  #     width: 704
-  #     height: 480
-  #     fps: 5
-  #   motion:
-  #     mask: 0,0,1,0,1,0.086,0,0.088
-
-  # P8_RLC811_test: # Reolink RLC-811WA, Reolink RLC-811WA
-  #   enabled: true
-  #   ffmpeg:
-  #     inputs:
-  #       # Detect Stream
-  #       - path: rtsp://localhost:8554/p8_rlc811w_test_detect
-  #         roles:
-  #           - detect
-  #       # Record Stream
-  #       - path: rtsp://localhost:8554/p8_rlc811w_test_main
-  #         roles:
-  #           - record
-  #           - audio
-  #   detect:
-  #     width: 640
-  #     height: 360
-  #     fps: 5
-  #   motion:
-  #     mask: 0,0,1,0,1,0.079,0,0.084
-
-  # P9_RD2_test: # Reolink Duo 2 WiFi 4K 180 Deg, Reolink Duo 2 WiFi
-  #   enabled: true
-  #   ffmpeg:
-  #     inputs:
-  #       # Detect Stream
-  #       - path: rtsp://localhost:8554/p9_rd2w_test_detect
-  #         roles:
-  #           - detect
-  #       # Record Stream
-  #       - path: rtsp://localhost:8554/p9_rd2w_test_main
-  #         roles:
-  #           - record
-  #           - audio
-  #   detect:
-  #     width: 1536
-  #     height: 576
-  #     fps: 5
-
-  #   motion:
-  #     mask: 0,0,1,0,1,0.089,0,0.097
-  # P11_Ank_Test: # Annke C1200 4K 12MP, C1200 | 191DD
-  #   enabled: true
-  #   ffmpeg:
-  #     inputs:
-  #       # Detect Stream
-  #       - path: rtsp://localhost:8554/p11_ank_test_detect
-  #         roles:
-  #           - detect
-  #       # Record Stream
-  #       - path: rtsp://localhost:8554/p11_ank_test_main
-  #         roles:
-  #           - record
-  #           - audio
-  #   detect:
-  #     width: 1280
-  #     height: 720
-  #     fps: 5
-  #   motion:
-  #     mask: 0,0,1,0,1,0.073,0,0.073
-
-  # P12_Ank_Test: # Annke FCD600 6MP 180, FCD600 | 151DW
-  #   enabled: true
-  #   ffmpeg:
-  #     inputs:
-  #       # Detect Stream
-  #       - path: rtsp://localhost:8554/p12_ank_test_detect
-  #         roles:
-  #           - detect
-  #       # Record Stream
-  #       - path: rtsp://localhost:8554/p12_ank_test_main
-  #         roles:
-  #           - record
-  #           - audio
-  #   detect:
-  #     width: 1200
-  #     height: 536
-  #     fps: 5
-  #   audio:
-  #     enabled: true
-  #   motion:
-  #     mask: 0,0,1,0,1,0.071,0,0.073
-
-  # P13_Ank_Test: # Annke C500 3K 5MP | 151DS, C500 | 151DS
-  #   enabled: true
-  #   ffmpeg:
-  #     inputs:
-  #       # Detect Stream
-  #       - path: rtsp://localhost:8554/p13_ank_test_detect
-  #         roles:
-  #           - detect
-  #       # Record Stream
-  #       - path: rtsp://localhost:8554/p13_ank_test_main
-  #         roles:
-  #           - record
-  #           - audio
-  #   detect:
-  #     width: 640
-  #     height: 480
-  #     fps: 5
-
-  #   motion:
-  #     mask: 0,0,1,0,1,0.08,0,0.085
-  # P14_RLC811_test: # Reolink RLC-811WA, Reolink RLC-811WA
-  #   enabled: true
-  #   ffmpeg:
-  #     inputs:
-  #       # Detect Stream
-  #       - path: rtsp://localhost:8554/p14_rlc811w_test_detect
-  #         roles:
-  #           - detect
-  #       # Record Stream
-  #       - path: rtsp://localhost:8554/p14_rlc811w_test_main
-  #         roles:
-  #           - record
-  #           - audio
-  #   detect:
-  #     width: 640
-  #     height: 360
-  #     fps: 5
-  #   motion:
-  #     mask: 0,0,1,0,1,0.08,0,0.079
-
-  # P15_AC_Test: # Amcrest 5MP Dome V3, IP5M-T1179EW-AI-V3
-  #   enabled: true
-  #   ffmpeg:
-  #     inputs:
-  #       # Detect Stream
-  #       - path: rtsp://localhost:8554/p15_ac_test_detect
-  #         roles:
-  #           - detect
-  #       # Record Stream
-  #       - path: rtsp://localhost:8554/p15_ac_test_main
-  #         roles:
-  #           - record
-  #           - audio
-  #   detect:
-  #     width: 704
-  #     height: 480
-  #     fps: 5
-  #   motion:
-  #     mask: 0,0,1,0,1,0.076,0,0.077
-
-  # P16_Ank_test: # Annke C500 3K 5MP | 151DS, C500 | 151DS
-  #   enabled: true
-  #   ffmpeg:
-  #     inputs:
-  #       # Detect Stream
-  #       - path: rtsp://localhost:8554/p16_ank_test_detect
-  #         roles:
-  #           - detect
-  #       # Record Stream
-  #       - path: rtsp://localhost:8554/p16_ank_test_main
-  #         roles:
-  #           - record
-  #           - audio
-  #   detect:
-  #     width: 640
-  #     height: 480
-  #     fps: 5
-
-  #   motion:
-  #     mask: 0,0,1,0,1,0.08,0,0.076
-  # P19_VIkV_Test: # VikVision 4K 8MP PTZ 18x OptZoom, PTZ-4818X-IS2
-  #   enabled: true
-  #   ffmpeg:
-  #     inputs:
-  #       # Detect Stream
-  #       - path: rtsp://localhost:8554/p19_vikv_test_detect
-  #         roles:
-  #           - detect
-  #       # Record Stream
-  #       - path: rtsp://localhost:8554/p19_vikv_test_main
-  #         roles:
-  #           - record
-  #           - audio
-  #     output_args:
-  #       record: preset-record-generic
-  #   detect:
-  #     width: 720
-  #     height: 480
-  #     fps: 5
-  #   motion:
-  #     mask: 0,0,1,0,1,0.073,0,0.079
-
-  # P20_ET_Test: # EmpireTech 8MP 4K Low Light Turret, IPC-Color4K-T 3.6mm
-  #   enabled: true
-  #   ffmpeg:
-  #     inputs:
-  #       # Detect Stream
-  #       - path: rtsp://localhost:8554/p20_et_test_detect
-  #         roles:
-  #           - detect
-  #       # Record Stream
-  #       - path: rtsp://localhost:8554/p20_et_test_main
-  #         roles:
-  #           - record
-  #           - audio
-  #   live:
-  #     stream_name: p20_et_test_view
-  #     quality: 1
-  #   webui_url: http://192.168.9.217:1984/stream.html?src=p20_et_test_view
-  #   detect:
-  #     width: 1024
-  #     height: 452
-  #     fps: 5
-
-  #   motion:
-  #     mask: 0,0,1,0,1,0.084,0,0.09
-
-  # P21_ET_Test: # EmpireTech 8MP 4K Low Light Turret, IPC-Color4K-T 3.6mm
-  #   enabled: true
-  #   ffmpeg:
-  #     inputs:
-  #       # Detect Stream
-  #       - path: rtsp://localhost:8554/p21_et_test_detect
-  #         roles:
-  #           - detect
-  #       # Record Stream
-  #       - path: rtsp://localhost:8554/p21_et_test_main
-  #         roles:
-  #           - record
-  #           - audio
-  #   detect:
-  #     width: 1024
-  #     height: 452
-  #     fps: 5
-  #   motion:
-  #     mask: 0,0,1,0,1,0.085,0,0.087
-
   ### NEW CAMERAS ###
   C01_RD2_Deck_West: # Reolink Duo 2 PoE 4K 180 Deg, Reolink Duo 2
     enabled: true
@@ -880,38 +282,51 @@ cameras:
           roles:
             - record
             - audio
+      output_args:
+        record: preset-record-generic
     detect:
       width: 1536
       height: 576
-      fps: 5
+      fps: 7
+    live:
+      streams:
+        Main Stream (Record): c01_rd2_deck_west_main
+        View Stream: c01_rd2_deck_west_view
+        Detect Stream: c01_rd2_deck_west_detect
     motion:
       mask: 0,0,1,0,1,0.077,0,0.075
+    webui_url: http://10.1.10.61
 
-  P02_RD2_Test: # Reolink Duo 2 PoE 4K 180 Deg, Reolink Duo 2
+  C02_RD2_Shop_Back: # Reolink Duo 2 PoE 4K 180 Deg, Reolink Duo 2
     enabled: false
     ffmpeg:
       hwaccel_args: []
       inputs:
         # Detect Stream
-        - path: rtsp://localhost:8554/p02_rd2_office_detect
+        - path: rtsp://localhost:8554/c02_rd2_shop_back_detect
           roles:
             - detect
         # Record Stream
-        - path: rtsp://localhost:8554/p02_rd2_office_main
+        - path: rtsp://localhost:8554/c02_rd2_shop_back_main
           roles:
             - record
             - audio
     detect:
       width: 1536
       height: 576
-      fps: 5
+      fps: 7
+    live:
+      streams:
+        Main Stream (Record): c02_rd2_shop_back_main
+        View Stream: c02_rd2_shop_back_view
+        Detect Stream: c02_rd2_shop_back_detect
     motion:
       mask: 0,0,1,0,1,0.077,0,0.077
+    webui_url: http://10.1.10.62
 
   C03_RD2W_Deck_East: # Reolink Duo 2 WiFi 4K 180 Deg, Reolink Duo 2 WiFi
     enabled: true
     ffmpeg:
-      hwaccel_args: []
       inputs:
         # Detect Stream
         - path: rtsp://localhost:8554/c03_rd2w_deck_east_detect
@@ -925,9 +340,15 @@ cameras:
     detect:
       width: 1536
       height: 576
-      fps: 5
+      fps: 7
+    live:
+      streams:
+        Main Stream (Record): c03_rd2w_deck_east_main
+        View Stream: c03_rd2w_deck_east_view
+        Detect Stream: c03_rd2w_deck_east_detect
     motion:
       mask: 0,0,1,0,1,0.087,0,0.089
+    webui_url: http://10.1.10.63
 
   C04_AC_Shop: # Amcrest 4Kx2 8MP Bullet-180, IP8M-DLB2998EW-AI
     enabled: true
@@ -946,37 +367,23 @@ cameras:
       width: 704
       height: 480
       fps: 5
+    live:
+      streams:
+        Main Stream (Record): c04_ac_shop_main
+        View Stream: c04_ac_shop_view
+        Detect Stream: c04_ac_shop_detect
+    webui_url: http://10.1.10.64
 
-  P05_AC_Test: # Amcrest 4Kx2 8MP Bullet-180, IP8M-DLB2998EW-AI
-    enabled: false
-    ffmpeg:
-      inputs:
-        # Detect Stream
-        - path: rtsp://localhost:8554/p05_ac_test_detect
-          roles:
-            - detect
-        # Record Stream
-        - path: rtsp://localhost:8554/p05_ac_test_main
-          roles:
-            - record
-            - audio
-    detect:
-      width: 704
-      height: 480
-      fps: 5
-    motion:
-      mask: 0,0,1,0,1,0.068,0,0.071
-
-  P06_AC_Test: # Amcrest 4Kx2 8MP Bullet-180, IP8M-DLB2998EW-AI
+  C05_AC_Shop_East: # Amcrest 4Kx2 8MP Bullet-180, IP8M-DLB2998EW-AI
     enabled: true
     ffmpeg:
       inputs:
         # Detect Stream
-        - path: rtsp://localhost:8554/p06_ac_test_detect
+        - path: rtsp://localhost:8554/c05_ac_shop_east_detect
           roles:
             - detect
         # Record Stream
-        - path: rtsp://localhost:8554/p06_ac_test_main
+        - path: rtsp://localhost:8554/c05_ac_shop_east_main
           roles:
             - record
             - audio
@@ -984,19 +391,25 @@ cameras:
       width: 704
       height: 480
       fps: 5
+    live:
+      streams:
+        Main Stream (Record): c05_ac_shop_east_main
+        View Stream: c05_ac_shop_east_view
+        Detect Stream: c05_ac_shop_east_detect
     motion:
-      mask: 0,0,1,0,1,0.07,0,0.064
+      mask: 0,0,1,0,1,0.068,0,0.071
+    webui_url: http://10.1.10.65
 
-  P07_AC_Test: # Amcrest 5MP Dome V3, IP5M-T1179EW-AI-V3
+  C06_AC_House_West: # Amcrest 4Kx2 8MP Bullet-180, IP8M-DLB2998EW-AI
     enabled: false
     ffmpeg:
       inputs:
         # Detect Stream
-        - path: rtsp://localhost:8554/p07_ac_test_detect
+        - path: rtsp://localhost:8554/c06_ac_house_west_detect
           roles:
             - detect
         # Record Stream
-        - path: rtsp://localhost:8554/p07_ac_test_main
+        - path: rtsp://localhost:8554/c06_ac_house_west_main
           roles:
             - record
             - audio
@@ -1004,8 +417,40 @@ cameras:
       width: 704
       height: 480
       fps: 5
+    live:
+      streams:
+        Main Stream (Record): c06_ac_house_west_main
+        View Stream: c06_ac_house_west_view
+        Detect Stream: c06_ac_house_west_detect
+    motion:
+      mask: 0,0,1,0,1,0.07,0,0.064
+    webui_url: http://10.1.10.66
+
+  C07_AC_Office_FrontDoor: # Amcrest 5MP Dome V3, IP5M-T1179EW-AI-V3
+    enabled: true
+    ffmpeg:
+      inputs:
+        # Detect Stream
+        - path: rtsp://localhost:8554/c07_ac_office_frontdoor_detect
+          roles:
+            - detect
+        # Record Stream
+        - path: rtsp://localhost:8554/c07_ac_office_frontdoor_main
+          roles:
+            - record
+            - audio
+    detect:
+      width: 704
+      height: 480
+      fps: 5
+    live:
+      streams:
+        Main Stream (Record): c07_ac_office_frontdoor_main
+        View Stream: c07_ac_office_frontdoor_view
+        Detect Stream: c07_ac_office_frontdoor_detect
     motion:
       mask: 0,0,1,0,1,0.086,0,0.088
+    webui_url: http://10.1.10.67
 
   C08_RLC811_Garage: # Reolink RLC-811WA, Reolink RLC-811WA
     enabled: true
@@ -1013,20 +458,26 @@ cameras:
       hwaccel_args: []
       inputs:
         # Detect Stream
-        - path: rtsp://localhost:8554/c08_rlc811w_garage_detect
+        - path: rtsp://localhost:8554/c08_rlc811_garage_detect
           roles:
             - detect
         # Record Stream
-        - path: rtsp://localhost:8554/c08_rlc811w_garage_main
+        - path: rtsp://localhost:8554/c08_rlc811_garage_main
           roles:
             - record
             - audio
     detect:
       width: 640
       height: 360
-      fps: 5
+      fps: 7
+    live:
+      streams:
+        Main Stream (Record): c08_rlc811_garage_main
+        View Stream: c08_rlc811_garage_view
+        Detect Stream: c08_rlc811_garage_detect
     motion:
       mask: 0,0,1,0,1,0.079,0,0.084
+    webui_url: http://10.1.10.68
 
   C09_RD2W_Driveway: # Reolink Duo 2 WiFi 4K 180 Deg, Reolink Duo 2 WiFi
     enabled: true
@@ -1044,197 +495,103 @@ cameras:
     detect:
       width: 1536
       height: 576
-      fps: 5
+      fps: 7
+    live:
+      streams:
+        Main Stream (Record): c09_rd2w_driveway_main
+        View Stream: c09_rd2w_driveway_view
+        Detect Stream: c09_rd2w_driveway_detect
     motion:
       mask: 0,0,1,0,1,0.089,0,0.097
+    webui_url: http://10.1.10.69
 
-  P10_Ank_Test: # Annke C1200 4K 12MP | 191DD, C1200 | 191DD
-    enabled: true
+  C11_Ank_House_NW: # Annke C1200 4K 12MP | 191DD, C1200 | 191DD
+    enabled: false
     ffmpeg:
       inputs:
         # Detect Stream
-        - path: rtsp://localhost:8554/p10_ank_test_detect
+        - path: rtsp://localhost:8554/c11_ank_house_nw_detect
           roles:
             - detect
         # Record Stream
-        - path: rtsp://localhost:8554/p10_ank_test_main
+        - path: rtsp://localhost:8554/c11_ank_house_nw_main
           roles:
             - record
             - audio
     detect:
       width: 1280
       height: 720
-      fps: 5
+      fps: 6
+    live:
+      streams:
+        Main Stream (Record): c11_ank_house_nw_main
+        View Stream: c11_ank_house_nw_view
+        Detect Stream: c11_ank_house_nw_detect
     motion:
       mask: 0,0,1,0,1,0.073,0,0.073
+    webui_url: http://10.1.10.71
 
-  P11_Ank_Test: # Annke C1200 4K 12MP | 191DD, C1200 | 191DD
-    enabled: true
+  C12_Ank_House_SW: # Annke FCD600 6MP 180 | 151DW, FCD600 | 151DW
+    enabled: false
     ffmpeg:
       inputs:
         # Detect Stream
-        - path: rtsp://localhost:8554/p11_ank_test_detect
+        - path: rtsp://localhost:8554/c12_ank_house_sw_detect
           roles:
             - detect
         # Record Stream
-        - path: rtsp://localhost:8554/p11_ank_test_main
-          roles:
-            - record
-            - audio
-    detect:
-      width: 1280
-      height: 720
-      fps: 5
-    motion:
-      mask: 0,0,1,0,1,0.073,0,0.073
-
-  P12_Ank_Test: # Annke FCD600 6MP 180 | 151DW, FCD600 | 151DW
-    enabled: true
-    ffmpeg:
-      inputs:
-        # Detect Stream
-        - path: rtsp://localhost:8554/p12_ank_test_detect
-          roles:
-            - detect
-        # Record Stream
-        - path: rtsp://localhost:8554/p12_ank_test_main
+        - path: rtsp://localhost:8554/c12_ank_house_sw_main
           roles:
             - record
             - audio
     detect:
       width: 1200
       height: 536
-      fps: 5
+      fps: 6
+    live:
+      streams:
+        Main Stream (Record): c12_ank_house_sw_main
+        View Stream: c12_ank_house_sw_view
+        Detect Stream: c12_ank_house_sw_detect
     motion:
       mask: 0,0,1,0,1,0.071,0,0.073
+    webui_url: http://10.1.10.72
 
-  P13_Ank_Test: # Annke C500 3K 5MP | 151DS, C500 | 151DS
-    enabled: true
-    ffmpeg:
-      inputs:
-        # Detect Stream
-        - path: rtsp://localhost:8554/p13_ank_test_detect
-          roles:
-            - detect
-        # Record Stream
-        - path: rtsp://localhost:8554/p13_ank_test_main
-          roles:
-            - record
-            - audio
-    detect:
-      width: 640
-      height: 480
-      fps: 5
-    motion:
-      mask: 0,0,1,0,1,0.08,0,0.085
-
-  P14_RLC811_Test: # Reolink RLC-811WA, Reolink RLC-811WA
+  C14_RLC811_BonusRoom: # Reolink RLC-811WA, Reolink RLC-811WA
     enabled: true
     ffmpeg:
       hwaccel_args: []
       inputs:
         # Detect Stream
-        - path: rtsp://localhost:8554/p14_rlc811w_test_detect
+        - path: rtsp://localhost:8554/c14_rlc811_bonusroom_detect
           roles:
             - detect
         # Record Stream
-        - path: rtsp://localhost:8554/p14_rlc811w_test_main
+        - path: rtsp://localhost:8554/c14_rlc811_bonusroom_main
           roles:
             - record
             - audio
     detect:
       width: 640
       height: 360
-      fps: 5
-    motion:
-      mask: 0,0,1,0,1,0.08,0,0.079
+      fps: 7
+    live:
+      streams:
+        Main Stream (Record): c14_rlc811_bonusroom_main
+        View Stream: c14_rlc811_bonusroom_view
+        Detect Stream: c14_rlc811_bonusroom_detect
+    webui_url: http://10.1.10.74
 
-  P15_AC_Test: # Amcrest 5MP Dome V3, IP5M-T1179EW-AI-V3
-    enabled: true
+  C19_VV_Office_FrontDoor: # VikVision 4K 8MP PTZ 18x OptZoom, PTZ-4818X-IS2
+    enabled: false
     ffmpeg:
       inputs:
         # Detect Stream
-        - path: rtsp://localhost:8554/p15_ac_test_detect
+        - path: rtsp://localhost:8554/c19_vv_office_frontdoor_detect
           roles:
             - detect
         # Record Stream
-        - path: rtsp://localhost:8554/p15_ac_test_main
-          roles:
-            - record
-            - audio
-    detect:
-      width: 704
-      height: 480
-      fps: 5
-    motion:
-      mask: 0,0,1,0,1,0.076,0,0.077
-
-  P16_Ank_Test: # Annke C500 3K 5MP | 151DS, C500 | 151DS
-    enabled: true
-    ffmpeg:
-      inputs:
-        # Detect Stream
-        - path: rtsp://localhost:8554/p16_ank_test_detect
-          roles:
-            - detect
-        # Record Stream
-        - path: rtsp://localhost:8554/p16_ank_test_main
-          roles:
-            - record
-            - audio
-    detect:
-      width: 640
-      height: 480
-      fps: 5
-    motion:
-      mask: 0,0,1,0,1,0.08,0,0.076
-
-  P17_Ank_Test: # Annke C500 3K 5MP | 151DL, C500 | 151DL
-    enabled: true
-    ffmpeg:
-      inputs:
-        # Detect Stream
-        - path: rtsp://localhost:8554/p17_ank_test_detect
-          roles:
-            - detect
-        # Record Stream
-        - path: rtsp://localhost:8554/p17_ank_test_main
-          roles:
-            - record
-            - audio
-    detect:
-      width: 640
-      height: 480
-      fps: 5
-
-  P18_Ank_Test: # Annke C500 3K 5MP | 151DL, C500 | 151DL
-    enabled: true
-    ffmpeg:
-      inputs:
-        # Detect Stream
-        - path: rtsp://localhost:8554/p18_ank_test_detect
-          roles:
-            - detect
-        # Record Stream
-        - path: rtsp://localhost:8554/p18_ank_test_main
-          roles:
-            - record
-            - audio
-    detect:
-      width: 640
-      height: 480
-      fps: 5
-
-  P19_VIkV_Test: # VikVision 4K 8MP PTZ 18x OptZoom, PTZ-4818X-IS2
-    enabled: true
-    ffmpeg:
-      inputs:
-        # Detect Stream
-        - path: rtsp://localhost:8554/p19_vikv_test_detect
-          roles:
-            - detect
-        # Record Stream
-        - path: rtsp://localhost:8554/p19_vikv_test_main
+        - path: rtsp://localhost:8554/c19_vv_office_frontdoor_main
           roles:
             - record
             - audio
@@ -1244,48 +601,134 @@ cameras:
       width: 720
       height: 480
       fps: 5
-    motion:
-      mask: 0,0,1,0,1,0.073,0,0.079
+    live:
+      streams:
+        Main Stream (Record): c19_vv_office_frontdoor_main
+        View Stream: c19_vv_office_frontdoor_view
+        Detect Stream: c19_vv_office_frontdoor_detect
+    webui_url: http://10.1.10.79
 
-  P20_ET_Test: # EmpireTech 8MP 4K Low Light Turret, IPC-Color4K-T 3.6mm
-    enabled: true
-    ffmpeg:
-      inputs:
-        # Detect Stream
-        - path: rtsp://localhost:8554/p20_et_test_detect
-          roles:
-            - detect
-        # Record Stream
-        - path: rtsp://localhost:8554/p20_et_test_main
-          roles:
-            - record
-            - audio
-    detect:
-      width:
-      height: 452
-      fps: 5
-    motion:
-      mask: 0,0,1,0,1,0.084,0,0.09
-
-  P21_ET_Test: # EmpireTech 8MP 4K Low Light Turret, IPC-Color4K-T 3.6mm
+  C20_ET_HouseFrontDriveway: # EmpireTech 8MP 4K Low Light Turret, IPC-Color4K-T 3.6mm
     enabled: false
     ffmpeg:
       inputs:
         # Detect Stream
-        - path: rtsp://localhost:8554/p21_et_test_detect
+        - path: rtsp://localhost:8554/c20_et_housefrontdriveway_detect
           roles:
             - detect
         # Record Stream
-        - path: rtsp://localhost:8554/p21_et_test_main
+        - path: rtsp://localhost:8554/c20_et_housefrontdriveway_main
           roles:
             - record
             - audio
     detect:
-      width:
+      width: 1024
       height: 452
       fps: 5
+    live:
+      streams:
+        Main Stream (Record): c20_et_housefrontdriveway_main
+        View Stream: c20_et_housefrontdriveway_view
+        Detect Stream: c20_et_housefrontdriveway_detect
+    webui_url: http://10.1.10.80
+
+  C21_ET_Shop_Driveway: # EmpireTech 8MP 4K Low Light Turret, IPC-Color4K-T 3.6mm
+    enabled: true
+    ffmpeg:
+      inputs:
+        # Detect Stream
+        - path: rtsp://localhost:8554/c21_et_shop_driveway_detect
+          roles:
+            - detect
+        # Record Stream
+        - path: rtsp://localhost:8554/c21_et_shop_driveway_main
+          roles:
+            - record
+            - audio
+    detect:
+      width: 1024
+      height: 452
+      fps: 5
+    live:
+      streams:
+        Main Stream (Record): c21_et_shop_driveway_main
+        View Stream: c21_et_shop_driveway_view
+        Detect Stream: c21_et_shop_driveway_detect
     motion:
       mask: 0,0,1,0,1,0.085,0,0.087
+    webui_url: http://10.1.10.81
+
+  C22_RL_Doorbell_Front: # REOLINK WiFi 2K Doorbell Cam 2K, 4:3, RL Doorbell Cam Wide Angle
+    enabled: true
+    ffmpeg:
+      inputs:
+        # Detect Stream
+        - path: rtsp://localhost:8554/c22_rl_doorbell_front_detect
+          roles:
+            - detect
+        # Record Stream
+        - path: rtsp://localhost:8554/c22_rl_doorbell_front_main
+          roles:
+            - record
+            - audio
+    detect:
+      width: 480
+      height: 640
+      fps: 7
+    live:
+      streams:
+        Main Stream (Record): c22_rl_doorbell_front_main
+        View Stream: c22_rl_doorbell_front_view
+        Detect Stream: c22_rl_doorbell_front_detect
+    webui_url: http://10.1.10.82
+
+  C23_RL_Doorbell_Garage: # REOLINK WiFi 2K Doorbell Cam 2K, 4:3, RL Doorbell Cam Wide Angle
+    enabled: true
+    ffmpeg:
+      inputs:
+        # Detect Stream
+        - path: rtsp://localhost:8554/c23_rl_doorbell_garage_detect
+          roles:
+            - detect
+        # Record Stream
+        - path: rtsp://localhost:8554/c23_rl_doorbell_garage_main
+          roles:
+            - record
+            - audio
+    detect:
+      width: 640
+      height: 480
+      fps: 7
+    live:
+      streams:
+        Main Stream (Record): c23_rl_doorbell_garage_main
+        View Stream: c23_rl_doorbell_garage_view
+        Detect Stream: c23_rl_doorbell_garage_detect
+    webui_url: http://10.1.10.83
+
+  C24_AC_Shop_Front_Flood: # Amcrest Floodlight Cam 1080P, ASH26-W
+    enabled: true
+    ffmpeg:
+      inputs:
+        # Detect Stream
+        - path: rtsp://localhost:8554/c24_ac_shop_front_flood_detect
+          roles:
+            - detect
+        # Record Stream
+        - path: rtsp://localhost:8554/c24_ac_shop_front_flood_main
+          roles:
+            - record
+            - audio
+    detect:
+      width: 640
+      height: 480
+      fps: 5
+    live:
+      streams:
+        Main Stream (Record): c24_ac_shop_front_flood_main
+        View Stream: c24_ac_shop_front_flood_view
+        Detect Stream: c24_ac_shop_front_flood_detect
+    webui_url: http://10.1.10.84
 
 ### END NEW CAMERAS ###
 
@@ -1295,7 +738,7 @@ camera_groups:
       - C03_RD2W_Deck_East
       - C08_RLC811_Garage
       - C09_RD2W_Driveway
-      - P14_RLC811_Test
+      #- P14_RLC811_Test
     order: 0
     icon: LuWifi
   reolink:
@@ -1305,7 +748,18 @@ camera_groups:
       - C03_RD2W_Deck_East
       - C08_RLC811_Garage
       - C09_RD2W_Driveway
-      - P14_RLC811_Test
+      #- P14_RLC811_Test
     order: 0
     icon: LuLink
-version: 0.15-1
+version: 0.16-0
+semantic_search:
+  enabled: false
+  model_size: small
+face_recognition:
+  enabled: true
+  model_size: large
+lpr:
+  enabled: true
+classification:
+  bird:
+    enabled: false

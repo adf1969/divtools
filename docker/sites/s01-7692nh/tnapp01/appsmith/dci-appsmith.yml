@@ -1,0 +1,85 @@
+########################### APPSMITH COMMERCIAL EDITION
+# This docker-compose file sets up AppSmith Commercial Edition (Enterprise Edition)
+# for self-hosting.
+#
+# NOTE (tnapp01): this deployment is intentionally kept close to Appsmith's
+# documented Docker installation: a single `appsmith` container with
+# persistent `/appsmith-stacks`. Appsmith runs its internal dependencies
+# under supervisord inside the container.
+
+# AppSmith EE requires a valid license key. Set the APPSMITH_LICENSE_KEY environment
+# variable in your .env file or host environment before starting.
+
+# Volumes are bind-mounted to $DOCKERDATADIR/appsmith for persistence:
+# - postgres data: /opt/appsmith/postgres
+# - appsmith stacks (uploads, etc.): /opt/appsmith/stacks
+# - git repositories: /opt/appsmith/git
+
+########################### NETWORKS
+networks:
+  appsmith-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: ${APPSMITH_NETWORK_BASE}.0/${APPSMITH_NETWORK_CIDR}
+
+services:
+  appsmith:
+    # AppSmith Commercial Edition image
+    image: appsmith/appsmith-ee:latest
+
+    # Container name for easy identification
+    container_name: appsmith
+
+    # Restart policy - always restart on failure
+    restart: unless-stopped
+
+    # Networks to attach to
+    networks:
+      - appsmith-network # Dedicated network for AppSmith services
+
+    # Port mappings - AppSmith runs on ports 80 (HTTP) and 443 (HTTPS) internally
+    # Accessible directly via host ports (isolated on appsmith-network)
+    ports:
+      - "${APPSMITH_HTTP_PORT}:80" # HTTP port (change if conflicts)
+      - "${APPSMITH_HTTPS_PORT}:443" # HTTPS port (change if conflicts)
+
+    profiles: [appsmith]
+
+    # Environment variables for AppSmith configuration
+    environment:
+      # IMPORTANT: Do not set APPSMITH_DB_URL to a `postgresql://...` URL for this image.
+      # That forces the backend into a Postgres runtime path that isn't present and causes
+      # `backend` to exit immediately, which then breaks RTS with ECONNREFUSED on 127.0.0.1:8080.
+
+      # License key for Commercial Edition (required)
+      - APPSMITH_LICENSE_KEY=${APPSMITH_LICENSE_KEY:-}
+
+      # Other AppSmith settings
+      - APPSMITH_DISABLE_TELEMETRY=${APPSMITH_DISABLE_TELEMETRY} # Disable telemetry
+      - APPSMITH_ENCRYPTION_PASSWORD=${APPSMITH_ENCRYPTION_PASSWORD:-appsmith}
+      - APPSMITH_ENCRYPTION_SALT=${APPSMITH_ENCRYPTION_SALT:-appsmith}
+
+      # Timezone
+      - TZ=${TZ}
+
+    # Volume mounts for persistent data
+    volumes:
+      # AppSmith stacks directory for uploads, templates, etc.
+      - $DOCKERDATADIR/appsmith/stacks:/appsmith-stacks
+      # Git repositories directory for version-controlled apps
+      - $DOCKERDATADIR/appsmith/git:/opt/appsmith/git
+
+    # Docker labels for divtools management and Traefik routing
+    labels:
+      - "divtools.group=appsmith" # Group label for docker_ps.sh
+
+    # Health check for the AppSmith service
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:80/api/v1/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+    # No external DB/cache services here.

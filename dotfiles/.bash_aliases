@@ -22,9 +22,17 @@ alias sbrc='source ~/.bashrc'
 alias sba='source $DIVTOOLS/dotfiles/.bash_aliases'
 alias sbp='source $DIVTOOLS/dotfiles/.bash_profile'
 
+# Debug Toggles
+alias dtdbgon='export DT_DEBUG=1 && echo "[DEBUG] DT_DEBUG=1 enabled"'
+alias dtdbgoff='unset DT_DEBUG && echo "[DEBUG] DT_DEBUG disabled"'
+alias dtdbgtog='if [ "${DT_DEBUG}" = "1" ]; then unset DT_DEBUG && echo "[DEBUG] DT_DEBUG disabled"; else export DT_DEBUG=1 && echo "[DEBUG] DT_DEBUG=1 enabled"; fi'
+
 # Script Folder Aliases
-alias chgid='$DIVTOOLS/scripts/chgid.sh'
-alias ffugid='$DIVTOOLS/scripts/find_ugid_files.sh'
+alias chgid='$DIVTOOLS/scripts/util/chgid.sh'
+alias ffugid='$DIVTOOLS/scripts/util/find_ugid_files.sh'
+
+# ADS (Active Directory Services) Aliases
+alias dt_ads='$DIVTOOLS/scripts/venvs/dtpyutil/bin/python3 $DIVTOOLS/scripts/ads/dt_ads_native.py'
 
 # GENERAL QOL ALIASES
 # navigation
@@ -47,9 +55,11 @@ alias dux='sudo du -xh --max-depth=1 --one-file-system 2>/dev/null | sort -h | t
 alias duf='find . -type f -exec du -h {} + 2>/dev/null | sort -h | tail -20' # Find 20 largest files in this folder
 alias duf100='find . -type f -exec du -h {} + 2>/dev/null | sort -h | tail -100' # Find ALL largest files in this folder
 alias dur='find . -xdev -type f -mtime -1 -printf "%k KB %T+ %p\n" | awk ''{printf "%.2f MB %s %s\n", $1/1024, $2, $3}'' | sort -nr | head -20' # Find the most RECENT 20 files consuming space
-alias dush='$DIVTOOLS/scripts/disk_usage.sh'
-alias flf='$DIVTOOLS/scripts/find_largest_files.sh'
-alias lfu='$DIVTOOLS/scripts/log_file_usage.sh'  # List file usage in current directory and subdirectories
+alias fr20="find -L . -type f -printf '%T@ %TY-%Tm-%Td %TH:%TM:%S %p\n' | sort -n | tail -n 20 | cut -d' ' -f2-" # find most recent 20 files
+alias fr100="find -L . -type f -printf '%T@ %TY-%Tm-%Td %TH:%TM:%S %p\n' | sort -n | tail -n 100 | cut -d' ' -f2-" # find most recent 100 files
+alias dush='$DIVTOOLS/scripts/util/disk_usage.sh'
+alias flf='$DIVTOOLS/scripts/util/find_largest_files.sh'
+alias lfu='$DIVTOOLS/scripts/util/log_file_usage.sh'  # List file usage in current directory and subdirectories
 
 
 # ps
@@ -69,10 +79,11 @@ alias dtp='cd $DIVTOOLS/projects'
 alias dtds='cd $DOCKER_SITEDIR'
 alias dtdh='cd $DOCKER_HOSTDIR'
 #alias pdiv='sudo chown -R divix $DOCKERDIR $DIVTOOLS/config $DIVTOOLS/scripts $DIVTOOLS/dotfiles $DIVTOOLS/.git*'
-alias pdiv='sudo $DIVTOOLS/scripts/fix_dt_perms.sh'
-alias dt_host_setup='sudo $DIVTOOLS/scripts/dt_host_setup.sh'
-alias dt_set_tz='sudo $DIVTOOLS/scripts/dt_set_tz.sh'
-alias dt_host_setup='sudo $DIVTOOLS/scripts/dt_host_setup.sh'
+alias pdiv='sudo $DIVTOOLS/scripts/util/fix_dt_perms.sh'
+alias dt_host_setup='sudo $DIVTOOLS/scripts/util/dt_host_setup.sh'
+alias dt_set_tz='sudo $DIVTOOLS/scripts/util/dt_set_tz.sh'
+alias dt_host_setup='sudo $DIVTOOLS/scripts/util/dt_host_setup.sh'
+alias dt_vscode_setup='$DIVTOOLS/scripts/vscode/vscode_host_colors.sh'
 
 # DT Host Log Aliases
 alias dt_host_log='sudo $DIVTOOLS/scripts/util/host_chg_mon/host_change_log.sh'
@@ -81,10 +92,10 @@ alias dt_hlm='sudo $DIVTOOLS/scripts/util/host_chg_mon/host_change_log.sh manife
 
 
 
-alias set_ads_acls='sudo $DIVTOOLS/scripts/set_ads_acls.sh'
+alias set_ads_acls='sudo $DIVTOOLS/scripts/util/set_ads_acls.sh'
 
 # PVE / Proxmox
-alias pve_host_check='sudo $DIVTOOLS/scripts/pve_host_check.sh'
+alias pve_host_check='sudo $DIVTOOLS/scripts/util/pve_host_check.sh'
 alias pve_snapshot='sudo $DIVTOOLS/scripts/pve/pve_snapshot.sh'
 alias cdq='cd /etc/pve/local/qemu-server'
 alias cdl='cd /etc/pve/local/lxc'
@@ -104,9 +115,13 @@ alias la='ls -al'
 alias ll='ls -alF'
 alias h='history'
 alias gid='getent group'
-alias alg='alias | grep -i '
+#alias alg='alias | grep -i '   # Old method, before I converted it to a function
+function alg() {
+    alias | grep -i "$1"
+}
 # Match all files and color everything after the #. This is to allow ARGS to be shown for the various aliases and found with: "algg <char>"
 alias algg="cat $DIVTOOLS/dotfiles/.bash_aliases $DIVTOOLS/dotfiles/.bash_profile | grep --color=always -E '#.*$' | grep alias | grep -i "
+alias algdc='alg "dc"'
 alias pchk='$DIVTOOLS/scripts/prom_host_check.py' # Checks if hosts are running monitoring apps for Prometheus
 
 # EZA
@@ -135,6 +150,8 @@ alias gitpoff='gitpoff_func'
 
 # PYTHON Aliases
 export VENV_DIR="${VENV_DIR:-$DIVTOOLS/scripts/venvs}"  # This SHOULD be set above, but just in case, gets set here as well.
+export CONDA_DIR="${CONDA_DIR:-$DIVTOOLS/scripts/conda-envs}"  # Directory for conda environments (synced between systems)
+export CONDA_ENVS_PATH="$CONDA_DIR"  # Tell conda where to create/find environments
 
 
 ## the python_venv_* functions are defined in .bash_profile
@@ -144,6 +161,37 @@ alias pvact='python_venv_activate'
 alias pvdel="python_venv_delete"
 alias pvls='python_venv_ls'
 alias pvda='deactivate' # deactivates the venv
+alias pvrun='$DIVTOOLS/scripts/util/pvrun.sh'
+
+# CONDA Aliases
+## the conda_* functions are defined in .bash_profile
+alias cdinstall='$DIVTOOLS/scripts/conda/conda_install.sh'  # Install Miniconda3
+alias cdcr='conda_create'  # Create a new conda environment
+alias cdact='conda_activate'  # Activate a conda environment
+alias cddel='conda_delete'  # Delete a conda environment
+alias cdls='conda_ls'  # List all conda environments
+alias cdda='conda deactivate'  # Deactivates the conda environment
+
+
+# Comfy aliases
+alias comfy_run='$DIVTOOLS/scripts/comfy/comfy_run.sh'
+alias comfy_launch='comfy_run'
+alias nt_mnt_on="mount /mnt/nas1-91/nfs_test/ && dfc | grep -E 'Filesystem|nfs_test'"
+alias nt_mnt_off="umount /mnt/nas1-91/nfs_test/ && dfc | grep -E 'Filesystem|nfs_test'"
+alias cd_nt='cd /mnt/nas1-91/nfs_test/'
+alias nt_cd='cd /mnt/nas1-91/nfs_test/'
+alias nt_mklink="mklink /mnt/nas1-91/nfs_test/default/workflows/ /opt/comfy/user/default/workflows/"
+alias comfy_crloraf='$DIVTOOLS/scripts/comfy/comfy_create_ltag_file.sh'
+alias comfy_uploral='$DIVTOOLS/scripts/comfy/comfy_lora_update_links.sh'
+alias comfy_chkloras='$DIVTOOLS/scripts/comfy/comfy_chk_loras.sh'
+
+# ComfyUI utilities
+alias mklink='$DIVTOOLS/scripts/comfy/mklink.sh' # Create softlinks for folders from source to destination
+
+
+## HASS QOL Scripts
+alias genps='pvrun -v hass -p scripts/hass -s gen_presence_sensors.py'
+alias genps_add_labels='pvrun -v hass -p scripts/hass -s gen_presence_sensors.py --add-labels "occupancy"'
 
 
 # FRIGATE Scripts
@@ -174,26 +222,39 @@ alias aki='$DIVTOOLS/scripts/office365/o365_upd_akiflow.sh'
 # Generic Docker Aliases
 alias dils='docker image ls'
 alias dpsn='docker container ls --format '\''table {{.ID}}\t{{.Names}}\t{{.Image}}\t{{.RunningFor}}\t{{.Status}}\t{{.Size}}'\''' 
-alias dps='$DIVTOOLS/scripts/docker_ps.sh'
-alias dpsv='$DIVTOOLS/scripts/docker_ps.sh -v'
-alias dlistrp='$DIVTOOLS/scripts/list_restart_policies.sh'
+alias dps='$DIVTOOLS/scripts/util/docker_ps.sh'
+alias dpsv='$DIVTOOLS/scripts/util/docker_ps.sh -v'
+alias dlistrp='$DIVTOOLS/scripts/util/list_restart_policies.sh'
 
 # Syncthing
 alias stfc='find . -type f -not -path "*/.stversions/*" -name "*sync-conflict*"'
 
+
+# TMUX QOL
+if has_tmux; then
+  alias tls='tmux ls'                     # list sessions
+  alias tns='tmux new -s '                # create new session: tns session_name
+  alias tat='tmux attach -t '             # attach to session: tat session_name
+  alias tre='tmux rename-session -t '     # rename session: tre old_name new_name
+  alias trm='tmux kill-session -t '       # remove session: trm session_name
+  alias tlk='tmux list-keys -T prefix | grep -i -E '              # list key bindings
+fi
+
+
 # NFS
 # ./add_nfs_mount.sh -mp /mnt/nfs/divtools -nfs-host 10.1.1.71 -nfs-path /mnt/tpool/sys/u-shared -test
-alias add_nfs_dt='$DIVTOOLS/scripts/add_nfs_mount.sh -mp /mnt/NAS1-1/u-shared -nfs-host NAS1-1 -nfs-path /mnt/tpool/sys/u-shared'
+alias add_nfs_dt='$DIVTOOLS/scripts/util/add_nfs_mount.sh -mp /mnt/NAS1-1/u-shared -nfs-host NAS1-1 -nfs-path /mnt/tpool/sys/u-shared'
 
 # DASHY
 alias fdicon='find $DOCKERDIR/appdata/dashy/dashboard-icons/png -printf "%f\n" | grep -i ' # Find Dashy Icons, Usage: dicon <icon name>
 alias fdicons=fdicon
 
 # POSTGRES
-
 alias pg_setup='sudo $DIVTOOLS/scripts/postgres/pg_setup.sh'  # Setup Postgres and pgAdmin
 alias pg_update_servers='$DIVTOOLS/scripts/postgres/pg_update_servers.sh'  # Update pgAdmin servers from YAML
-
+if has_pgbackrest; then
+  alias pgbr="sudo pgbackrest --config=$DOCKER_HOSTDIR/pgbackrest/pgbackrest.conf" # runs pgbackrest with the local pgbackrest.conf file
+fi
 
 # Drive/Storage Aliases
 alias lsdrv='lsblk -o NAME,FSTYPE,MOUNTPOINT,SIZE,MODEL'
@@ -267,16 +328,18 @@ if [ -f $DOCKERFILE ] ; then
   alias dcbuild='dcrun build' # usage: dcbuild [service_name] - builds custom Docker images from Dockerfiles
   alias tfklogst='tail -f /opt/traefik/logs/traefik.log' # tail traefik logs
   alias tfklogs='cat /opt/traefik/logs/traefik.log' # cat traefik logs
-  alias tfkcerts='$DIVTOOLS/scripts/get_traefik_certs.sh' # get traefik certs from acme.json
-  alias dcchk='$DIVTOOLS/scripts/dt_yamlcheck.sh' # Check YAML files (minimal: checkmarks + missing vars only)
-  alias dcchk_err='$DIVTOOLS/scripts/dt_yamlcheck.sh -show-errors' # Check YAML files and show yamllint errors
-  alias dcchk_all='$DIVTOOLS/scripts/dt_yamlcheck.sh -show-errors -show-env -hide-commented' # Check YAML files with full output (errors + all env vars)
-  alias dtyc='$DIVTOOLS/scripts/dt_yamlcheck.sh' # Check YAML files (minimal: checkmarks + missing vars only)
-  alias dtyce='$DIVTOOLS/scripts/dt_yamlcheck.sh --show-env --hide-commented' # Check YAML files 
-  alias dtycv='$DIVTOOLS/scripts/dt_yamlcheck.sh --show-vol' # Check YAML files 
-  alias dtycev='$DIVTOOLS/scripts/dt_yamlcheck.sh --show-env --show-vol --hide-commented' # Check YAML files 
-  alias dtyc_err='$DIVTOOLS/scripts/dt_yamlcheck.sh -show-errors' # Check YAML files and show yamllint errors
-  alias dtyc_all='$DIVTOOLS/scripts/dt_yamlcheck.sh -show-errors -show-env -hide-commented' # Check YAML files with full output (errors + all env vars)
+  alias tfkcerts='$DIVTOOLS/scripts/util/get_traefik_certs.sh' # get traefik certs from acme.json
+  alias dcchk='$DIVTOOLS/scripts/util/dt_yamlcheck.sh' # Check YAML files (minimal: checkmarks + missing vars only)
+  alias dcchk_err='$DIVTOOLS/scripts/util/dt_yamlcheck.sh -show-errors' # Check YAML files and show yamllint errors
+  alias dcchk_all='$DIVTOOLS/scripts/util/dt_yamlcheck.sh -show-errors -show-env -hide-commented' # Check YAML files with full output (errors + all env vars)
+  alias dtyc='$DIVTOOLS/scripts/util/dt_yamlcheck.sh' # Check YAML files (minimal: checkmarks + missing vars only)
+  alias dtyce='$DIVTOOLS/scripts/util/dt_yamlcheck.sh --show-env --hide-commented' # Check YAML files
+  alias dtycv='$DIVTOOLS/scripts/util/dt_yamlcheck.sh --show-vol' # Check YAML files
+  alias dtycev='$DIVTOOLS/scripts/util/dt_yamlcheck.sh --show-env --show-vol --hide-commented' # Check YAML files
+  alias dtyc_err='$DIVTOOLS/scripts/util/dt_yamlcheck.sh -show-errors' # Check YAML files and show yamllint errors
+  alias dtyc_all='$DIVTOOLS/scripts/util/dt_yamlcheck.sh -show-errors -show-env -hide-commented' # Check YAML files with full output (errors + all env vars)
+  alias dtycp='$DIVTOOLS/scripts/util/dt_yamlcheck.sh -hide-yp -hide-yv -check-ports' # Check YAML files for port conflicts only
+  alias dtycpl='$DIVTOOLS/scripts/util/dt_yamlcheck.sh -hide-yp -hide-yv -check-ports -local' # Check YAML files for LOCAL port conflicts only
 
   # Manage "core" services as defined by profiles in docker compose
   alias startcore='sudo docker compose --profile core -f $DOCKERDIR/docker-compose-$HOSTNAME.yml start'
@@ -335,9 +398,12 @@ alias ufwdelete='sudo ufw delete'
 alias ufwreload='sudo ufw reload'
 
 # JOURNALCTL
-alias jcu='journalctl -u'
-alias jceu='journalctl -eu'
-alias jcfu='journalctl -fu'
+alias jcu='journalctl  --output=cat -u'    # preserves colors, NO Timestamps
+alias jceu='journalctl  --output=cat -eu'  # preserves colors, NO Timestamps
+alias jcfu='journalctl  --output=cat -fu'  # preserves colors, NO Timestamps
+alias jcut='journalctl -u'                # NO colors, WITH Timestamps
+alias jceut='journalctl -eu'              # NO colors, WITH Timestamps
+alias jcfut='journalctl -fu'              # NO colors, WITH Timestamps
 
 # SYSTEMD START, STOP AND RESTART | sc
 alias screload='sudo systemctl daemon-reload'
@@ -412,7 +478,10 @@ alias ipe='curl ipinfo.io/ip' # external ip
 alias ipi='ifconfig eth0' # internal ip
 alias header='curl -I' # get web server headers 
 alias lsnw='echo "===== IPs ====="; ip -brief addr; echo "===== Routes ====="; ip route show; echo "===== DNS ====="; cat /etc/resolv.conf'
-alias nocloudinit='sudo $DIVTOOLS/scripts/nw_disable_cloudinit.sh' # disable CloudInit. Used for VMs that default to CloudInit but really don't even use it
+alias nocloudinit='sudo $DIVTOOLS/scripts/util/nw_disable_cloudinit.sh' # disable CloudInit. Used for VMs that default to CloudInit but really don't even use it
+alias dnsd='$DIVTOOLS/scripts/util/dns_diag.sh' # Test DNS resolution using multiple public DNS servers
+alias sshu='$DIVTOOLS/scripts/util/ssh_util.sh' # SSH Utility Script for testing SSH connections
+
 
 # Syncthing Aliases
 if container_exists "syncthing"; then
@@ -430,6 +499,25 @@ else
   alias ststop='sudo systemctl stop syncthing'
   alias ststatus='sudo systemctl status syncthing'
   alias stlogs='journalctl -eu syncthing'
+fi
+
+if container_exists "appsmith"; then
+  alias asctl='docker exec appsmith supervisorctl '
+  alias asstatus='docker exec appsmith supervisorctl status'
+
+  # Appsmith aliases
+  alias as-status='docker exec appsmith supervisorctl status'
+  alias as-health='docker exec appsmith curl -sS -o /dev/null -w "%{http_code}\n" http://localhost:80/api/v1/health'
+  alias as-logs='docker logs --tail 50 appsmith'
+  alias as-backend-logs='docker exec appsmith supervisorctl tail -50 backend stdout'
+  alias as-rts-logs='docker exec appsmith supervisorctl tail -50 rts stdout'
+  alias as-mongo-status='docker exec appsmith supervisorctl status mongodb'
+  alias as-redis-status='docker exec appsmith supervisorctl status redis'
+  alias as-ps='docker exec appsmith ps -eo pid,ppid,cmd --sort=ppid | head -20'
+  alias as-container-status='docker ps --filter name=appsmith --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"'
+  alias as-restart='docker restart appsmith && echo "Waiting 10s for restart..." && sleep 10 && as-health'
+  alias as-backend-errors='docker exec appsmith supervisorctl tail -20 backend stderr'
+  alias as-rts-health='docker exec appsmith curl -sS -o /dev/null -w "%{http_code}\n" http://localhost:8886/rts-api/v1/health-check'
 fi
 
 # Samba
@@ -504,10 +592,17 @@ if has_qm; then
       echo "Snapshots:"
       echo "$snapshots"
   }
-
-
-
 fi
+
+# TMUX QOL Aliases
+if has_tmux; then
+  alias tma='tmux attach -t '
+  alias tmls='tmux ls'
+  alias tmnew='tmux new -s '  
+  alias tmkeys='tmux list-keys'
+fi
+
+
 
 # HOSTNAME Specific Aliases
 
@@ -571,7 +666,10 @@ esac
 
 # Proxmox Specific Aliases:
 if [ -f /etc/pve/.version ]; then
-  alias setdtacls='sudo $DIVTOOLS/scripts/setup_divtools_acls.sh' # set divtools acls on Promxox Host for internal LXCs
+  alias setdtacls='sudo $DIVTOOLS/scripts/util/setup_divtools_acls.sh' # set divtools acls on Promxox Host for internal LXCs
   alias pve_tpu_chk='sudo $DIVTOOLS/scripts/frigate/proxmox_coral_check.sh' # Check Proxmox TPU status
   alias pve_tpu_fix='sudo $DIVTOOLS/scripts/frigate/proxmox_coral_fix.sh' # Fix Proxmox TPU status
 fi
+
+# Samba AD DC Native Bash Aliases
+source "$DIVTOOLS/dotfiles/samba-aliases-native.sh"

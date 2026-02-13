@@ -1,0 +1,1 @@
+../projects/ads/native/samba-aliases-native.sh

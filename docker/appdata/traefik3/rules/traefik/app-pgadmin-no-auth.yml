@@ -1,0 +1,41 @@
+http:
+  routers:
+    pgadmin-service-rtr:
+      rule: 'Host(`pgadmin.{{env "DOMAINNAME_2"}}`) || Host(`pgadmin.w{{env "SITE_NUM"}}.{{env "DOMAINNAME_1"}}`)'
+      entryPoints:
+        - "websecure"
+      middlewares:
+        - pgadmin-https-headers
+        - pgadmin-security-headers
+      service: "pgadmin-service"
+      tls:
+        certResolver: "dns-cloudflare"
+        options: tls-opts@file
+  services:
+    pgadmin-service:
+      loadBalancer:
+        passHostHeader: true
+        serversTransport: "pgadmin"
+        servers:
+          - url: "http://10.1.1.74:5050/browser"
+  serversTransports:
+    pgadmin:
+      insecureSkipVerify: true
+
+  middlewares:
+    pgadmin-security-headers:
+      headers:
+        browserXssFilter: true
+        contentTypeNosniff: true
+        forceSTSHeader: true
+        stsIncludeSubdomains: true
+        stsPreload: true
+        stsSeconds: 315360000
+        customRequestHeaders:
+          X-Forwarded-Proto: "https"
+          X-Forwarded-Ssl: "on"
+    pgadmin-https-headers:
+      headers:
+        customRequestHeaders:
+          X-Forwarded-Proto: "https"
+          X-Forwarded-Ssl: "on"

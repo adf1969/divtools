@@ -1,0 +1,68 @@
+########################### ANAND'S ENVIRONMENT
+# Here are my 5 Docker Hosts:
+# - Traefik (traefik) - Proxmox LXC with Ubuntu Server 22.04
+# - DNS / AdBlock Server (pihole) - Proxmox LXC with Ubuntu Server 22.04
+
+########################### THIS COMPOSE FILE
+# - Home Server (t3ubu1) - Proxmox LXC with Ubuntu Server 22.04
+# - Prefix/suffix "t3ubu1" refers to the above host
+# - Docker version 24.0.7, build afdd53b
+# - Docker Compose version v2.21.0
+
+########################### NETWORKS
+# You may customize the network subnets (192.168.x.0/24) below as you please.
+# SOCKET_PROXY_NETWORK_BASE=192.168.201 - defined in .env
+# SOCKET_PROXY_NETWORK_CIDR=24 - defined in .env
+# T3_PROXY_NETWORK_BASE=192.168.201 - defined in .env
+# T3_PROXY_NETWORK_CIDR=24 - defined in .env
+networks:
+  default:
+    driver: bridge
+  socket_proxy:
+    name: socket_proxy
+    driver: bridge
+    ipam:
+      config:
+        - subnet: ${SOCKET_PROXY_NETWORK_BASE}.0/${SOCKET_PROXY_NETWORK_CIDR}        
+  t3_proxy:
+    name: t3_proxy
+    driver: bridge
+    ipam:
+      config:
+        - subnet: ${T3_PROXY_NETWORK_BASE}.0/${T3_PROXY_NETWORK_CIDR}
+
+########################### SECRETS
+secrets:
+  basic_auth_credentials:
+    file: $DOCKERDIR/secrets/basic_auth_credentials
+  cf_dns_api_token_traefik3_divix_biz:
+    file: $DOCKERDIR/secrets/cf_dns_api_token_traefik3_divix_biz
+
+
+include:
+  ########################### SERVICES
+  # PREFIX t3ubu1 = Home Server
+  # HOSTNAME=t3ubu1 - defined in .env
+
+  # CORE
+  
+  - include/$HOSTNAME/traefik3_cli.yml  # Use CLI in docker-compose version of Traefik config
+  ##- include/$HOSTNAME/syncthing.yml
+  #- include/$HOSTNAME/traefik3_config.yml  # Use Config File ./traefik.yml version of Traefik config
+  #- include/$HOSTNAME/oauth.yml
+  #- include/$HOSTNAME/authelia.yml
+  ##- include/$HOSTNAME/portainer.yml
+  #- include/$HOSTNAME/dockge.yml
+  ##- include/$HOSTNAME/cloudflare-ddns.yml      
+  ##- include/$HOSTNAME/glances.yml
+
+  # SHARED
+  - include/shared/socket-proxy.yml   #SP+ Uncomment to enable Socket Proxy. Check files for #SP for details
+  ##- include/shared/node-exporter.yml
+  ##- include/shared/cadvisor.yml
+
+
+  # TRAEFIK
+  #- include/$HOSTNAME/homepage.yml
+  ##- include/$HOSTNAME/dashy.yml
+  #- include/$HOSTNAME/homarr.yml

@@ -1,0 +1,24 @@
+http:
+  routers:
+    plex-service-rtr:
+      rule: 'Host(`plex.{{env "DOMAINNAME_2"}}`) || Host(`plex.w{{env "SITE_NUM"}}.{{env "DOMAINNAME_1"}}`)'
+      entryPoints:
+        - "websecure"
+      # MiddleWare breaks plex, fix later.
+      #middlewares:
+      #  - chain-no-auth
+      service: "plex-service"
+      tls:
+        certResolver: "dns-cloudflare"
+        options: tls-opts@file
+  services:
+    plex-service:
+      loadBalancer:
+        passHostHeader: true
+        serversTransport: "plex"
+        servers:
+          # plex URL
+          - url: "http://10.1.1.75:32400"
+  serversTransports:
+    plex:
+      insecureSkipVerify: true

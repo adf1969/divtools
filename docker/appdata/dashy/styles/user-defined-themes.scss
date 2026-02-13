@@ -34,4 +34,39 @@ html[data-theme='nord-frost-tl'] {
     .collapsable:nth-child(4n) {
         background: #ac9e5e;
     }
+
+    /* Target items with a custom backgroundColor (your remote markers) */
+    .item[style*="background"] {
+        border: 3px solid #3fa5b9 !important;
+        /* Red border - adjust color to match your palette */
+        border-radius: 12px !important;
+        box-shadow: 0 0 15px rgb(63, 165, 185) !important;
+        /* Optional glow */
+    }
+
+    /* Optional: Ensure local items (no background) stay clean */
+    .item:not([style*="background"]) {
+        border: none !important;
+        box-shadow: none !important;
+    }
+}
+
+html[data-theme='nord-frost'] {
+
+    /* Target items with a custom backgroundColor (your remote markers) */
+    .item[style*="background"] {
+        /* Red border - adjust color to match your palette */
+        border: 3px solid #3fa5b9 !important;
+        /* Optional glow */
+        border-radius: 12px !important;
+        box-shadow: 0 0 15px rgb(63, 165, 185) !important;
+        //background-color: #6f7581 !important;
+        background-color: #434b5e !important;
+    }
+
+    /* Optional: Ensure local items (no background) stay clean */
+    .item:not([style*="background"]) {
+        border: none !important;
+        box-shadow: none !important;
+    }
 }

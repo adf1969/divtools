@@ -69,6 +69,7 @@ include:
   - include/$HOSTNAME/grafana.yml
   - include/$HOSTNAME/uptime-kuma.yml
   - include/$HOSTNAME/prometheus.yml
+  - include/$HOSTNAME/loki.yml
 
   # Omada SDN Controller SW
   - include/$HOSTNAME/omada-sdn.yml

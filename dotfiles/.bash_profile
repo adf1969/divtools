@@ -369,9 +369,19 @@ has_zfs() {
   command -v zfs &> /dev/null
 }
 
-# Function to check if ZFS filesystem
+# Function to check if QM exists
 has_qm() {
   command -v qm &> /dev/null
+}
+
+# Function to check if ZFS filesystem
+has_pgbackrest() {
+  command -v pgbackrest &> /dev/null
+}
+
+# Function to check if tmux exists
+has_tmux() {
+  command -v tmux &> /dev/null
 }
 
 # Function to add a directory to PATH if it exists
@@ -976,15 +986,22 @@ load_env_files() {
     fi
     
     # Define base paths - use known locations
-    # Last Updated: 11/11/2025 9:15:00 PM CDT
+    # Last Updated: 12/6/2025 1:30:00 PM CST
     local docker_dir="${DOCKERDIR:-/opt/divtools/docker}"
     local shared_dir="${docker_dir}/sites/s00-shared"
+    
+    [ "${DT_DEBUG,,}" == "1" -o "${DT_DEBUG,,}" == "true" ] && {
+        log_msg "DEBUG" "=== load_env_files() started ===" >&2
+        log_msg "DEBUG" "HOSTNAME=$HOSTNAME, SITE_NAME=$SITE_NAME, docker_dir=$docker_dir" >&2
+    }
     
     # === ALWAYS LOAD SHARED .env FIRST ===
     # The shared .env is at a KNOWN location and should always be loaded if it exists
     # This provides DT_INCLUDE_* and other shared configuration variables
     # Last Updated: 11/11/2025 9:15:00 PM CDT
     local shared_env_file
+    [ "${DT_DEBUG,,}" == "1" -o "${DT_DEBUG,,}" == "true" ] && log_msg "DEBUG" "Checking shared .env in: $shared_dir" >&2
+    
     shared_env_file=$(find_file_case_insensitive "${shared_dir}" ".env." "s00-shared" "")
     if [ -n "$shared_env_file" ]; then
         source "$shared_env_file" || {
@@ -992,6 +1009,7 @@ load_env_files() {
             return 1
         }
         log_msg "INFO" "Sourced shared settings from $shared_env_file" >&2
+        [ "${DT_DEBUG,,}" == "1" -o "${DT_DEBUG,,}" == "true" ] && log_msg "DEBUG" "✓ Loaded shared: $shared_env_file" >&2
     else
         [ "${DT_DEBUG,,}" == "1" -o "${DT_DEBUG,,}" == "true" ] && log_msg "WARNING" "Shared .env not found in $shared_dir" >&2
     fi
@@ -1006,53 +1024,81 @@ load_env_files() {
     fi
 
     # Now we can use SITE_NAME for site/host specific paths
+    # Convert HOSTNAME to lowercase for directory paths (directories are stored in lowercase)
     local site_name="${SITE_NAME:-default}"
     local site_dir="${docker_dir}/sites/${site_name}"
-    local host_dir="${site_dir}/${HOSTNAME}"
+    local hostname_lower=$(echo "${HOSTNAME}" | tr '[:upper:]' '[:lower:]')
+    local host_dir="${site_dir}/${hostname_lower}"
 
     # === DETECT CONFIG MODE (V1 or V2) ===
+    # This determines which .env files to load
+    # V1 uses: $DOCKERDIR/.env and $DOCKERDIR/secrets/env/.env.$HOSTNAME
+    # V2 uses: $DOCKERDIR/sites/$SITE_NAME/.env.$SITE_NAME and $DOCKERDIR/sites/$SITE_NAME/$HOSTNAME/.env.$HOSTNAME
+    # Last Updated: 12/6/2025 1:30:00 PM CST
     local selected_compose
     selected_compose=$(get_docker_compose_file 2>/dev/null || echo "")
+    [ "${DT_DEBUG,,}" == "1" -o "${DT_DEBUG,,}" == "true" ] && log_msg "DEBUG" "Detected compose file: $selected_compose" >&2
+    
     if [[ "$selected_compose" == *"/docker-compose-"* ]]; then
         export CFG_MODE=1
-        [ "${DT_DEBUG,,}" == "1" -o "${DT_DEBUG,,}" == "true" ] && log_msg "DEBUG" "CFG_MODE=1 (V1) - Using compose file: $selected_compose" >&2
+        [ "${DT_DEBUG,,}" == "1" -o "${DT_DEBUG,,}" == "true" ] && log_msg "DEBUG" "✓ CFG_MODE=1 (V1) - Compose file pattern: docker-compose-*" >&2
     elif [[ "$selected_compose" == *"/dc-"* ]]; then
         export CFG_MODE=2
-        [ "${DT_DEBUG,,}" == "1" -o "${DT_DEBUG,,}" == "true" ] && log_msg "DEBUG" "CFG_MODE=2 (V2) - Using compose file: $selected_compose" >&2
+        [ "${DT_DEBUG,,}" == "1" -o "${DT_DEBUG,,}" == "true" ] && log_msg "DEBUG" "✓ CFG_MODE=2 (V2) - Compose file pattern: dc-*" >&2
     else
         export CFG_MODE=2  # Default to V2 if no compose file found
-        [ "${DT_DEBUG,,}" == "1" -o "${DT_DEBUG,,}" == "true" ] && log_msg "WARN" "No compose file found; defaulting to CFG_MODE=2 (V2)" >&2
+        [ "${DT_DEBUG,,}" == "1" -o "${DT_DEBUG,,}" == "true" ] && log_msg "DEBUG" "ℹ CFG_MODE=2 (V2 default) - No compose file found, using V2 path" >&2
     fi
 
     # === LOAD .env FILES BASED ON CFG_MODE ===
+    # Migration Note: You can have BOTH V1 and V2 files present. The system will load based on CFG_MODE.
+    # To migrate from V1 to V2:
+    #   1. Create V2 files in docker/sites/$SITE_NAME/$HOSTNAME/
+    #   2. Verify they load correctly with DT_DEBUG=1
+    #   3. The old V1 files will be ignored once CFG_MODE switches to V2
+    #   4. You can safely DELETE the old V1 files once migration is complete
 
     if [[ "$CFG_MODE" == "1" ]]; then
-        # --- V1: Load $DOCKERDIR/.env ---
-        if [ -f "${docker_dir}/.env" ]; then
-            source "${docker_dir}/.env"
+        # --- V1 MODE: Load from $DOCKERDIR and $DOCKERDIR/secrets/env/ ---
+        [ "${DT_DEBUG,,}" == "1" -o "${DT_DEBUG,,}" == "true" ] && log_msg "DEBUG" "LOADING V1 FILES..." >&2
+        
+        # --- V1: Load $DOCKERDIR/.env (general settings) ---
+        local v1_general="${docker_dir}/.env"
+        [ "${DT_DEBUG,,}" == "1" -o "${DT_DEBUG,,}" == "true" ] && log_msg "DEBUG" "  Checking V1 general: $v1_general" >&2
+        
+        if [ -f "$v1_general" ]; then
+            source "$v1_general"
             log_msg "INFO" "Sourced V1 general settings from ${docker_dir}/.env" >&2
-            [ "${DT_DEBUG,,}" == "1" -o "${DT_DEBUG,,}" == "true" ] && log_msg "DEBUG" "Loaded V1 general env" >&2
+            [ "${DT_DEBUG,,}" == "1" -o "${DT_DEBUG,,}" == "true" ] && log_msg "DEBUG" "  ✓ Loaded V1 general env" >&2
         else
-            [ "${DT_DEBUG,,}" == "1" -o "${DT_DEBUG,,}" == "true" ] && log_msg "WARNING" "V1 general .env not found at ${docker_dir}/.env" >&2
+            [ "${DT_DEBUG,,}" == "1" -o "${DT_DEBUG,,}" == "true" ] && log_msg "WARNING" "  ✗ V1 general .env not found at ${docker_dir}/.env" >&2
         fi
 
-        # --- V1: Load $DOCKERDIR/secrets/env/.env.$HOSTNAME (case-insensitive) ---
+        # --- V1: Load $DOCKERDIR/secrets/env/.env.$HOSTNAME (host-specific) ---
+        local v1_host_base="${docker_dir}/secrets/env"
+        [ "${DT_DEBUG,,}" == "1" -o "${DT_DEBUG,,}" == "true" ] && log_msg "DEBUG" "  Checking V1 host-specific in: $v1_host_base" >&2
+        
         local v1_host_env
-        v1_host_env=$(find_file_case_insensitive "${docker_dir}/secrets/env" ".env." "$HOSTNAME" "")
+        v1_host_env=$(find_file_case_insensitive "$v1_host_base" ".env." "$HOSTNAME" "")
         if [ -n "$v1_host_env" ]; then
             source "$v1_host_env"
             log_msg "INFO" "Sourced V1 host-specific settings from $v1_host_env" >&2
-            [ "${DT_DEBUG,,}" == "1" -o "${DT_DEBUG,,}" == "true" ] && log_msg "DEBUG" "Loaded V1 host env: $v1_host_env" >&2
+            [ "${DT_DEBUG,,}" == "1" -o "${DT_DEBUG,,}" == "true" ] && log_msg "DEBUG" "  ✓ Loaded V1 host env: $v1_host_env" >&2
         else
-            [ "${DT_DEBUG,,}" == "1" -o "${DT_DEBUG,,}" == "true" ] && log_msg "WARNING" "V1 host-specific .env not found in ${docker_dir}/secrets/env for $HOSTNAME" >&2
+            [ "${DT_DEBUG,,}" == "1" -o "${DT_DEBUG,,}" == "true" ] && log_msg "WARNING" "  ✗ V1 host-specific .env not found in $v1_host_base for $HOSTNAME" >&2
         fi
 
     elif [[ "$CFG_MODE" == "2" ]]; then
-        # --- V2: Load site and host .env files ---
+        # --- V2 MODE: Load from $DOCKERDIR/sites/$SITE_NAME/ ---
         # Note: Shared .env was already loaded at the top of this function
-        # Last Updated: 11/11/2025 9:15:00 PM CDT
+        # Last Updated: 12/6/2025 1:30:00 PM CST
+        [ "${DT_DEBUG,,}" == "1" -o "${DT_DEBUG,,}" == "true" ] && log_msg "DEBUG" "LOADING V2 FILES..." >&2
+        
         local site_env_file host_env_file
 
+        # --- V2: Load site-specific .env ---
+        [ "${DT_DEBUG,,}" == "1" -o "${DT_DEBUG,,}" == "true" ] && log_msg "DEBUG" "  Checking V2 site-specific in: $site_dir" >&2
+        
         site_env_file=$(find_file_case_insensitive "${site_dir}" ".env." "$site_name" "")
         if [ -n "$site_env_file" ]; then
             source "$site_env_file" || {
@@ -1060,10 +1106,14 @@ load_env_files() {
                 return 1
             }
             log_msg "INFO" "Sourced V2 site-specific settings from $site_env_file" >&2
+            [ "${DT_DEBUG,,}" == "1" -o "${DT_DEBUG,,}" == "true" ] && log_msg "DEBUG" "  ✓ Loaded V2 site env: $site_env_file" >&2
         else
-            [ "${DT_DEBUG,,}" == "1" -o "${DT_DEBUG,,}" == "true" ] && log_msg "WARNING" "V2 site-specific .env not found in $site_dir" >&2
+            [ "${DT_DEBUG,,}" == "1" -o "${DT_DEBUG,,}" == "true" ] && log_msg "WARNING" "  ✗ V2 site-specific .env not found in $site_dir" >&2
         fi
 
+        # --- V2: Load host-specific .env ---
+        [ "${DT_DEBUG,,}" == "1" -o "${DT_DEBUG,,}" == "true" ] && log_msg "DEBUG" "  Checking V2 host-specific in: $host_dir" >&2
+        
         host_env_file=$(find_file_case_insensitive "${host_dir}" ".env." "$HOSTNAME" "")
         if [ -n "$host_env_file" ]; then
             source "$host_env_file" || {
@@ -1071,10 +1121,13 @@ load_env_files() {
                 return 1
             }
             log_msg "INFO" "Sourced V2 host-specific settings from $host_env_file" >&2
+            [ "${DT_DEBUG,,}" == "1" -o "${DT_DEBUG,,}" == "true" ] && log_msg "DEBUG" "  ✓ Loaded V2 host env: $host_env_file" >&2
         else
-            [ "${DT_DEBUG,,}" == "1" -o "${DT_DEBUG,,}" == "true" ] && log_msg "WARNING" "V2 host-specific .env not found in $host_dir" >&2
+            [ "${DT_DEBUG,,}" == "1" -o "${DT_DEBUG,,}" == "true" ] && log_msg "WARNING" "  ✗ V2 host-specific .env not found in $host_dir" >&2
         fi
     fi
+    
+    [ "${DT_DEBUG,,}" == "1" -o "${DT_DEBUG,,}" == "true" ] && log_msg "DEBUG" "=== load_env_files() completed ===" >&2
 
     # === DEFAULTS & PATH ===
     if [ -z "$DIVTOOLS" ]; then
@@ -1136,7 +1189,8 @@ container_exists() {
 get_docker_compose_file() {
     local selected_compose
     local hostname="${HOSTNAME:-$(hostname)}"
-    #local hostname=$(hostname)}
+    # Convert hostname to lowercase for directory paths (directories are stored in lowercase)
+    hostname=$(echo "${hostname}" | tr '[:upper:]' '[:lower:]')
     local docker_dir="${DOCKERDIR:-/opt/divtools/docker}"
     local site_name="${SITE_NAME:-default}"
     local docker_sitedir="${docker_dir}/sites/${site_name}"
@@ -1166,9 +1220,76 @@ get_docker_compose_file() {
 
 
 
+# Display usage information for dcrun_f and docker compose commands
+# Last Updated: 01/19/2026 12:00:00 PM CDT
+dcrun_f_usage() {
+    cat << 'EOF'
+╔═════════════════════════════════════════════════════════════════════════════╗
+║                        DOCKER COMPOSE HELPER USAGE                          ║
+╚═════════════════════════════════════════════════════════════════════════════╝
+
+USAGE:
+  dcrun <docker-compose-command> [options] [arguments]
+
+ALIASES:
+  dcup              = dcrun up -d --build --remove-orphans
+  dcdown            = dcrun down --remove-orphans
+  dcstart           = dcrun start
+  dcstop            = dcrun stop
+  dcrestart         = dcrun restart
+  dcrec             = dcrun up -d --force-recreate --no-deps --remove-orphans
+  dcrecall          = dcrun up -d --force-recreate --remove-orphans
+  dcpull            = dcrun pull
+  dcbuild           = dcrun build
+  dclogs            = dcrun logs -tf --tail="50"
+
+CUSTOM FLAGS (must come before docker-compose command):
+  -test                Enable test mode (shows what would run, no changes)
+  -dt-debug            Enable debug mode (verbose output)
+  -p, --profile        Specify docker-compose profile
+  -h, --help, -usage   Display this help message
+
+EXAMPLES:
+  dcup                             # Start all services in compose file
+  dcup -p appsmith                 # Start only services in 'appsmith' profile
+  dcpull -p appsmith               # Pull images for 'appsmith' profile services
+  dcdown -p appsmith               # Stop services in 'appsmith' profile
+  dcrun logs appsmith -f           # Follow logs for appsmith container
+  dcrun up -d -p n8n              # Start n8n profile services in background
+  dcrun -test up -d                # Test mode: show what 'dcup' would run
+  dcrun -dt-debug up -d            # Debug mode: verbose output with 'dcup'
+
+PROFILES:
+  Use -p/--profile to selectively start services with matching profiles.
+  Services without a profile always start.
+  Services with a profile only start when that profile is specified.
+
+  Example:
+    dcup                             # Starts services without profiles
+    dcup -p appsmith                 # Starts appsmith profile services
+    dcup -p n8n -p appsmith         # Starts both n8n and appsmith profiles
+
+HELP:
+  For docker-compose specific help:
+    dcrun --help                     # Docker compose help
+    dcrun pull --help                # Help for 'pull' command
+    dcrun up --help                  # Help for 'up' command
+
+EOF
+} # dcrun_f_usage
+
 # Function for dcrun to handle docker compose execution with environment setup
-# Last Updated: 10/22/2025 8:35:00 PM CDT
+# Last Updated: 01/19/2026 12:00:00 PM CDT
 dcrun_f() {
+    # Check for help/usage flags early (before other processing)
+    for arg in "$@"; do
+        case "${arg}" in
+            -h|--help|-usage|--usage)
+                dcrun_f_usage
+                return 0
+                ;;
+        esac
+    done
     # Set defaults
     TEST_MODE=0
     DEBUG_MODE=0
@@ -1177,7 +1298,7 @@ dcrun_f() {
         log_msg "DEBUG" "Debug mode enabled via DT_DEBUG=${DT_DEBUG}" >&2
     fi
 
-    # Parse and filter custom flags (-test, -dt-debug, --profile)
+    # Parse and filter custom flags (-test, -dt-debug, --profile, -h/--help, -usage/--usage)
     local profile_args=""
     local filtered_args=()
     local skip_next=0
@@ -1190,8 +1311,11 @@ dcrun_f() {
             DEBUG_MODE=1
             log_msg "DEBUG" "Debug mode enabled via -dt-debug flag" >&2
             continue
-        elif [[ "${arg}" == "--profile" ]]; then
-            profile_args="${arg}"
+        elif [[ "${arg}" == "-h" || "${arg}" == "--help" || "${arg}" == "-usage" || "${arg}" == "--usage" ]]; then
+            # Already handled above, skip it
+            continue
+        elif [[ "${arg}" == "-p" || "${arg}" == "--profile" ]]; then
+            profile_args="--profile"  # Normalize to --profile regardless of input
             skip_next=1
             continue
         elif [[ ${skip_next} -eq 1 ]]; then
@@ -1565,8 +1689,9 @@ df_color() {
             echo "[DEBUG] Processing line $i: filesystem=$filesystem, mountpoint=$mountpoint"
         fi
         
-        # Check if this is a remote mount and has usage info file
+        # Reset per-line variables and prepare corrected line
         local corrected_line="$line"
+        usage=""
         if type -t is_remote_mount &>/dev/null && type -t get_truenas_usage &>/dev/null; then
             if is_remote_mount "$mountpoint" 2>/dev/null; then
                 usage_file=$(get_usage_file_for_mount "$mountpoint" 2>/dev/null)

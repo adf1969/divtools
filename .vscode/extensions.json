@@ -1,0 +1,20 @@
+{
+    // Recommended extensions to improve Markdown checklists and TODO/tag support
+    "recommendations": [
+        "shd101wyy.markdown-preview-enhanced",
+        "yzhang.markdown-all-in-one",
+        "Gruntfuggly.todo-tree",
+        "ryuta46.multi-command",
+        "jannchie.vscode-better-color-picker",
+        "bierner.color-info",
+        "wholroyd.jinja",
+        "mads-hartmann.bash-ide-vscode",
+        "naumovs.color-highlight",
+        "royaction.color-manager",
+        "anseki.vscode-color",
+        "fabiospampinato.vscode-highlight",
+        "usama8800.tab-groups",
+        "redhat.vscode-yaml",
+        "jerrygoyal.shortcut-menu-bar"
+    ]
+}

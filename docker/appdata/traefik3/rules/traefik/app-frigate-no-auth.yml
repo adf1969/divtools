@@ -1,0 +1,24 @@
+http:
+  routers:
+    frigate-service-rtr:
+      rule: 'Host(`frigate.{{env "DOMAINNAME_2"}}`) || Host(`frigate.w{{env "SITE_NUM"}}.{{env "DOMAINNAME_1"}}`)'
+      entryPoints:
+        - "websecure"
+      # MiddleWare breaks frigate, fix later.
+      #middlewares:
+      #  - chain-no-auth
+      service: "frigate-service"
+      tls:
+        certResolver: "dns-cloudflare"
+        options: tls-opts@file
+  services:
+    frigate-service:
+      loadBalancer:
+        passHostHeader: true
+        serversTransport: "frigate"
+        servers:
+          # frigate URL
+          - url: "http://10.1.1.75:5000/"
+  serversTransports:
+    frigate:
+      insecureSkipVerify: true

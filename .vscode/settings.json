@@ -1,4 +1,28 @@
 {
+    // Workspace settings to make snippets and todo tags more useful in Markdown
+    "editor.quickSuggestions": {
+        "other": true,
+        "comments": true,
+        "strings": true
+    },
+    "editor.suggest.snippetsPreventQuickSuggestions": false,
+    // Todo Tree: pick up custom tags including OUTSTANDING and markdown checklist tokens
+    "todo-tree.general.tags": [
+        "TODO",
+        "FIXME",
+        "OUTSTANDING",
+        "[ ]",
+        "[x]"
+    ],
+    // Regex uses $TAGS placeholder which is expanded from todo-tree.general.tags
+    // This pattern also detects markdown list prefixes so '- [ ]' items are matched
+    "todo-tree.regex.regex": "(//|#|<!--|;|/\\*|^|^\\s*(-|\\d+.))\\s*($TAGS)",
+    // Markdown Preview Enhanced: allow source updates from preview (if you use it)
+    "markdown-preview-enhanced.enableScriptExecution": true,
+    // Ensure .md files use markdown language
+    "files.associations": {
+        "*.md": "markdown"
+    },
     "files.eol": "\n",
     "cSpell.words": [
         "DOMAINNAME"
@@ -27,6 +51,15 @@
                 "copilot/claude-sonnet-4.5",
                 "copilot/grok-code-fast-1"
             ]
+        },
+        "divtools/.vscode/mcp.json: nodered-dt": {
+            "allowedModels": [
+                "copilot/gpt-5-mini",
+                "copilot/gpt-4.1",
+                "copilot/gpt-4o",
+                "copilot/grok-code-fast-1",
+                "copilot/oswe-vscode-prime"
+            ]
         }
     },
     "todo-tree.general.excludeGlobs": [
@@ -45,5 +78,63 @@
         "**/*.sync-conflict*"
     ],
     "todo-tree.general.showExcludedGlobs": false,
-    "todo-tree.regex.regex": "(^|//|#|<!--|;|/\\*|\\*)\\s*(❓ OUTSTANDING|TODO|FIXME|HACK|BUG)\\b"
+    "todo-tree.highlights.customHighlight": {
+        "[ ]": {
+            "background": "#8d2e2e80",
+            "foreground": "#ffffff",
+            "icon": "circle",
+            "type": "text"
+        },
+        "[x]": {
+            "background": "#00ff0080",
+            "foreground": "#000000",
+            "icon": "check",
+            "type": "text"
+        }
+    },
+    // multi-command configuration to chain focus+toggle (requires 'ryuta46.multi-command')
+    "multiCommand.commands": [
+        {
+            "command": "multiCommand.toggleCheckboxAndFocus",
+            "sequence": [
+                "workbench.action.focusActiveEditorGroup",
+                "markdown.extension.toggleCheckbox"
+            ]
+        }
+    ],
+    "github.copilot.enable": {
+        "*": true,
+        "plaintext": true,
+        "markdown": false, // ← turns Copilot off **only** in .md files
+        "scminput": false
+    },
+    // This is for Markdown All in One extension to disable features we don't want
+    "markdown.extension.completion.enabled": false,
+    "markdown.extension.format.enabled": false,
+    "markdown.extension.autoList.enabled": false,
+    "markdown.extension.print.absoluteImgPath": false,
+    // This is for ALL Markdown Files
+    "[markdown]": {
+        "editor.quickSuggestions": {
+            "other": true,
+            "comments": false,
+            "strings": false
+        },
+        // No popups on # [ / . etc. → kills most Markdown "helpful" completions
+        "editor.suggestOnTriggerCharacters": false,
+        // No random word suggestions while typing prose
+        "editor.wordBasedSuggestions": "off",
+        // Disable built-in Markdown path/header/link completions
+        "markdown.suggest.paths.enabled": false,
+        "markdown.suggest.anchors.enabled": false,
+        "markdown.suggest.workspaceHeaderCompletions": "never",
+        // No inline ghost text
+        "editor.inlineSuggest.enabled": false,
+        // Your existing good ones
+        "editor.lightbulb.enabled": "off",
+        "editor.codeActionsOnSave": {},
+        "editor.codeLens": false,
+        "editor.largeFileOptimizations": true,
+    },
+    // Disable Spell Checking in Markdown files
 }

@@ -1,0 +1,566 @@
+pageInfo:
+  title: Private-10dot Links
+
+appConfig:
+  cssThemes: ["nord-frost-tl"]
+  theme: nord-frost
+  layout: auto
+  iconSize: medium
+
+sections:
+  - name: Media & Entertainment
+    items:
+      - title: Plex
+        description: Plex Media Server TNFS1
+        icon: plex.png
+        url: http://10.1.1.75:32400
+        target: newtab
+        statusCheck: true
+        statusCheckUrl: http://10.1.1.75:32400/identity
+        statusCheckAllowInsecure: true
+        id: 0_1605_plex
+      - title: Immich
+        description: IMMICH Photo Server TNFS1
+        icon: immich.png
+        url: http://10.1.1.75:2283/
+        target: newtab
+        statusCheck: true
+        statusCheckAllowInsecure: true
+        id: 0_1605_immich
+
+    displayData:
+      sortBy: default
+      rows: 1
+      cols: 1
+      collapsed: false
+      hideForGuests: false
+    icon: fas fa-photo-video
+  - name: Networking
+    icon: fas fa-network-wired
+    items:
+      - title: opn01-7692NH
+        description: opnSense Firewall/Router (Protectli Vault) [site 01-7692nh]
+        icon: opnsense.png
+        url: https://10.1.0.1/
+        target: newtab
+        statusCheck: true
+        statusCheckAllowInsecure: true
+        statusCheckUrl: https://10.1.0.1/
+        id: 0_1064_opnsense_01
+      - title: opn04-AVC
+        description: opnSense Firewall/Router (Protectli Vault) [site 04-avc]
+        icon: opnsense.png
+        url: https://10.4.0.1/
+        target: newtab
+        statusCheck: true
+        statusCheckAllowInsecure: true
+        statusCheckUrl: https://10.4.0.1/
+        id: 0_1064_opnsense_04
+      - title: opn10-CVG
+        description: opnSense Firewall/Router (Protectli Vault) [site 10-cvg]
+        icon: opnsense.png
+        url: https://10.10.0.1/
+        target: newtab
+        statusCheck: true
+        statusCheckAllowInsecure: true
+        statusCheckUrl: https://10.10.0.1/
+        id: 0_1064_opnsense_10
+      - title: opn11-AVAK
+        description: opnSense Firewall/Router (Protectli Vault) [site 11-avak]
+        icon: opnsense.png
+        url: https://10.11.0.1/
+        target: newtab
+        statusCheck: true
+        statusCheckAllowInsecure: true
+        statusCheckUrl: https://10.11.0.1/
+        id: 0_1064_opnsense_11
+      - title: opn12-9205ST
+        description: opnSense Firewall/Router (Protectli Vault) [site 12-9205st]
+        icon: opnsense.png
+        url: https://10.12.0.1/
+        target: newtab
+        statusCheck: true
+        statusCheckAllowInsecure: true
+        statusCheckUrl: https://10.12.0.1/
+        id: 0_1064_opnsense_12
+      - title: OMADA SDN (monitor)
+        description: OMADA NW Management SW Controller
+        icon: omada.png
+        url: https://10.1.1.104:8043/
+        target: newtab
+        statusCheck: true
+        statusCheckAllowInsecure: true
+        statusCheckUrl: https://10.1.1.104:8043/
+        id: 0_1064_pihole
+      - title: BonusRm TEG-284WS
+        description: TrendNet TEG-284WS 28-Port Switch (Bonus Room)
+        icon: freebox-revolution.png
+        url: http://10.1.0.40
+        target: newtab
+        statusCheck: true
+        statusCheckUrl: http://10.1.0.40
+        id: 0_1064_teg284ws_br
+      - title: Shop TEG-284WS
+        description: TrendNet TEG-284WS 28-Port Switch (Shop)
+        icon: freebox-revolution.png
+        url: http://10.1.0.41
+        target: newtab
+        statusCheck: true
+        statusCheckUrl: http://10.1.0.41
+        id: 0_1064_teg284ws_shop
+      - title: Pi-Hole
+        description: DNS Ad-Blocking
+        icon: pi-hole.png
+        url: http://pihole/admin/login.php
+        target: newtab
+        statusCheck: true
+        statusCheckUrl: http://10.1.1.111/admin/login.php
+        id: 0_1064_pihole
+      - title: Traefik
+        description: Traefik Reverse Proxy
+        icon: traefik.png
+        url: http://10.1.1.103:8085
+        target: newtab
+        statusCheck: true
+        id: 1_1064_traefik
+    displayData:
+      sortBy: default
+      rows: 1
+      cols: 1
+      collapsed: false
+      hideForGuests: false
+  - name: Network Monitoring
+    icon: fas fa-tachometer-alt-fast
+    displayData:
+      sortBy: default
+      rows: 1
+      cols: 1
+      collapsed: false
+      hideForGuests: false
+    items:
+      - title: Uptime Kuma
+        description: Uptime Kuma [monitor]
+        icon: uptime-kuma.png
+        url: http://10.1.1.104:3001/
+        target: newtab
+        statusCheck: true
+        statusCheckAllowInsecure: true
+        id: 0_1840_ukuma
+      - title: Grafana
+        description: Grafana [monitor]
+        icon: grafana.png
+        url: http://10.1.1.104:3000/
+        target: newtab
+        statusCheck: true
+        statusCheckAllowInsecure: true
+        id: 0_1840_grafana
+      - title: InfluxDB
+        description: InfluxDB [monitor]
+        icon: influxdb.png
+        url: http://10.1.1.104:8086/
+        target: newtab
+        statusCheck: true
+        statusCheckAllowInsecure: true
+        id: 1_1840_influxdb
+      - title: Prometheus
+        description: Prometheus [monitor]
+        icon: prometheus.png
+        url: http://10.1.1.104:9091/
+        target: newtab
+        statusCheck: true
+        statusCheckAllowInsecure: true
+        id: 2_1840_prometheus
+      - title: NetBox
+        description: IPAM Network Config Mgmt [monitor]
+        icon: netbox.png
+        backgroundColor: "transparent"
+        #url: http://10.1.1.104:8080/
+        url: https://netbox.l1.divix.biz/
+        target: newtab
+        statusCheck: true
+        id: 3_1840_netbox
+  - name: Servers/VM/NW Mgmt
+    icon: fas fa-monitor-heart-rate
+    displayData:
+      sortBy: default
+      rows: 1
+      cols: 1
+      collapsed: false
+      hideForGuests: false
+    items:
+      - title: TNHL01
+        description: Proxmox Server TNHL01
+        icon: proxmox.png
+        url: https://10.1.1.100:8006/
+        target: newtab
+        statusCheck: true
+        statusCheckAllowInsecure: true
+        id: 0_1605_tnhl01
+      - title: TNHL02
+        description: Proxmox Server TNHL01
+        icon: proxmox.png
+        url: https://10.1.1.150:8006/
+        target: newtab
+        statusCheck: true
+        statusCheckAllowInsecure: true
+        id: 1_1605_tnhl02
+      - title: TNHL03
+        description: Proxmox Server TNHL03
+        icon: proxmox.png
+        url: https://10.1.1.160:8006/
+        target: newtab
+        statusCheck: true
+        statusCheckAllowInsecure: true
+        id: 0_1605_tnhl03
+      - title: TNHL04
+        description: Proxmox Server TNHL04
+        icon: proxmox.png
+        url: https://10.1.1.170:8006/
+        target: newtab
+        statusCheck: true
+        statusCheckAllowInsecure: true
+        id: 0_1605_tnhl04
+      - title: TNFS1
+        description: Proxmox Server TNFS1 / TrueNAS Scale
+        icon: proxmox.png
+        url: https://10.1.1.70:8006/
+        target: newtab
+        statusCheck: true
+        statusCheckAllowInsecure: true
+        id: 0_1605_tnfs1
+      - title: TNFS2
+        description: Proxmox Server TNFS2 / TrueNAS Scale
+        icon: proxmox.png
+        url: https://10.1.1.90:8006/
+        target: newtab
+        statusCheck: true
+        statusCheckAllowInsecure: true
+        id: 0_1605_tnfs2
+      - title: QNAP:FHMTN1
+        description: QNAP WebUI FHMTN1
+        icon: qnap-alt.png
+        url: http://10.1.1.85:8080/
+        target: newtab
+        statusCheck: true
+        id: 2_1605_qnapfhmtn
+      - title: NAS1-1
+        description: NAS1-1, TrueNAS Scale in VM on TNFS1 (U:truenas_admin)
+        icon: truenas-scale.png
+        url: https://10.1.1.71/
+        target: newtab
+        statusCheck: true
+        statusCheckAllowInsecure: true
+        id: 0_1605_truenasscale1_1
+      - title: NAS1-91
+        description: NAS1-91, TrueNAS Scale in VM on TNFS2 (U:truenas_admin)
+        icon: truenas-scale.png
+        url: https://10.1.1.91/
+        target: newtab
+        statusCheck: true
+        statusCheckAllowInsecure: true
+        id: 0_1605_truenasscale1_91
+      - title: ZDC1
+        description: Zentyal NW Domain Controller [TNHL01]
+        icon: windows-admin-center.jpg
+        url: https://10.1.1.201:8443/
+        target: newtab
+        statusCheck: true
+        statusCheckAllowInsecure: true
+        id: 4_1605_zdc
+      - title: PBS (tnhl01)
+        description: Proxmox Backup Server [TNHL01]
+        icon: proxmox-light.png
+        url: https://10.1.1.101:8007/
+        target: newtab
+        statusCheck: true
+        statusCheckAllowInsecure: true
+        id: 5_1605_pbstnhl
+  - name: Home Control
+    icon: fas fa-house-signal
+    displayData:
+      sortBy: default
+      rows: 1
+      cols: 1
+      collapsed: false
+      hideForGuests: false
+    items:
+      - title: HomeAssistant
+        description: Home Assistant (tnhl02|haos)
+        icon: home-assistant.png
+        url: http://10.1.1.215:8123/
+        target: newtab
+        statusCheck: true
+        id: 0_1605_haos
+      # - title: Frigate (217)
+      #   description: Frigate VM (tnhl02)
+      #   icon: frigate.png
+      #   url: http://10.1.1.217:5000/
+      #   target: newtab
+      #   statusCheck: true
+      #   id: 0_1605_frigate
+      # - title: Frigate:go2rtc (217)
+      #   description: Frigate:go2rtc VM (tnhl02)
+      #   icon: go2rtc.png
+      #   url: http://10.1.1.217:1984/
+      #   target: newtab
+      #   statusCheck: true
+      #   id: 0_1605_frigate_go2rtc
+      - title: Frigate (75)
+        description: Frigate VM (TNFS1)
+        icon: frigate.png
+        url: http://10.1.1.75:5000/
+        target: newtab
+        statusCheck: true
+        id: 0_1605_frigate
+      - title: Frigate:go2rtc (75)
+        description: Frigate:go2rtc VM (TNFS1)
+        icon: go2rtc.png
+        url: http://10.1.1.75:1984/
+        target: newtab
+        statusCheck: true
+        id: 0_1605_frigate_go2rtc
+      - title: LR SLZB-06-01
+        description: SLZB-06 Zigbee Coord (Living Room)
+        icon: zigbee2mqtt.png
+        url: http://10.1.0.90
+        target: newtab
+        statusCheck: true
+        statusCheckUrl: http://10.1.0.90
+        id: 0_1064_slzb06_lr
+      - title: Shop SLZB-06-02
+        description: SLZB-06 Zigbee Coord (Shop)
+        icon: zigbee2mqtt.png
+        url: http://10.1.0.91
+        target: newtab
+        statusCheck: true
+        statusCheckUrl: http://10.1.0.91
+        id: 0_1064_slzb06_shop
+
+  - name: Productivity
+    icon: fas fa-bookmark
+    displayData:
+      sortBy: default
+      rows: 1
+      cols: 1
+      collapsed: false
+      hideForGuests: false
+    items:
+      - title: n8n
+        description: n8n Workflow Automation
+        icon: n8n.png
+        backgroundColor: "transparent"
+        url: https://n8n.l1.divix.biz
+        target: newtab
+        statusCheck: true
+        statusCheckUrl: https://n8n.l1.divix.biz/healthz
+        id: 0_930_n8n
+      - title: AppSmith
+        description: AppSmith App Dev
+        icon: appsmith-blue-tr.png
+        backgroundColor: "transparent"
+        url: http://10.1.1.74:8080
+        target: newtab
+        statusCheck: true
+        statusCheckUrl: http://10.1.1.74:8080
+        id: 0_930_appsmith
+      - title: OpenWebUI
+        description: OpenWebUI AI Chatbot
+        icon: open-webui-light.png
+        backgroundColor: "transparent"
+        url: https://openwebui.l1.divix.biz
+        target: newtab
+        statusCheck: true
+        statusCheckUrl: "http://10.1.1.75:3000"
+        id: 0_930_openwebui
+      - title: PGAdmin
+        description: PGAdmin PostgreSQL Management
+        icon: pgadmin.png
+        backgroundColor: "transparent"
+        url: https://pgadmin.l1.divix.biz/browser/
+        target: newtab
+        statusCheck: true
+        statusCheckUrl: "http://10.1.1.74:5050/misc/ping"
+        id: 0_930_pgadmin
+      - title: Moodle
+        description: Moodle Learning Management System
+        icon: moodle.png
+        backgroundColor: "transparent"
+        url: http://10.1.1.74:5050
+        target: newtab
+        statusCheck: true
+        statusCheckUrl: "http://10.1.1.74:5050/misc/ping"
+        id: 0_930_moodle
+      - title: Plane
+        description: Trouble Ticket Management
+        icon: plane-trans.png
+        backgroundColor: "transparent"
+        url: https://plane.l1.divix.biz
+        target: newtab
+        statusCheck: true
+        statusCheckUrl: "http://10.1.1.74:8085"
+        id: 0_930_plane
+
+  - name: Dashy Docs
+    icon: far fa-rocket
+    displayData:
+      sortBy: default
+      rows: 1
+      cols: 1
+      collapsed: false
+      hideForGuests: false
+    items:
+      - title: GitHub
+        description: Source Code, Issues and Pull Requests
+        icon: fab fa-github-alt
+        url: https://github.com/lissy93/dashy
+        target: newtab
+        id: 0_930_github
+      - title: Docs
+        description: Configuring & Usage Documentation
+        icon: far fa-book
+        url: https://dashy.to/docs
+        target: newtab
+        provider: Dashy.to
+        statusCheck: true
+        id: 1_930_docs
+      - title: WalkXCode GH
+        description: Dashboard Icon List
+        icon: far fa-rocket
+        url: https://github.com/walkxcode/dashboard-icons
+        target: newtab
+        id: 2_930_walkxcodegh
+      - title: WalkXCode Icons
+        description: Page to Display All Icons
+        icon: far fa-rocket
+        url: https://github.com/walkxcode/dashboard-icons/blob/main/ICONS.md
+        target: newtab
+        id: 3_930_walkxcodeicons
+      - title: FontAwesome Icons
+        description: Searchable Font Awesome Icon Library
+        icon: si-fontawesome
+        url: https://fontawesome.com/icons
+        target: newtab
+        id: 4_930_fontawesomeicons
+      - title: SimpleIcons
+        description: Searchable Icon Library
+        icon: si-simpleicons
+        url: https://simpleicons.org/
+        target: newtab
+        statusCheckUrl: https://simpleicons.org/
+        statusCheck: true
+        id: 5_930_simpleicons
+      - title: Ex Conf.YML
+        description: Example Config Files for Dashy
+        icon: si-yaml
+        url: https://gist.github.com/Lissy93/000f712a5ce98f212817d20bc16bab10
+        target: newtab
+        id: 6_930_exconfyml
+      - title: Sub-Pages Issue
+        url: https://github.com/Lissy93/dashy/issues/1258
+        target: newtab
+        id: 7_930_subpagesissue
+  - name: Syncthing
+    icon: syncthing.png
+    displayData:
+      sortBy: default
+      rows: 1
+      cols: 1
+      collapsed: false
+      hideForGuests: false
+    items:
+      - title: FHMTN1
+        description: FHMTN1 Syncthing Instance
+        icon: syncthing.png
+        url: https://10.1.1.85:8384/
+        target: newtab
+        statusCheck: true
+        statusCheckAllowInsecure: true
+        id: 0_951_fhmtn
+      - title: TNHL01
+        description: TNHL01 Syncthing Instance
+        icon: syncthing.png
+        url: https://10.1.1.100:8384/
+        target: newtab
+        statusCheck: true
+        statusCheckAllowInsecure: true
+        id: 2_951_tnhl01
+      - title: TNHL02
+        description: TNHL02 Syncthing Instance
+        icon: syncthing.png
+        url: https://10.1.1.150:8384/
+        target: newtab
+        statusCheck: true
+        statusCheckAllowInsecure: true
+        id: 2_951_tnhl02
+      - title: TNHL03
+        description: TNHL03 Syncthing Instance
+        icon: syncthing.png
+        url: https://10.1.1.160:8384/
+        target: newtab
+        statusCheck: true
+        statusCheckAllowInsecure: true
+        id: 2_951_tnhl03
+      - title: TNFS1
+        description: TNFS1 Syncthing Instance
+        icon: syncthing.png
+        url: https://10.1.1.70:8384/
+        target: newtab
+        statusCheck: true
+        statusCheckAllowInsecure: true
+        id: 2_951_tnfs1
+      - title: NAS1-1
+        description: NAS1-1 Syncthing Instance
+        icon: syncthing.png
+        url: https://10.1.1.71:8384/
+        target: newtab
+        statusCheck: true
+        statusCheckAllowInsecure: true
+        id: 2_951_nas1_1
+      - title: TNFS2
+        description: TNFS2 Syncthing Instance
+        icon: syncthing.png
+        url: https://10.1.1.90:8384/
+        target: newtab
+        statusCheck: true
+        statusCheckAllowInsecure: true
+        id: 2_951_tnfs2
+      - title: NAS1-91
+        description: NAS1-91 Syncthing Instance
+        icon: syncthing.png
+        url: https://10.1.1.91:8384/
+        target: newtab
+        statusCheck: true
+        statusCheckAllowInsecure: true
+        id: 2_951_nas1_91
+      - title: zdc1
+        description: zdc1 Syncthing Instance
+        icon: syncthing.png
+        url: https://10.1.1.201:8384/
+        target: newtab
+        statusCheck: true
+        statusCheckAllowInsecure: true
+        id: 5_951_zdc
+      - title: frigate
+        description: frigate Syncthing Instance
+        icon: syncthing.png
+        url: https://10.1.1.217:8384/
+        target: newtab
+        statusCheck: true
+        statusCheckAllowInsecure: true
+        id: 7_951_frigate
+      - title: pihole
+
+        icon: syncthing.png
+        url: https://10.1.1.111:8384/
+        target: newtab
+        statusCheck: true
+        statusCheckAllowInsecure: true
+        id: 6_951_pihole
+      - title: FIELDS10
+        description: FIELDS10 Syncthing Instance
+        icon: syncthing.png
+        url: https://10.1.3.10:8384/
+        target: newtab
+        statusCheck: true
+        statusCheckAllowInsecure: true
+        id: 7_951_fields10

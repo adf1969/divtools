@@ -57,13 +57,13 @@ record:
     pre_capture: 10
     post_capture: 10
     retain:
-      days: 30
+      days: 14
       mode: motion
 
 snapshots:
   enabled: true
   retain:
-    default: 30
+    default: 14
 
 #### DEBUG ####
 logger:
@@ -749,6 +749,14 @@ camera_groups:
       #- P14_RLC811_Test
     order: 0
     icon: LuLink
+  Shop Front:
+    order: 3
+    icon: LuCar
+    cameras:
+      - C04_AC_Shop
+      - C09_RD2W_Driveway
+      - C21_ET_Shop_Driveway
+      - C24_AC_Shop_Front_Flood
 version: 0.16-0
 semantic_search:
   enabled: false

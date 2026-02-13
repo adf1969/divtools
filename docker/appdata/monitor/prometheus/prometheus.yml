@@ -83,6 +83,13 @@ scrape_configs:
         target_label: friendly_name
         replacement: "DIVTOOLS"
 
+      # FALLBACK - Ensures ALL rows end up with a friendly_name of mountpoint value, if they don't match any of the above regex
+      - source_labels: [mountpoint, friendly_name]
+        regex: "(.+);$"  # Match mountpoint but an empty friendly_name
+        target_label: friendly_name
+        replacement: "$1"
+
+
 
   # cAdvisor Hosts
   - job_name: "cadvisor"

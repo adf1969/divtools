@@ -1,0 +1,42 @@
+# Docker Compose configuration for Gotenberg PDF generation server
+# Last Updated: 1/12/2026 12:00:00 PM CDT
+#
+# Gotenberg is a stateless API for converting HTML, Markdown, and Office documents to PDF
+# Provides REST API for PDF generation from various input formats
+#
+# Environment Vars in Use:
+# $TZ : The timezone we run in. Format America/Chicago
+# $DOCKERDIR : Usually the divtools/docker dir
+# $DOCKERDATADIR: Usually the /opt dir
+# $HOSTNAME: defined in .env (tnapp01)
+# $SITE_NAME: defined in .env (s01-7692nh)
+# Section Order: CIRPNVEUE
+#
+
+# To Start Gotenberg, run:
+#  dcup gotenberg
+#  dcup --profile gotenberg
+
+name: gotenberg
+
+services:
+  gotenberg:
+    container_name: gotenberg
+    image: gotenberg/gotenberg:8
+    restart: unless-stopped
+    labels:
+      - "divtools.group=gotenberg"
+    profiles: [gotenberg]
+    ports:
+      # This is NOT 3000 since OpenWebUI defaults to 3000, and it is easier to change Gotenberg here
+      - "${GOTENBERG_HTTP_PORT:-3005}:3000" # API port - defaults to 3000 if not set
+    environment:
+      - TZ=$TZ
+    volumes:
+      # Mount custom fonts directory (read-only) for PDF generation
+      - $DOCKERDATADIR/gotenburg/fonts:/usr/local/share/fonts:ro
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
