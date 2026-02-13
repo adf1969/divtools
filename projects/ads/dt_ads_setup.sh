@@ -1,0 +1,1 @@
+../../scripts/ads/dt_ads_setup.sh

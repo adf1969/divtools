@@ -1,0 +1,30 @@
+# Host-level Docker Compose File for ads1-98
+# Samba Active Directory Domain Controller
+# Deploy Location: $DIVTOOLS/docker/sites/$SITE_NAME/$HOSTNAME/dc-${HOSTNAME}.yml
+# Example: $DIVTOOLS/docker/sites/s01-7692nw/ads1-98/dc-ads1-98.yml
+# Last Updated: 01/09/2026 10:45:00 AM CDT
+#
+# Environment Vars in Use:
+# $TZ : The timezone we run in. Format America/Chicago
+# $DIVTOOLS : Usually /home/divix/divtools
+# $DOCKERDATADIR: Usually /opt
+# $DOCKER_SHAREDDIR: $DIVTOOLS/docker/sites/s00-shared - set by dcrun_f() in .bash_aliases
+# $DOCKER_SITEDIR: $DIVTOOLS/docker/sites/$SITE_NAME - set by dcrun_f() in .bash_aliases
+# $DOCKER_HOSTDIR: $DOCKER_SITEDIR/$HOSTNAME - set by dcrun_f() in .bash_aliases
+# $HOSTNAME: set by dcrun_f() in .bash_aliases
+# $SITE_NAME: defined in .env.$SITE_NAME
+
+########################### NETWORKS
+networks:
+  default:
+    driver: bridge
+
+########################### SERVICES
+
+include:
+  # Samba Active Directory Domain Controller
+  - samba/dci-samba.yml
+  
+  # Add other services here as needed
+  # - monitoring/dci-telegraf.yml
+  # - backup/dci-restic.yml

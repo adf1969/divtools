@@ -1,0 +1,91 @@
+[
+    {
+        "id": "inject-night-check",
+        "type": "inject",
+        "z": "flow-id",
+        "name": "Check Night Time",
+        "props": [
+            {
+                "p": "payload"
+            },
+            {
+                "p": "topic",
+                "vt": "str"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "",
+        "payloadType": "date",
+        "x": 120,
+        "y": 80,
+        "wires": [
+            [
+                "template-night-check"
+            ]
+        ]
+    },
+    {
+        "id": "template-night-check",
+        "type": "api-template",
+        "z": "flow-id",
+        "name": "Is Night Time?",
+        "server": "home-assistant-server",
+        "version": 0,
+        "template": "{% set now = now().hour * 3600 + now().minute * 60 + now().second %}\n{% set start_parts = states('input_datetime.night_time_start').split(':') %}\n{% set start = (start_parts[0]|int * 3600) + (start_parts[1]|int * 60) + (start_parts[2]|int) %}\n{% set end_parts = states('input_datetime.night_time_end').split(':') %}\n{% set end = (end_parts[0]|int * 3600) + (end_parts[1]|int * 60) + (end_parts[2]|int) %}\n{% if start < end %}\n  {{ (now >= start and now <= end) | lower }}\n{% else %}\n  {{ (now >= start or now <= end) | lower }}\n{% endif %}",
+        "resultsLocation": "payload",
+        "resultsLocationType": "msg",
+        "templateLocation": "template",
+        "templateLocationType": "editor",
+        "x": 320,
+        "y": 80,
+        "wires": [
+            [
+                "debug-night-check"
+            ]
+        ]
+    },
+    {
+        "id": "debug-night-check",
+        "type": "debug",
+        "z": "flow-id",
+        "name": "Debug Output",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 520,
+        "y": 80,
+        "wires": []
+    },
+    {
+        "id": "home-assistant-server",
+        "type": "server",
+        "name": "Home Assistant",
+        "version": 5,
+        "addon": false,
+        "rejectUnauthorizedCerts": true,
+        "ha_boolean": "y|yes|true|on|home|open",
+        "connectionDelay": true,
+        "cacheJson": true,
+        "heartbeat": false,
+        "heartbeatInterval": "30",
+        "areaSelector": "friendlyName",
+        "deviceSelector": "friendlyName",
+        "entitySelector": "friendlyName",
+        "statusSeparator": "at: ",
+        "statusYear": "hidden",
+        "statusMonth": "short",
+        "statusDay": "numeric",
+        "statusHourCycle": "h23",
+        "statusTimeFormat": "h:m",
+        "enableGlobalContextStore": true
+    }
+]

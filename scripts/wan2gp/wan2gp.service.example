@@ -1,0 +1,15 @@
+[Unit]
+Description=Wan2GP
+After=network.target
+
+[Service]
+Type=simple
+User=divix
+Group=divix
+WorkingDirectory=/opt/wan2gp/Wan2GP
+ExecStart=/opt/divtools/scripts/wan2gp/run_wan2gp.sh
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,95 @@
+# Samba Active Directory Domain Controller - Docker Compose
+# Deploy Location: /home/divix/divtools/docker/sites/$SITE_NAME/$HOSTNAME/samba/dci-samba.yml
+# Example: /home/divix/divtools/docker/sites/s01-7692nw/ads1-98/samba/dci-samba.yml
+# Last Updated: 01/10/2026 4:30:00 PM CDT
+#
+# IMAGE CHOICE: ubuntu:22.04
+# RATIONALE:
+#   - Ubuntu 22.04 is the recommended OS for Samba AD DC (released 2022, compatible with Samba 4.15+)
+#   - No reliable pre-built samba-dc images exist (servercontainers/samba is for file sharing, not AD DC)
+#   - samba packages are installed at container startup via entrypoint.sh
+#   - Samba is compiled by Ubuntu maintainers, optimized for Ubuntu 22.04
+#   - Transparent: any operator can see "oh, it's Ubuntu with samba installed"
+#
+# STARTUP PROCESS:
+#   1. Container starts from ubuntu:22.04 image
+#   2. entrypoint.sh runs and checks: is samba-tool available?
+#   3. If not: apt-get update && apt-get install -y samba krb5-user winbind
+#   4. Then: samba-tool domain provision (creates AD database, smb.conf, krb5.conf)
+#   5. Finally: starts samba services (LDAP, Kerberos, DNS, SMB)
+
+services:
+  samba-dc:
+    image: ubuntu:22.04
+    container_name: samba-ads
+    hostname: ${HOSTNAME:-ads1-98}
+    domainname: ${ADS_DOMAIN:-avctn.lan}
+    restart: unless-stopped
+    
+    env_file:
+      - .env.samba
+    
+    environment:
+      - DOMAIN=${ADS_DOMAIN}
+      - REALM=${ADS_REALM}
+      - WORKGROUP=${ADS_WORKGROUP}
+      - ADMIN_PASSWORD=${ADS_ADMIN_PASSWORD}
+      - DNS_FORWARDER=${ADS_DNS_FORWARDER}
+      - HOST_IP=${ADS_HOST_IP}
+      - SERVER_ROLE=${ADS_SERVER_ROLE:-dc}
+    
+    networks:
+      - default
+    
+    ports:
+      - "53:53/tcp"
+      - "53:53/udp"
+      - "88:88/tcp"
+      - "88:88/udp"
+      - "135:135/tcp"
+      - "139:139/tcp"
+      - "389:389/tcp"
+      - "445:445/tcp"
+      - "464:464/tcp"
+      - "464:464/udp"
+      - "636:636/tcp"
+      - "3268:3268/tcp"
+      - "3269:3269/tcp"
+    
+    volumes:
+      # Persisted data and logs (system-wide in /opt)
+      - /opt/samba/data:/var/lib/samba:rw
+      - /opt/samba/config:/etc/samba:rw
+      - /opt/samba/logs:/var/log/samba:rw
+      # Entrypoint script from config location
+      - ./entrypoint.sh:/usr/local/bin/entrypoint.sh:ro
+      # System time sync
+      - /etc/localtime:/etc/localtime:ro
+    
+    cap_add:
+      - NET_ADMIN
+      - SYS_ADMIN
+    
+    security_opt:
+      - apparmor:unconfined
+    
+    labels:
+      - "divtools.group=ads"
+      - "divtools.site=${SITE_NAME}"
+      - "divtools.hostname=${HOSTNAME}"
+      - "divtools.service=samba-dc"
+    
+    healthcheck:
+      test: ["CMD-SHELL", "samba-tool domain info 127.0.0.1 || exit 1"]
+      interval: 60s
+      timeout: 10s
+      retries: 3
+      start_period: 120s
+    
+    entrypoint: ["/usr/local/bin/entrypoint.sh"]
+    command: ["samba", "-i", "--no-process-group"]
+
+networks:
+  default:
+    name: ${SITE_NAME}_network
+    external: true

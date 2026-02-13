@@ -1,0 +1,40 @@
+# ZFS Dataset Usage Information
+# Generated: 2025-11-04 21:30:00
+# Parent Dataset: tpool/FieldsHm
+# Format: dataset|used|available|referenced|mountpoint
+
+[PARENT]
+name=tpool/FieldsHm
+used=8.3T
+available=11.7T
+mountpoint=/mnt/tpool/FieldsHm
+
+[DATASET:HASS]
+used=1.2T
+available=2.9T
+referenced=160K
+mountpoint=/mnt/tpool/FieldsHm/HASS
+
+[DATASET:HASS/frigate]
+used=1.2T
+available=2.9T
+referenced=1.2T
+mountpoint=/mnt/tpool/FieldsHm/HASS/frigate
+
+[DATASET:MEDIA]
+used=7.1T
+available=12T
+referenced=7.1T
+mountpoint=/mnt/tpool/FieldsHm/MEDIA
+
+[DATASET:acltest]
+used=128K
+available=12T
+referenced=128K
+mountpoint=/mnt/tpool/FieldsHm/acltest
+
+[DATASET:tmp]
+used=7.5G
+available=12T
+referenced=7.5G
+mountpoint=/mnt/tpool/FieldsHm/tmp

@@ -1,0 +1,18 @@
+Outlook Filters:
+- PP:Buckner Filter:
+    outlook_filter:
+      category: PP:Buckner
+      #subject: /SubjectRegex/
+    #akiflow_settings:
+    #  project: ExampleProject
+    #  status: New
+    todoist_settings:
+      project: TN-Property Purchases\Buckner
+      #project_id: ExampleProjectId
+
+- PS:Drumwood Filter:
+    outlook_filter:
+      category: PS:Drumwood
+      #subject: /SubjectRegex/
+    todoist_settings:
+      project: OR-Property Sales\Drumwood      

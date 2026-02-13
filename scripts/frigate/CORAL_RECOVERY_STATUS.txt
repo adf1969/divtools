@@ -1,0 +1,132 @@
+CORAL TPU USB PASSTHROUGH - RECOVERY SCRIPTS STATUS
+====================================================
+Last Updated: November 20, 2025 8:10 PM CST
+
+CURRENT SYSTEM STATE
+====================
+✓ Coral TPU:         VISIBLE in VM (Bus 012 Device 009)
+✓ Frigate:          RUNNING and healthy  
+✓ Autosuspend:      DISABLED (-1) on both VM and Proxmox
+✓ Kernel params:    PERSISTENT on Proxmox host
+
+
+SCRIPTS AVAILABLE
+=================
+
+1. proxmox_coral_check.sh (6.4 KB)
+   Location: /home/divix/divtools/scripts/frigate/proxmox_coral_check.sh
+   Purpose:  Diagnostic only (read-only, safe to run anytime)
+   Run on:   Proxmox host (tnfs1)
+   Help:     ssh root@tnfs1 'bash /home/divix/divtools/scripts/frigate/proxmox_coral_check.sh -h'
+   Returns:  0 (healthy) or 1 (issues)
+
+2. proxmox_coral_fix.sh (7.4 KB)
+   Location: /home/divix/divtools/scripts/frigate/proxmox_coral_fix.sh
+   Purpose:  Implements fixes for Coral issues
+   Run on:   Proxmox host (tnfs1)
+   Help:     ssh root@tnfs1 'bash /home/divix/divtools/scripts/frigate/proxmox_coral_fix.sh -h'
+   Features: Autosuspend fix, xHCI reset, safety checks, test mode
+
+3. coral_vm_recovery.sh (8.5 KB)
+   Location: /home/divix/divtools/scripts/frigate/coral_vm_recovery.sh
+   Purpose:  Recover Coral when it disconnects in VM
+   Run on:   VM (gpu1-75) or via SSH from anywhere
+   Help:     bash /home/divix/divtools/scripts/frigate/coral_vm_recovery.sh -h
+   Features: Auto-detection, SSH integration, test mode
+
+
+QUICK RECOVERY PROCEDURES
+=========================
+
+SCENARIO 1: Coral disconnects but still visible on host
+  Quick (5 sec):   ssh root@tnfs1 'bash /home/divix/divtools/scripts/frigate/proxmox_coral_fix.sh -skip-checks'
+  Safer (10 sec):  bash /home/divix/divtools/scripts/frigate/coral_vm_recovery.sh
+  Slowest (30 sec): ssh root@tnfs1 'qm reboot 275'
+
+SCENARIO 2: Frigate fails with "Failed to load delegate from libedgetpu.so.1.0"
+  Step 1: Run diagnostic
+    ssh root@tnfs1 'bash /home/divix/divtools/scripts/frigate/proxmox_coral_check.sh'
+  Step 2: If issues found, run recovery
+    bash /home/divix/divtools/scripts/frigate/coral_vm_recovery.sh
+  Step 3: Restart Frigate
+    docker restart frigate
+
+SCENARIO 3: Want to test before running
+  All scripts support -test flag:
+    bash /home/divix/divtools/scripts/frigate/coral_vm_recovery.sh -test
+    ssh root@tnfs1 'bash /home/divix/divtools/scripts/frigate/proxmox_coral_check.sh -test'
+    ssh root@tnfs1 'bash /home/divix/divtools/scripts/frigate/proxmox_coral_fix.sh -test'
+
+
+ROOT CAUSE
+==========
+USB Link Power Management (LPM) on xHCI controller + USB passthrough state issues
+Fixed by: Disabling autosuspend and properly managing xHCI controller resets
+
+
+PERMANENT FIXES APPLIED
+=======================
+Proxmox Host (/etc/kernel/cmdline):
+  usbcore.autosuspend=-1 usbcore.autosuspend_delay_ms=0
+
+VM (/etc/default/grub):
+  GRUB_CMDLINE_LINUX="usbcore.autosuspend=-1"
+
+These persist after reboot and prevent the issue from recurring.
+
+
+AUTOMATED RECOVERY OPTION
+=========================
+For automatic recovery via cron (runs check every 5 minutes):
+  */5 * * * * lsusb | grep -q 18d1:9302 || bash /home/divix/divtools/scripts/frigate/coral_vm_recovery.sh
+
+This detects if Coral is missing and automatically runs recovery.
+
+
+NEXT STEPS
+==========
+1. [IMMEDIATE] Restart Frigate to load EdgeTPU:
+   docker restart frigate
+
+2. [SHORT-TERM] Monitor for 48 hours:
+   - Watch for disconnections
+   - If it happens: run coral_vm_recovery.sh
+   - Frigate should recover without manual intervention
+
+3. [OPTIONAL] Set up cron monitoring:
+   - Add the automatic recovery cron job above
+   - Monitor via Proxmox or home automation logs
+
+4. [OPTIONAL] Deploy to other VMs with Coral:
+   - Copy scripts to appropriate paths
+   - Update SSH targets in coral_vm_recovery.sh if different hosts
+
+
+DOCUMENTATION
+==============
+For detailed information and examples:
+  - CORAL_PROXMOX_SCRIPTS_GUIDE.sh (complete walkthrough)
+  - PROXMOX_CORAL_QUICK_COMMANDS.txt (quick reference)
+  - Each script has comprehensive help: -h or --help
+
+
+EMERGENCY CONTACTS (Commands)
+=============================
+If all else fails:
+
+Full VM reboot:
+  ssh root@tnfs1 'qm reboot 275'
+  Wait 30-60 seconds for VM to restart
+
+Check Coral on host:
+  ssh root@tnfs1 'lsusb | grep 18d1'
+
+Check Coral in VM:
+  lsusb | grep 18d1
+
+Check Frigate logs:
+  docker logs frigate | tail -100 | grep -E 'EdgeTPU|delegate'
+
+Verify autosuspend disabled:
+  cat /sys/module/usbcore/parameters/autosuspend
+  (Should return: -1)

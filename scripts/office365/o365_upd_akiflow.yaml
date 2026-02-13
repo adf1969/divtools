@@ -1,0 +1,131 @@
+Outlook Filters:
+- AVC:AVC:AnnualReports Filter:
+    outlook_filter:
+      category: AVC:AnnualReports
+    todoist_settings:
+      project: AVC\AVC:AnnualReports
+- AVC:AVC:Construction Filter:
+    outlook_filter:
+      category: AVC:Construction
+    todoist_settings:
+      project: AVC\AVC:Construction
+- AVC:AVC:PropMgmt Filter:
+    outlook_filter:
+      category: AVC:PropMgmt
+    todoist_settings:
+      project: AVC\AVC:PropMgmt
+- AVC:AVC:NW Mgmt Filter:
+    outlook_filter:
+      category: AVC:NW Mgmt
+    todoist_settings:
+      project: AVC\AVC:NW Mgmt
+- OR-Property Sales:PS:Land Filter:
+    outlook_filter:
+      category: PS:Land
+    todoist_settings:
+      project: OR-Property Sales\PS:Land
+- OR-Property Sales:PS:VE Filter:
+    outlook_filter:
+      category: PS:VE
+    todoist_settings:
+      project: OR-Property Sales\PS:VE
+- OR-Property Sales:PS:HISProperties Filter:
+    outlook_filter:
+      category: PS:HISProperties
+    todoist_settings:
+      project: OR-Property Sales\PS:HISProperties
+- OR-Property Sales:PS:ECT Filter:
+    outlook_filter:
+      category: PS:ECT
+    todoist_settings:
+      project: OR-Property Sales\PS:ECT
+- OR-Property Sales:PS:CollegePark Filter:
+    outlook_filter:
+      category: PS:CollegePark
+    todoist_settings:
+      project: OR-Property Sales\PS:CollegePark
+- OR-Property Sales:PS:AVofTheDalles Filter:
+    outlook_filter:
+      category: PS:AVofTheDalles
+    todoist_settings:
+      project: OR-Property Sales\PS:AVofTheDalles
+- OR-Property Sales:PS:Drumwood Filter:
+    outlook_filter:
+      category: PS:Drumwood
+    todoist_settings:
+      project: OR-Property Sales\PS:Drumwood
+- TN-Property Purchases:PP:Buckner Filter:
+    outlook_filter:
+      category: PP:Buckner
+    todoist_settings:
+      project: TN-Property Purchases\PP:Buckner
+- TN-Property Purchases:PP:Baxter Office Filter:
+    outlook_filter:
+      category: PP:Baxter Office
+    todoist_settings:
+      project: TN-Property Purchases\PP:Baxter Office
+- AVAK:AVAK:Finance Filter:
+    outlook_filter:
+      category: AVAK:Finance
+    todoist_settings:
+      project: AVAK\AVAK:Finance
+- AVAK:AVAK:NW Mgmt Filter:
+    outlook_filter:
+      category: AVAK:NW Mgmt
+    todoist_settings:
+      project: AVAK\AVAK:NW Mgmt
+- CVG:CVG:Finance Filter:
+    outlook_filter:
+      category: CVG:Finance
+    todoist_settings:
+      project: CVG\CVG:Finance
+- CVG:CVG:NW Mgmt Filter:
+    outlook_filter:
+      category: CVG:NW Mgmt
+    todoist_settings:
+      project: CVG\CVG:NW Mgmt
+- Personal:PERS:House Filter:
+    outlook_filter:
+      category: PERS:House
+    todoist_settings:
+      project: Personal\PERS:House
+- Personal:PERS:Family Filter:
+    outlook_filter:
+      category: PERS:Family
+    todoist_settings:
+      project: Personal\PERS:Family
+- Personal:PERS:Church Filter:
+    outlook_filter:
+      category: PERS:Church
+    todoist_settings:
+      project: Personal\PERS:Church
+- Personal:PERS:Planning Filter:
+    outlook_filter:
+      category: PERS:Planning
+    todoist_settings:
+      project: Personal\PERS:Planning
+- NW+Tech:TECH:NW Mgmt Filter:
+    outlook_filter:
+      category: TECH:NW Mgmt
+    todoist_settings:
+      project: NW+Tech\TECH:NW Mgmt
+- NW+Tech:TECH:LED Lights Filter:
+    outlook_filter:
+      category: TECH:LED Lights
+    todoist_settings:
+      project: NW+Tech\TECH:LED Lights
+- NW+Tech:TECH:Frigate Filter:
+    outlook_filter:
+      category: TECH:Frigate
+    todoist_settings:
+      project: NW+Tech\TECH:Frigate
+- NW+Tech:TECH:HomeLab Filter:
+    outlook_filter:
+      category: TECH:HomeLab
+    todoist_settings:
+      project: NW+Tech\TECH:HomeLab
+- NW+Tech:TECH:HomeAssistant Filter:
+    outlook_filter:
+      category: TECH:HomeAssistant
+    todoist_settings:
+      project: NW+Tech\TECH:HomeAssistant

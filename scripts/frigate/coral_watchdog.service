@@ -1,0 +1,27 @@
+[Unit]
+Description=Frigate Coral TPU Watchdog - Auto-recovery service
+Documentation=file:///home/divix/divtools/scripts/frigate/CORAL_USB_DIAGNOSTICS.md
+After=docker.service
+Wants=docker.service
+
+[Service]
+Type=simple
+User=root
+ExecStart=/home/divix/divtools/scripts/frigate/coral_watchdog.sh
+Restart=always
+RestartSec=10
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=coral_watchdog
+
+# Resource limits
+MemoryLimit=256M
+CPUQuota=20%
+
+# Logging
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=coral-watchdog
+
+[Install]
+WantedBy=multi-user.target

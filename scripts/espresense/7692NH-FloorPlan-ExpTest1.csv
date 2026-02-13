@@ -1,0 +1,47 @@
+Name	Description	X	Y	Level	Visible
+dining:4		11.834	-1.803	Main	true
+dining:3		15.353	-1.803	Main	true
+sarah_wic:1	Sarah WIC	2.145	-20.579	Main	true
+sarah_wic:2; sarah_room:1	Sarah Room	6.128	-20.579	Main	true
+sarah_wic:4		2.145	-19.237	Main	true
+sarah_wic:3		6.128	-19.272	Main	true
+sarah_room:2		9.923	-20.579	Main	true
+sarah_room:3		9.916	-16.868	Main	true
+sarah_room:4		6.128	-16.868	Main	true
+clarity_room:1	Clarity Room	2.204	-16.868	Main	true
+clarity_room:8		2.204	-13.781	Main	true
+clarity_room:7; clarity_wic:5		6.116	-13.781	Main	true
+clarity_room:6; clarity_wic:6		6.116	-15.004	Main	true
+clarity_room:5; clarity_wic:1	Clarity WIC	6.776	-15.747	Main	true
+clarity_room:4; clarity_wic:2		7.477	-15.747	Main	true
+clarity_wic:3		7.477	-12.654	Main	true
+clarity_wic:4		6.116	-12.654	Main	true
+clarity_room:3; nook:1	Breakfast Nook	7.477	-16.868	Main	true
+nook:2		15.271	-16.868	Main	true
+nook:3; kitchen:2		15.271	-13.946	Main	true
+laundry:3; garage_entry:1; nook:5	Garage Entry	10.582	-13.838	Main	true
+laundry:2; nook:6		10.582	-15.752	Main	true
+laundry:1	Laundry Room	8.617	-15.752	Main	true
+laundry:5		8.617	-12.748	Main	true
+laundry:4; garage_entry:5		10.419	-12.748	Main	true
+garage_entry:4; kitchen:7		11.794	-12.748	Main	true
+garage_entry:3; kitchen:8		12.406	-12.966	Main	true
+nook:4; garage_entry:2; kitchen:1	Kitchen	12.406	-13.838	Main	true
+kitchen:3; dining:2		15.271	-8.543	Main	true
+kitchen:4; pantry:3; dining:1	Dining Room	13.25	-8.543	Main	true
+kitchen:5; pantry:2		12.481	-9.324	Main	true
+kitchen:6; pantry:1	Pantry	11.757	-9.324	Main	true
+pantry:6; dining:5		11.757	-6.527	Main	true
+pantry:5; dining:6		13.25	-6.527	Main	true
+node:kitchen	Kitchen, Floors:main, bonus, basement	15.306	-11.911	Main	true
+Round chimney		8.052	-2.178	Bonus	true
+bonus:1	Bonus Room	7.553	-14.729	Bonus	true
+bonus:2		8.639	-14.729	Bonus	true
+bonus:3		8.639	-12.736	Bonus	true
+bonus:4		10.227	-12.736	Bonus	true
+bonus:8		7.375	-12.736	Bonus	true
+bonus:7		6.138	-12.736	Bonus	true
+bonus:6		6.138	-2.158	Bonus	true
+bonus:5		10.227	-2.158	Bonus	true
+node:bonus_room_1	Bonus Room 1, Floors:bonus, main	9.795	-2.444	Bonus	true
+node:bonus_room_2	Bonus Room 2, Floors:bonus, main	6.448	-12.366	Bonus	true

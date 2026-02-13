@@ -1,0 +1,106 @@
+═══════════════════════════════════════════════════════════════════════════════
+                 CORAL TPU PROXMOX - QUICK COMMANDS REFERENCE
+═══════════════════════════════════════════════════════════════════════════════
+
+QUICK DIAGNOSTICS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Check if system is healthy (read-only):
+  ssh root@tnfs1 'bash /home/divix/divtools/scripts/frigate/proxmox_coral_check.sh'
+
+Check with debug output:
+  ssh root@tnfs1 'bash /home/divix/divtools/scripts/frigate/proxmox_coral_check.sh -debug'
+
+
+QUICK FIXES
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Test the fix (safe, no changes):
+  ssh root@tnfs1 'bash /home/divix/divtools/scripts/frigate/proxmox_coral_fix.sh -test'
+
+Apply the fix:
+  ssh root@tnfs1 'bash /home/divix/divtools/scripts/frigate/proxmox_coral_fix.sh'
+
+Apply with debug output:
+  ssh root@tnfs1 'bash /home/divix/divtools/scripts/frigate/proxmox_coral_fix.sh -debug'
+
+
+QUICK VM CHECK
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Check Coral in VM (from VM or docker host):
+  /home/divix/divtools/scripts/frigate/coral_status_check.sh
+
+
+RESTART FRIGATE AFTER FIX
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Restart and check status:
+  docker restart frigate && sleep 5 && docker logs frigate --since 30s | grep -i "coral\|edgetpu\|delegate"
+
+Or longer check (last minute):
+  docker restart frigate && sleep 5 && docker logs frigate --since 1m | grep -i "coral\|edgetpu\|error" | tail -20
+
+
+MAKE PERMANENT (After testing, when ready)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Add kernel parameters:
+  ssh root@tnfs1 'echo "$(cat /etc/kernel/cmdline) usbcore.autosuspend=-1 usbcore.autosuspend_delay_ms=0" > /etc/kernel/cmdline'
+
+Refresh boot configuration:
+  ssh root@tnfs1 'proxmox-boot-tool refresh'
+
+Reboot (only when you're ready):
+  ssh root@tnfs1 'reboot'
+
+Verify after reboot:
+  ssh root@tnfs1 'bash /home/divix/divtools/scripts/frigate/proxmox_coral_check.sh'
+
+
+ONE-LINER WORKFLOW (Automated)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Check and auto-fix if needed:
+  ssh root@tnfs1 'bash /home/divix/divtools/scripts/frigate/proxmox_coral_check.sh' || ssh root@tnfs1 'bash /home/divix/divtools/scripts/frigate/proxmox_coral_fix.sh'
+
+Then restart Frigate:
+  docker restart frigate && sleep 10 && docker ps | grep frigate
+
+
+MANUAL EMERGENCY FIX (If scripts fail)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Disable autosuspend manually:
+  ssh root@tnfs1 'echo "-1" > /sys/module/usbcore/parameters/autosuspend'
+
+Reset xHCI controller manually:
+  ssh root@tnfs1 'echo "0000:00:14.0" > /sys/bus/pci/drivers/xhci_hcd/unbind && sleep 2 && echo "0000:00:14.0" > /sys/bus/pci/drivers/xhci_hcd/bind'
+
+
+MONITORING
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Check every 30 minutes (add to crontab):
+  */30 * * * * ssh -o StrictHostKeyChecking=no root@tnfs1 'bash /home/divix/divtools/scripts/frigate/proxmox_coral_check.sh' >> /var/log/coral_check.log 2>&1
+
+Auto-fix if unhealthy (add to crontab):
+  */5 * * * * ssh -o StrictHostKeyChecking=no root@tnfs1 'bash /home/divix/divtools/scripts/frigate/proxmox_coral_check.sh' || ssh -o StrictHostKeyChecking=no root@tnfs1 'bash /home/divix/divtools/scripts/frigate/proxmox_coral_fix.sh'
+
+
+DOCUMENTATION
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Full guide:
+  bash /home/divix/divtools/scripts/frigate/CORAL_PROXMOX_SCRIPTS_GUIDE.sh
+
+This quick reference:
+  cat /home/divix/divtools/scripts/frigate/PROXMOX_CORAL_QUICK_COMMANDS.txt
+
+
+═══════════════════════════════════════════════════════════════════════════════
+Created: November 14, 2025
+Root Cause: USB Link Power Management (LPM) causing device resets
+Solution: Disable autosuspend + reset xHCI controller
+Location: /home/divix/divtools/scripts/frigate/
+═══════════════════════════════════════════════════════════════════════════════

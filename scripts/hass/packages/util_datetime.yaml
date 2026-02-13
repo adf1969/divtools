@@ -1,0 +1,29 @@
+binary_sensor:
+  - platform: template
+    sensors:
+      night_time:
+        unique_id: night_time_binary_sensor
+        friendly_name: "Night Time"
+        value_template: >
+          {% set now = now().hour * 3600 + now().minute * 60 + now().second %}
+          {% set start_parts = states('input_datetime.night_time_start').split(':') %}
+          {% set start = (start_parts[0]|int * 3600) + (start_parts[1]|int * 60) + (start_parts[2]|int) %}
+          {% set end_parts = states('input_datetime.night_time_end').split(':') %}
+          {% set end = (end_parts[0]|int * 3600) + (end_parts[1]|int * 60) + (end_parts[2]|int) %}
+          {{ (start > end and (now >= start or now <= end)) or (start <= end and (now >= start and now <= end)) }}
+        attribute_templates:
+          night_time_start: "{{ states('input_datetime.night_time_start') }}"
+          night_time_end: "{{ states('input_datetime.night_time_end') }}"
+      day_time:
+        unique_id: day_time_binary_sensor
+        friendly_name: "Day Time"
+        value_template: >
+          {% set now = now().hour * 3600 + now().minute * 60 + now().second %}
+          {% set start_parts = states('input_datetime.day_time_start').split(':') %}
+          {% set start = (start_parts[0]|int * 3600) + (start_parts[1]|int * 60) + (start_parts[2]|int) %}
+          {% set end_parts = states('input_datetime.day_time_end').split(':') %}
+          {% set end = (end_parts[0]|int * 3600) + (end_parts[1]|int * 60) + (end_parts[2]|int) %}
+          {{ (start > end and (now >= start or now <= end)) or (start <= end and (now >= start and now <= end)) }}
+        attribute_templates:
+          day_time_start: "{{ states('input_datetime.day_time_start') }}"
+          day_time_end: "{{ states('input_datetime.day_time_end') }}"

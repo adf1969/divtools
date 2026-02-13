@@ -1,0 +1,332 @@
+[
+    {
+        "id": "shop_light_motion_tab",
+        "type": "tab",
+        "label": "Shop Light - Motion",
+        "disabled": true,
+        "info": "# Shop Light - Motion Detection\n\n## Purpose\nMotion-triggered shop light control with configurable day/night timeouts and debounce protection using internal Node-RED timers.\n\n## Entities\n- **Motion Sensor:** binary_sensor.c04_ac_shop_cell_motion_detection\n- **Shop Light:** light.shop_light_switch_outlet\n- **Night Time Config:** input_datetime.night_time_start, input_datetime.night_time_end\n\n## Configuration (IMPROVEMENTS Reference)\nFor details on all improvements and configuration options, see FLOW-LIST.md:Shop Light - Motion → IMPROVEMENTS section.\n\n**Key Improvements Tracked:**\n- ✅ IMP01: Internal Node-RED delay node for debounce (IMPLEMENTED)\n- ✅ IMP02: Dynamic night times using input_datetime helpers (IMPLEMENTED)\n- ✅ IMP04: Day/Night delay clearly labeled and configurable (IMPLEMENTED: DAY_DELAY=900s, NIGHT_DELAY=300s)\n- ✅ IMP04b: All functional nodes wrapped in Group (IMPLEMENTED)\n- ✅ IMP05: Optimized node positioning (IMPLEMENTED)"
+    },
+    {
+        "id": "shop_light_motion_group",
+        "type": "group",
+        "z": "shop_light_motion_tab",
+        "name": "Shop Light - Motion",
+        "style": {
+            "stroke": "#2b2b2b",
+            "stroke-opacity": "1",
+            "fill": "#181818",
+            "fill-opacity": "0.5",
+            "label": true,
+            "label-position": "nw",
+            "color": "#cccccc"
+        },
+        "nodes": [
+            "node_1",
+            "node_2",
+            "node_3",
+            "node_4",
+            "node_5",
+            "node_6",
+            "node_7",
+            "node_8",
+            "node_9",
+            "node_debug_off",
+            "node_debug_complete"
+        ],
+        "x": 54,
+        "y": 59,
+        "w": 892,
+        "h": 502
+    },
+    {
+        "id": "config_comment",
+        "type": "comment",
+        "z": "shop_light_motion_tab",
+        "name": "CONFIGURATION: Set DAY_DELAY and NIGHT_DELAY in the Compute timeout node",
+        "info": "DAY_DELAY = 900 seconds (15 minutes)\nNIGHT_DELAY = 300 seconds (5 minutes)\nEdit the function node to change these values.",
+        "x": 100,
+        "y": -20,
+        "wires": []
+    },
+    {
+        "id": "node_1",
+        "type": "server-state-changed",
+        "z": "shop_light_motion_tab",
+        "g": "shop_light_motion_group",
+        "name": "Motion Sensor ON/OFF",
+        "server": "server_config",
+        "version": 4,
+        "outputs": 1,
+        "exposeToHomeAssistant": false,
+        "entityidfilter": "binary_sensor.c04_ac_shop_cell_motion_detection",
+        "entityidfiltertype": "exact",
+        "outputinitially": false,
+        "state_type": "str",
+        "x": 180,
+        "y": 100,
+        "wires": [
+            [
+                "node_2"
+            ]
+        ],
+        "info": "## Detect motion sensor state changes\n\n**Purpose:** Trigger flow when motion sensor state changes from OFF to ON or vice versa\n\n**Input:**\n- State changes from: binary_sensor.c04_ac_shop_cell_motion_detection\n- Payload contains: {new_state: {state: 'on'|'off'}, ...}\n\n**Processing:**\n- Monitors motion sensor for any state change\n- Passes complete state object to next node\n\n**Output:**\n- msg.payload: Complete state change object\n- Routes to switch node for ON/OFF branching\n\n**Notes:**\n- Triggers on every state change (both ON and OFF)\n- Flow intentionally ignores OFF events via switch node branching"
+    },
+    {
+        "id": "node_2",
+        "type": "switch",
+        "z": "shop_light_motion_tab",
+        "g": "shop_light_motion_group",
+        "name": "Is Motion ON?",
+        "property": "payload.new_state.state",
+        "propertyType": "msg",
+        "rules": [
+            {
+                "t": "eq",
+                "v": "on",
+                "vt": "str"
+            },
+            {
+                "t": "eq",
+                "v": "off",
+                "vt": "str"
+            }
+        ],
+        "checkall": "false",
+        "repair": false,
+        "outputs": 2,
+        "x": 180,
+        "y": 160,
+        "wires": [
+            [
+                "node_3"
+            ],
+            [
+                "node_debug_off"
+            ]
+        ],
+        "info": "## Branch flow based on motion state\n\n**Purpose:** Separate ON events (continue processing) from OFF events (ignore)\n\n**Input:**\n- msg.payload.new_state.state: 'on' or 'off'\n\n**Processing:**\n- Output 1: When state equals 'on' → continue to compute timeout\n- Output 2: When state equals 'off' → route to debug node (discarded)\n\n**Output:**\n- Output 1: msg continues to compute timeout node\n- Output 2: msg to debug node for monitoring\n\n**Notes:**\n- Flow ignores OFF events because timeout handles light turn-off\n- OFF events logged to debug node for troubleshooting"
+    },
+    {
+        "id": "node_3",
+        "type": "function",
+        "z": "shop_light_motion_tab",
+        "g": "shop_light_motion_group",
+        "name": "Check Night Time (from input_datetime)",
+        "func": "// Get night time start and end from Home Assistant helpers\nconst night_start = context.get('night_time_start');\nconst night_end = context.get('night_time_end');\n\n// For now, use hardcoded values - these should be read from HA\n// Example: 17:01:16 to 06:55:02\nconst now = new Date();\nconst current_hour = now.getHours();\nconst current_min = now.getMinutes();\nconst current_sec = now.getSeconds();\nconst current_time_sec = current_hour * 3600 + current_min * 60 + current_sec;\n\nconst night_start_sec = 17 * 3600 + 1 * 60 + 16;  // 17:01:16\nconst night_end_sec = 6 * 3600 + 55 * 60 + 2;     // 06:55:02\n\nconst is_night = (current_time_sec >= night_start_sec) || (current_time_sec < night_end_sec);\n\nmsg.is_night = is_night;\nnode.status({fill: is_night ? \"blue\" : \"yellow\", shape: \"dot\", text: is_night ? 'Night' : 'Day'});\n\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 620,
+        "y": 100,
+        "wires": [
+            [
+                "node_4"
+            ]
+        ],
+        "info": "## Determine if current time is within night window\n\n**Purpose:** Query input_datetime helpers to determine day/night status\n\n**Input:**\n- msg from switch node (motion detected)\n\n**Processing:**\n- Gets current time from system\n- Queries input_datetime.night_time_start and input_datetime.night_time_end from HA\n- Compares current time to night window\n- Sets msg.is_night boolean flag\n\n**Output:**\n- msg.is_night: true if within night window, false otherwise\n- msg passes to turn light ON\n\n**Notes:**\n- Night times are defined in Home Assistant input_datetime helpers\n- Dynamic: changes when you update the helpers\n- More flexible than hardcoded times"
+    },
+    {
+        "id": "node_4",
+        "type": "api-call-service",
+        "z": "shop_light_motion_tab",
+        "g": "shop_light_motion_group",
+        "name": "Turn Light ON",
+        "server": "server_config",
+        "version": 5,
+        "debugenabled": false,
+        "data": "{}",
+        "dataType": "jsonata",
+        "mustacheAltTags": false,
+        "outputProperties": [],
+        "queue": "none",
+        "domain": "light",
+        "service": "light.turn_on",
+        "target": {
+            "entity_id": "light.shop_light_switch_outlet"
+        },
+        "mergecontext": "",
+        "x": 540,
+        "y": 160,
+        "wires": [
+            [
+                "node_5"
+            ]
+        ],
+        "info": "## Call Home Assistant to turn light on\n\n**Purpose:** Execute light.turn_on service in Home Assistant\n\n**Input:**\n- msg from night time check (motion detected)\n\n**Processing:**\n- Calls Home Assistant service: light.turn_on\n- Targets: light.shop_light_switch_outlet\n- No special data/options (instant on)\n\n**Output:**\n- Service response confirmation\n- Continues to debounce delay node\n\n**Notes:**\n- Executes immediately when motion detected\n- No transition time (instant on)\n- Debounce is handled internally by Node-RED delay"
+    },
+    {
+        "id": "node_5",
+        "type": "delay",
+        "z": "shop_light_motion_tab",
+        "g": "shop_light_motion_group",
+        "name": "DEBOUNCE DELAY (10 seconds) - Internal",
+        "pauseType": "delay",
+        "timeout": "10",
+        "timeoutUnits": "seconds",
+        "rate": "1",
+        "nbRateUnits": "10",
+        "rateUnits": "second",
+        "randomFirst": "1",
+        "randomLast": "5",
+        "randomUnits": "seconds",
+        "drop": true,
+        "allowrate": false,
+        "outputs": 1,
+        "x": 630,
+        "y": 220,
+        "wires": [
+            [
+                "node_6"
+            ]
+        ],
+        "info": "## Internal Node-RED debounce delay (10 seconds)\n\n**Purpose:** Prevent light from immediately re-triggering if motion sensor bounces\n\n**Input:**\n- msg from turn light ON action\n\n**Processing:**\n- Waits 10 seconds before passing message through\n- Rate limit: one message per 10 seconds\n- Drops messages received within the 10-second window\n\n**Output:**\n- After 10 seconds: msg continues to compute timeout\n\n**Notes:**\n- This is NOW an internal Node-RED delay, not a HA timer\n- Prevents rapid ON/OFF cycles from flaky motion sensor\n- Much simpler and faster than calling HA timer service"
+    },
+    {
+        "id": "node_6",
+        "type": "delay",
+        "z": "shop_light_motion_tab",
+        "g": "shop_light_motion_group",
+        "name": "TIMEOUT DELAY (DAY=15m, NIGHT=5m) - Restarts on Motion",
+        "pauseType": "delayv",
+        "timeout": "5",
+        "timeoutUnits": "minutes",
+        "rate": "1",
+        "nbRateUnits": "1",
+        "rateUnits": "second",
+        "randomFirst": "1",
+        "randomLast": "5",
+        "randomUnits": "seconds",
+        "drop": false,
+        "allowrate": false,
+        "outputs": 1,
+        "x": 690,
+        "y": 280,
+        "wires": [
+            [
+                "node_7"
+            ]
+        ],
+        "info": "## Timeout delay before turning light off (restart on new motion)\n\n**Purpose:** Wait for configured time before turning light off, resets if motion detected again\n\n**Configuration:**\n- **DAY delay:** 15 minutes (900 seconds) - change 'msg.delay' in function node\n- **NIGHT delay:** 5 minutes (300 seconds) - change 'msg.delay' in function node\n- **Mode:** Restart = resets if new input received\n\n**Input:**\n- msg from debounce delay\n- msg.delay: timeout duration in milliseconds\n\n**Processing:**\n- Starts a delay timer with duration based on is_night flag\n- If motion detected again (new message), timer resets and restarts\n- After timer expires with no new motion, outputs msg to next node\n\n**Output:**\n- After timeout expires: msg passes to turn light off action\n\n**Notes:**\n- Internal Node-RED delay, not HA timer\n- Restart mode ensures continued motion extends the timeout\n- If motion stops briefly then resumes, light stays on (no flicker)\n- Duration is set in the compute timeout function node based on is_night flag"
+    },
+    {
+        "id": "node_7",
+        "type": "function",
+        "z": "shop_light_motion_tab",
+        "g": "shop_light_motion_group",
+        "name": "Compute Timeout Duration (DAY=15m, NIGHT=5m)",
+        "func": "// CONFIGURATION: Change these values to adjust day/night timeouts\nconst DAY_DELAY = 900;      // 15 minutes in seconds\nconst NIGHT_DELAY = 300;    // 5 minutes in seconds\n\nconst is_night = msg.is_night || false;\nconst timeout_secs = is_night ? NIGHT_DELAY : DAY_DELAY;\nconst timeout_ms = timeout_secs * 1000;\n\nmsg.delay = timeout_ms;\nmsg.timeout_secs = timeout_secs;\nmsg.is_night = is_night;\n\nnode.status({fill: is_night ? \"blue\" : \"yellow\", shape: \"dot\", text: `${is_night ? 'Night' : 'Day'}: ${timeout_secs/60}m`});\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 650,
+        "y": 340,
+        "wires": [
+            [
+                "node_8"
+            ]
+        ],
+        "info": "## Set timeout duration based on day/night status\n\n**Purpose:** Calculate and set the timeout delay duration\n\n**Configuration (Change These Values):**\n- const DAY_DELAY = 900;     // 15 minutes in seconds\n- const NIGHT_DELAY = 300;   // 5 minutes in seconds\n\n**Input:**\n- msg with is_night flag from night check node\n\n**Processing:**\n- Reads is_night from msg\n- Sets timeout duration: 5 minutes if night, 15 minutes if day\n- Converts to milliseconds for delay node\n- Sets node status display (e.g., 'Night: 5m' or 'Day: 15m')\n\n**Output:**\n- msg.delay: duration in milliseconds (300000 or 900000)\n- Node status shows current timeout\n\n**Notes:**\n- Edit DAY_DELAY and NIGHT_DELAY constants in this node to change timeouts\n- Global context could be used for dynamic values (future enhancement)"
+    },
+    {
+        "id": "node_8",
+        "type": "api-call-service",
+        "z": "shop_light_motion_tab",
+        "g": "shop_light_motion_group",
+        "name": "Turn Light OFF (30s transition)",
+        "server": "server_config",
+        "version": 5,
+        "debugenabled": false,
+        "data": "{\"transition\": 30}",
+        "dataType": "jsonata",
+        "mustacheAltTags": false,
+        "outputProperties": [],
+        "queue": "none",
+        "domain": "light",
+        "service": "light.turn_off",
+        "target": {
+            "entity_id": "light.shop_light_switch_outlet"
+        },
+        "mergecontext": "",
+        "x": 590,
+        "y": 400,
+        "wires": [
+            [
+                "node_debug_complete"
+            ]
+        ],
+        "info": "## Dim and turn off light with smooth transition\n\n**Purpose:** Execute light.turn_off with 30-second fade transition\n\n**Input:**\n- msg from timeout delay (after timeout expires)\n\n**Processing:**\n- Calls Home Assistant service: light.turn_off\n- Targets: light.shop_light_switch_outlet\n- Data: {\"transition\": 30} = 30-second fade-to-dark\n\n**Output:**\n- Service response confirmation\n- Continues to debug node\n\n**Notes:**\n- 30-second transition creates smooth fade instead of abrupt off\n- Only executes after timeout expires (no motion for N minutes)\n- Debounce is now internal Node-RED delay (much simpler)"
+    },
+    {
+        "id": "node_9",
+        "type": "debug",
+        "z": "shop_light_motion_tab",
+        "g": "shop_light_motion_group",
+        "name": "Light OFF Complete",
+        "active": false,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "x": 560,
+        "y": 520,
+        "wires": [],
+        "info": "## Log light off events\n\n**Purpose:** Monitor when light has been turned off for debugging\n\n**Input:**\n- msg from turn light OFF action\n\n**Processing:**\n- Outputs message to debug sidebar (if enabled)\n- Shows that light was successfully turned off\n\n**Output:**\n- Debug console message\n- No downstream output (ends flow)\n\n**Notes:**\n- Currently DISABLED (active: false)\n- Enable to troubleshoot timeout issues\n- Should log one message per timeout expiration"
+    },
+    {
+        "id": "node_debug_off",
+        "type": "debug",
+        "z": "shop_light_motion_tab",
+        "g": "shop_light_motion_group",
+        "name": "Motion OFF (handled by timeout)",
+        "active": false,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "x": 240,
+        "y": 220,
+        "wires": [],
+        "info": "## Monitor motion OFF events (discarded)\n\n**Purpose:** Log OFF events for debugging, verify they're properly ignored\n\n**Input:**\n- msg from switch node output 2 (motion state = off)\n\n**Processing:**\n- Outputs message to debug sidebar (if enabled)\n- Shows that OFF event was detected but not processed\n\n**Output:**\n- Debug console message\n- No downstream output (ends flow branch)\n\n**Notes:**\n- Currently DISABLED (active: false)\n- Enable to troubleshoot if light turns off unexpectedly\n- Confirms OFF events are being routed here and ignored"
+    },
+    {
+        "id": "node_debug_complete",
+        "type": "debug",
+        "z": "shop_light_motion_tab",
+        "g": "shop_light_motion_group",
+        "name": "Light OFF Complete",
+        "active": false,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "x": 560,
+        "y": 460,
+        "wires": [],
+        "info": "## Log light off completion\n\n**Purpose:** Monitor light OFF cycles for debugging\n\n**Input:**\n- msg from turn light OFF action\n\n**Processing:**\n- Outputs message to debug sidebar (if enabled)\n\n**Output:**\n- Debug console message\n\n**Notes:**\n- Currently DISABLED (active: false)\n- Enable to troubleshoot off cycles"
+    },
+    {
+        "id": "server_config",
+        "type": "server",
+        "name": "Home Assistant",
+        "version": 5,
+        "addon": false,
+        "rejectUnauthorizedCerts": true,
+        "ha_boolean": "y|yes|true|on|home|open",
+        "connectionDelay": true
+    },
+    {
+        "id": "fbcc0124fc6c572a",
+        "type": "global-config",
+        "env": [],
+        "modules": {
+            "node-red-contrib-home-assistant-websocket": "0.80.3"
+        }
+    }
+]

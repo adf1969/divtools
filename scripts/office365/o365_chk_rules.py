@@ -190,7 +190,8 @@ def send_email(recipient, subject, body):
 
     #with smtplib.SMTP("localhost") as server:
     #    server.sendmail(recipient, [recipient], msg.as_string())
-    with smtplib.SMTP("localhost") as server:
+    #with smtplib.SMTP("localhost") as server:
+    with smtplib.SMTP("monitor") as server:
         server.sendmail(SENDER_EMAIL, [recipient], msg.as_string())
 
 def list_saved_rules(verbose=False):

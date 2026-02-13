@@ -102,7 +102,7 @@ def extract_levels_and_rooms(file_path):
 # ---------------------------
 # Main Processing Logic
 # ---------------------------
-def process_sh3d(file_path, output_path=None, list_only=None, level_filter=None):
+def process_sh3d(file_path, output_path=None, list_only=None, level_filter=None, nodes_only=False):
     levels, rooms_by_level, root = extract_levels_and_rooms(file_path)
 
     if list_only == 'levels':
@@ -182,20 +182,83 @@ def process_sh3d(file_path, output_path=None, list_only=None, level_filter=None)
             "rooms": rooms
         })
 
-    output = {"floors": floor_outputs}
-    output_lines = ["floors:"]
-    for floor in output['floors']:
-        output_lines.append(f"  - id: {floor['id']}")
-        output_lines.append(f"    name: {floor['name']}")
-        output_lines.append(f"    bounds: {floor['bounds_str']}")
-        output_lines.append(f"    rooms:")
-        for room in floor['rooms']:
-            output_lines.append(f"      - id: {room['id']}")
-            output_lines.append(f"        name: {room['name']}")
-            output_lines.append(f"        points:")
-            for pt in room['points']:
-                output_lines.append(f"          - {pt}")
+        # Extract nodes from furniture elements
+    nodes = []
+    for piece in root.findall("pieceOfFurniture"):
+        name = piece.get("name", "")
+        if not name.startswith("node:"):
+            continue
+        desc = piece.get("description", "")
+        if ", Floors:" in desc:
+            raw_name = desc.split(", Floors:", 1)[0].strip()
+        else:
+            raw_name = name.split(":", 1)[1].strip()
+        if ", Floors:" in desc:
+            raw_name = desc.split(", Floors:", 1)[0].strip()
+        else:
+            raw_name = name.split(":", 1)[1].strip()
+        node_id = normalize_id(raw_name)
+        x = float(piece.get("x"))
+        y = float(piece.get("y"))
+        z = float(piece.get("elevation", "0"))
+        x_m = round(abs(x / 100.0), 3)
+        y_m = round(abs(y / 100.0), 3)
+        z_m = round(z / 100.0, 3)
+        desc = piece.get("description", "")
+        floor_list = []
+        if "Floors:" in desc:
+            floor_list = [s.strip().lower().replace(" ", "_") for s in desc.split("Floors:", 1)[1].split(",")]
+        nodes.append({
+            "id": node_id,
+            "name": raw_name,
+            "point": [x_m, y_m, z_m],
+            "floors": floor_list
+        })
+
+    output = {"floors": floor_outputs, "nodes": nodes}
+    import datetime
+    file_mod_ts = os.path.getmtime(file_path)
+    file_mod_str = datetime.datetime.fromtimestamp(file_mod_ts).strftime('%Y-%m-%d %H:%M:%S')
+    output_lines = [f"### Floor/Rooms/Nodes output produced by create_espc_yaml.py script", f"### BEGIN (Generated from file last modified: {file_mod_str})"]
+    if not nodes_only:
+        output_lines.append("floors:")
+        for floor in output['floors']:
+            output_lines.append(f"# Floor: {floor['name'].upper()}")
+            output_lines.append(f"  - id: {floor['id']}")
+            output_lines.append(f"    name: {floor['name']}")
+            output_lines.append(f"    bounds: {floor['bounds_str']}")
+            output_lines.append("")
+            output_lines.append(f"    # ROOMS for {floor['name'].upper()}")
+            output_lines.append(f"    rooms:")
+            for room in floor['rooms']:
+                output_lines.append(f"      - id: {room['id']}")
+                output_lines.append(f"        name: {room['name']}")
+                output_lines.append(f"        points:")
+                for pt in room['points']:
+                    output_lines.append(f"          - {pt}")
+
+    if output['nodes']:
+        selected_nodes = output['nodes']
+        if level_filter:
+            selected_nodes = [n for n in output['nodes'] if level_filter.lower() in n['floors']]
+        if selected_nodes:
+            output_lines.append("")
+            output_lines.append("# NODES")
+            output_lines.append("nodes:")
+            for node in selected_nodes:
+                output_lines.append(f"  - id: {node['id']}")
+                output_lines.append(f"    name: {node['name']}")
+                output_lines.append(f"    point: [{node['point'][0]}, {node['point'][1]}, {node['point'][2]}]")
+                output_lines.append(f"    floors: {node['floors']}")
+
+    output_lines.append("")
+    output_lines.append("### END")
     yaml_output = "\n".join(output_lines)
+
+    if not output_path and args.unique_output:
+        ts_str = datetime.datetime.fromtimestamp(file_mod_ts).strftime('%Y-%m-%d-%H%M%S')
+        prefix = args.unique_output if args.unique_output else "espc"
+        output_path = f"{prefix}-{ts_str}.yaml"
 
     if output_path:
         with open(output_path, "w") as f:
@@ -209,6 +272,7 @@ def process_sh3d(file_path, output_path=None, list_only=None, level_filter=None)
 # ---------------------------
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Generate ESPresense YAML config from .sh3d or Home.xml.")
+    parser.add_argument("-u", "--unique-output", nargs="?", const="espc", help="Generate unique output filename with optional prefix")
     parser.add_argument("-f", "--file", required=True, help="Input .sh3d or Home.xml file path")
     parser.add_argument("-o", "--output", help="Output YAML file (stdout if not set)")
     parser.add_argument("-d", "--debug", action="store_true", help="Enable debug output")
@@ -216,6 +280,7 @@ if __name__ == "__main__":
     parser.add_argument("-lsl", "--list-levels", action="store_true", help="List level IDs and names")
     parser.add_argument("-lsr", "--list-rooms", help="List rooms for a specific level name or ID")
     parser.add_argument("-l", "--level", help="Only process specific level (by ID or name)")
+    parser.add_argument("-n", "--nodes-only", action="store_true", help="Output only nodes section")
     args = parser.parse_args()
 
     if args.file.lower().endswith(".sh3d"):
@@ -227,7 +292,7 @@ if __name__ == "__main__":
         elif args.list_rooms:
             list_flag = f"rooms:{args.list_rooms}"
         debug = args.debug
-        process_sh3d(args.file, args.output, list_only=list_flag, level_filter=args.level)
+        process_sh3d(args.file, args.output, list_only=list_flag, level_filter=args.level, nodes_only=args.nodes_only)
     elif os.path.basename(args.file).lower() == "home.xml":
         with zipfile.ZipFile("temp.sh3d", 'w') as z:
             z.write(args.file, arcname="Home.xml")

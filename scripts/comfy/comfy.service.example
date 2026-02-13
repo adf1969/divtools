@@ -1,0 +1,15 @@
+[Unit]
+Description=ComfyUI
+After=network.target
+
+[Service]
+Type=simple
+User=divix
+Group=divix
+WorkingDirectory=/opt/comfy
+ExecStart=/opt/divtools/scripts/comfy/comfy_run.sh
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
