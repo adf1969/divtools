@@ -1,0 +1,24 @@
+{
+    "name": "nodered-http-server",
+    "version": "1.0.0",
+    "description": "HTTP REST API server for Node-RED admin operations",
+    "type": "module",
+    "main": "server.js",
+    "scripts": {
+        "start": "node server.js http://10.1.1.215:1880 divix:3mpms3 3001",
+        "dev": "node server.js"
+    },
+    "dependencies": {
+        "axios": "^1.6.0",
+        "express": "^4.18.0",
+        "uuid": "^9.0.0"
+    },
+    "keywords": [
+        "node-red",
+        "api",
+        "http",
+        "rest"
+    ],
+    "author": "",
+    "license": "MIT"
+}

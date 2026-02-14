@@ -1337,30 +1337,42 @@ function install_nvidia_container_toolkit() {
         fi
 
         # Check NVIDIA device permissions
+        local permission_warning=0
         if ls /dev/nvidia* &>/dev/null; then
             echo_green "NVIDIA devices found: $(ls /dev/nvidia*)"
             if ! ls -l /dev/nvidia* | grep -v nvidia-modeset | grep -q "rw-rw.*video"; then
                 echo_red "NVIDIA devices (excluding nvidia-modeset) lack sufficient permissions or incorrect group: $(ls -l /dev/nvidia*)"
                 echo_red "Ensure LXC config maps devices correctly and host permissions allow access."
-                return 1
+                permission_warning=1
             fi
             # Verify user access to devices
             local current_user=$(whoami)
             if [[ "$current_user" != "root" ]]; then
                 if ! groups "$current_user" | grep -q "\bvideo\b"; then
                     echo_red "User $current_user is not in the video group. Cannot access NVIDIA devices."
-                    return 1
+                    permission_warning=1
                 fi
                 # Check if user can access devices
                 if ! sudo -u "$current_user" test -r /dev/nvidia0 && ! sudo -u "$current_user" test -w /dev/nvidia0; then
                     echo_red "User $current_user cannot read/write /dev/nvidia0. Check LXC device passthrough or host permissions."
                     echo_red "Device permissions: $(ls -l /dev/nvidia*)"
-                    return 1
+                    permission_warning=1
                 fi
             fi
         else
             echo_red "No NVIDIA devices found in /dev/nvidia*. Check LXC device passthrough."
-            return 1
+            permission_warning=1
+        fi
+
+        # If permission issues detected, ask user if they want to proceed
+        if [[ $permission_warning -eq 1 ]]; then
+            echo_red "WARNING: Permission or device access issues detected."
+            read -p "Do you want to proceed with configuring Docker runtime anyway? (y/n): " proceed_choice
+            if [[ "$proceed_choice" != "y" && "$proceed_choice" != "Y" ]]; then
+                echo_red "Aborting NVIDIA Container Toolkit configuration."
+                return 1
+            fi
+            echo "Proceeding with Docker runtime configuration despite warnings..."
         fi
 
         # Configure Docker runtime

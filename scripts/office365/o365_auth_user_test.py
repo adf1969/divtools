@@ -16,7 +16,7 @@ AUTHORITY = f"https://login.microsoftonline.com/{TENANT_ID}"
 SCOPES = ["Mail.Read", "Mail.ReadBasic", "MailboxSettings.Read", "User.Read"]
 
 # Token cache file for persistent login
-CACHE_PATH = os.path.join(os.path.dirname(__file__), "token_cache.bin")
+CACHE_PATH = os.path.join(os.path.dirname(__file__), "token_cache.bin_secret")
 cache = msal.SerializableTokenCache()
 if os.path.exists(CACHE_PATH):
     cache.deserialize(open(CACHE_PATH, "r").read())

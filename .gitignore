@@ -11,6 +11,8 @@ docker/secrets
 docker/appdata/traefik3/acme
 docker/appdata/dashy/dashboard-icons
 docker/appdata/glances/common/glances.conf
+**/*.jwt_secret
+**/*.bin_secret
 *.sync-conflict*
 .stfolder/
 .stversions/
@@ -19,6 +21,7 @@ docker/appdata/dashy/user-data/config-backups/
 config/tmux/tmux.conf.out
 *.swp
 __pycache__/
+scripts/**/.env.*
 scripts/office365/o365_users.txt
 scripts/office365/secrets/
 scripts/office365/alerts/
@@ -33,7 +36,21 @@ stversions.out
 scripts/dhcp_dyn_update/backups/*
 scripts/dhcp_dyn_update/data/*
 mcp-servers/*/node_modules/*
+mcp-servers/**/secrets/*
 **/package-lock.json
 scripts/office365/todoist_db/*
 docker/appdata/t3ubu1/traefik3/acme/*
 docker/sites/s00-shared/glances/glances.conf
+/scripts/conda-envs
+/scripts/venvs
+# Ignore all files that are part of the 2026-02-12 issue
+**/*.2026-02-12
+# Ignore all Frigate Log Files
+**/frigate-*.log
+docker/.env.example
+logs/*.log
+# Do not track telegraph *.conf. They contain Keys.
+**/telegraf/*.conf
+
+# Exclude any token_cache.bin file
+scripts/**/token_cache.bin

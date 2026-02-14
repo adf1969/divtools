@@ -99,6 +99,30 @@ python3 /home/divix/divtools/scripts/smtp/send_email.py ...  # ❌ Hardcoded pat
 - Both methods are acceptable; choose based on context
 - Always ensure `$DIVTOOLS` is set before calling other scripts (usually via `load_env_files()`)
 
+#### Credential Storage (REQUIRED)
+
+**REQUIREMENT:** Any `mcp-server` or script must never contain hardcoded credentials. Store credentials outside source files — preferably in a `.env` (or `.env.$HOSTNAME`) loaded via `load_env_files()`, or in a `secrets/` subfolder adjacent to the script/server (for example `mcp-servers/<server>/secrets/.env.secret` or `scripts/<tool>/secrets/.env`).
+
+Guidelines:
+- Do not commit secret files to git. Ensure `.gitignore` includes patterns such as `mcp-servers/**/secrets/*` and `scripts/**/secrets/*`.
+- Load secrets at runtime rather than hardcoding them. Example pattern for shell scripts:
+
+```bash
+# Load secrets from external file (if present)
+SECRETS_FILE="$SCRIPT_DIR/secrets/.env.secret"
+if [[ -f "$SECRETS_FILE" ]]; then
+  source "$SECRETS_FILE"
+fi
+
+# Use environment variables (no hardcoded fallback credentials)
+NODE_RED_AUTH="${NODE_RED_AUTH:-}"
+```
+
+- Prefer using environment variables in code (e.g. `DB_PASSWORD=${DB_PASSWORD:-}`) and avoid default fallback values that contain real credentials.
+- If a secret must be referenced by name, prefer clearly suffixed filenames such as `.jwt_secret`, `.bin_secret`, or place them under `secrets/` to make them easy to ignore.
+
+Rationale: centralizing secrets prevents accidental commits, simplifies secret rotation, and keeps repositories safe.
+
 #### Environment Variable Loading in Divtools Scripts
 
 **CRITICAL RULE**: ALL divtools scripts must use `load_env_files()` from `.bash_profile`

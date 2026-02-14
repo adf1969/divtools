@@ -1,0 +1,9 @@
+#!/bin/bash
+# mcp-proxy wrapper script
+# Last Updated: 2/5/2025 9:45:00 PM CST
+
+VENV_PYTHON="/home/divix/divtools/scripts/venvs/dthostmon/bin/python"
+MCP_PROXY_MODULE="-m mcp_proxy"
+
+# Pass all arguments through to mcp-proxy
+exec "$VENV_PYTHON" $MCP_PROXY_MODULE "$@"

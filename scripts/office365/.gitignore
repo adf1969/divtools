@@ -1,0 +1,8 @@
+# Ignore generated/test artifacts and secret token files in office365 scripts
+alerts.test/
+sent_deleted_exceptions/
+o365_token.jwt_secret
+token_cache.bin_secret
+
+# Ignore any secrets folder if used
+secrets/

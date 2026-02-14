@@ -26,6 +26,8 @@ The structure for the divtools files are as follows:
   - **appdata**
   - **archive**
   - **include**: folder contains docker-compose yml files for including in main docker-compose-<HOSTNAME>.yml file
+    These docker-compose files are NOT site-specific, they are HOSTNAME specific.
+    For site-specific, store those as indicated below in the SITE_NAME folder
     - **<HOSTNAME>**: folder contains <HOSTNAME> folders which each contain host-specific yml files
       - **<app>**: folder contains host specific full docker-compose yml files. 
         These docker-compose files are NOT called by the main docker-compose-<HOSTNAME>.yml file.
@@ -34,6 +36,14 @@ The structure for the divtools files are as follows:
   - **local**: folder contains files used for local docker use.
   - **secrets**: folder contains secret files.
   - **secrets_example**: folder that contains examples of secrets files.
+  - **sites**: folder that contains site-specific config
+    - **<SITE_NAME>**: folder contains SITE specific data/config for one site
+      - **<HOSTNAME>: folder contains HOST specific data/config for one site:host
+        - **<APP>: folder contains APP specific data/config for a site:host:app
+          Example: s01-7692nh/tnapp01/postgres: contains postgres app data, on the server named "tnapp01" at the siate named "s01-7692nh".
+          This folder could contain:
+          - postgres-compose.yml: the postgres YML Docker-Compose file
+          - .\config: this would be configuration data for the specific app, sometimes this folder may be named differently, to fit with the standard naming conventions of the app.
   - **docker-compose-<HOSTNAME>.yml**: This is the local docker file, run by the alias dcrun.
 
 - **dotfiles**: contains various login/.* files used for configuring shells:

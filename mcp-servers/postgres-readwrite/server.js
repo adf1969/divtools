@@ -29,7 +29,7 @@ if (process.argv[2]) {
         host: process.env.DB_HOST || '10.1.1.74',
         port: parseInt(process.env.DB_PORT || '5432', 10),
         user: process.env.DB_USER || 'divix',
-        password: process.env.DB_PASSWORD || '3mpms3',
+        password: process.env.DB_PASSWORD || 'pass',
         database: process.env.DB_NAME || 'dthostmon',
         connectionTimeoutMillis: 10000,
         idleTimeoutMillis: 30000,
